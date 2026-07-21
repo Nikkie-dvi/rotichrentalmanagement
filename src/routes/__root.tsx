@@ -16,6 +16,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 import { ThemeProvider } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
+import { useRentReminders } from "@/hooks/use-rent-reminders";
 
 function NotFoundComponent() {
   return (
