@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+import { notify } from "@/lib/notifications";
 
 type Props = {
   tenantId: string;
