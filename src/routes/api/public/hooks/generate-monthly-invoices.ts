@@ -51,6 +51,7 @@ export const Route = createFileRoute("/api/public/hooks/generate-monthly-invoice
           const { error } = await supabase.from("invoices").upsert(
             {
               tenant_id: (t as any).id,
+              owner_id: (t as any).owner_id,
               month_year: month,
               base_rent: rent,
               utility_amount: util,
