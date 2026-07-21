@@ -58,12 +58,74 @@ export type Database = {
           },
         ]
       }
+      mpesa_transactions: {
+        Row: {
+          amount: number
+          checkout_request_id: string | null
+          created_at: string
+          id: string
+          invoice_id: string | null
+          merchant_request_id: string | null
+          mpesa_receipt_no: string | null
+          phone_number: string
+          result_desc: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          merchant_request_id?: string | null
+          mpesa_receipt_no?: string | null
+          phone_number: string
+          result_desc?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          merchant_request_id?: string | null
+          mpesa_receipt_no?: string | null
+          phone_number?: string
+          result_desc?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mpesa_transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mpesa_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount_paid: number
           created_at: string
           id: string
           invoice_id: string | null
+          mpesa_receipt_no: string | null
+          mpesa_status: string | null
           payment_date: string
           payment_method: string
           reference_no: string | null
@@ -74,6 +136,8 @@ export type Database = {
           created_at?: string
           id?: string
           invoice_id?: string | null
+          mpesa_receipt_no?: string | null
+          mpesa_status?: string | null
           payment_date?: string
           payment_method?: string
           reference_no?: string | null
@@ -84,6 +148,8 @@ export type Database = {
           created_at?: string
           id?: string
           invoice_id?: string | null
+          mpesa_receipt_no?: string | null
+          mpesa_status?: string | null
           payment_date?: string
           payment_method?: string
           reference_no?: string | null
@@ -137,6 +203,7 @@ export type Database = {
           move_in_date: string | null
           move_out_date: string | null
           phone_number: string | null
+          rent_due_day: number | null
           unit_id: string | null
         }
         Insert: {
@@ -148,6 +215,7 @@ export type Database = {
           move_in_date?: string | null
           move_out_date?: string | null
           phone_number?: string | null
+          rent_due_day?: number | null
           unit_id?: string | null
         }
         Update: {
@@ -159,6 +227,7 @@ export type Database = {
           move_in_date?: string | null
           move_out_date?: string | null
           phone_number?: string | null
+          rent_due_day?: number | null
           unit_id?: string | null
         }
         Relationships: [

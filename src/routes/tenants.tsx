@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+import { MpesaStkButton } from "@/components/mpesa-stk-button";
 
 export const Route = createFileRoute("/tenants")({
   head: () => ({
@@ -66,6 +67,7 @@ function TenantsPage() {
         phone_number: v.phone_number,
         deposit_paid: Number(v.deposit_paid) || 0,
         move_in_date: v.move_in_date || null,
+        rent_due_day: v.rent_due_day ? Number(v.rent_due_day) : null,
         active: true,
       });
       if (tErr) throw tErr;
@@ -123,6 +125,7 @@ function TenantsPage() {
                   unit_id: String(f.get("unit_id")),
                   deposit_paid: Number(f.get("deposit_paid")) || 0,
                   move_in_date: String(f.get("move_in_date")),
+                  rent_due_day: String(f.get("rent_due_day") ?? ""),
                 });
               }}
               className="space-y-3"
@@ -147,6 +150,11 @@ function TenantsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Deposit Paid</Label><Input type="number" name="deposit_paid" min={0} defaultValue={0} /></div>
                 <div><Label>Move-in Date</Label><Input type="date" name="move_in_date" /></div>
+                <div className="col-span-2">
+                  <Label>Rent Due Day (1–31)</Label>
+                  <Input type="number" name="rent_due_day" min={1} max={31} placeholder="Auto from move-in date" />
+                  <p className="text-[11px] text-muted-foreground mt-1">Cron auto-generates a new invoice every month on this day.</p>
+                </div>
               </div>
               <DialogFooter><Button type="submit" disabled={assign.isPending}>Assign</Button></DialogFooter>
             </form>
@@ -176,10 +184,20 @@ function TenantsPage() {
                 <Row label="Rent Due" value={money(Number(t.units?.rent_amount ?? 0))} />
                 <Row label="Deposit" value={money(Number(t.deposit_paid))} />
                 <Row label="Move-in" value={t.move_in_date ?? "—"} />
+                <Row label="Due Day" value={t.rent_due_day ? `${t.rent_due_day} of month` : "—"} />
                 <Row label="Balance" value={<span className={balance > 0 ? "text-destructive font-semibold" : "text-primary font-semibold"}>{money(balance)}</span>} />
-                <Button size="sm" variant="outline" className="w-full mt-2" onClick={() => moveOut.mutate(t)}>
-                  <LogOut className="h-4 w-4" />Mark Moved Out
-                </Button>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <MpesaStkButton
+                    tenantId={t.id}
+                    defaultPhone={t.phone_number}
+                    defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
+                    label="STK Push"
+                    className="w-full"
+                  />
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => moveOut.mutate(t)}>
+                    <LogOut className="h-4 w-4" />Move Out
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );

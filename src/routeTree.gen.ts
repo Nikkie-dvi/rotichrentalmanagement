@@ -15,6 +15,9 @@ import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as MetersRouteImport } from './routes/meters'
 import { Route as BillingRouteImport } from './routes/billing'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
+import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
+import { Route as ApiPublicHooksGenerateMonthlyInvoicesRouteImport } from './routes/api/public/hooks/generate-monthly-invoices'
 
 const TenantsRoute = TenantsRouteImport.update({
   id: '/tenants',
@@ -46,6 +49,23 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMpesaStkPushRoute = ApiPublicMpesaStkPushRouteImport.update({
+  id: '/api/public/mpesa/stk-push',
+  path: '/api/public/mpesa/stk-push',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMpesaSimulateCallbackRoute =
+  ApiPublicMpesaSimulateCallbackRouteImport.update({
+    id: '/api/public/mpesa/simulate-callback',
+    path: '/api/public/mpesa/simulate-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksGenerateMonthlyInvoicesRoute =
+  ApiPublicHooksGenerateMonthlyInvoicesRouteImport.update({
+    id: '/api/public/hooks/generate-monthly-invoices',
+    path: '/api/public/hooks/generate-monthly-invoices',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +74,9 @@ export interface FileRoutesByFullPath {
   '/payments': typeof PaymentsRoute
   '/properties': typeof PropertiesRoute
   '/tenants': typeof TenantsRoute
+  '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
+  '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
+  '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +85,9 @@ export interface FileRoutesByTo {
   '/payments': typeof PaymentsRoute
   '/properties': typeof PropertiesRoute
   '/tenants': typeof TenantsRoute
+  '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
+  '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
+  '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +97,9 @@ export interface FileRoutesById {
   '/payments': typeof PaymentsRoute
   '/properties': typeof PropertiesRoute
   '/tenants': typeof TenantsRoute
+  '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
+  '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
+  '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,8 +110,20 @@ export interface FileRouteTypes {
     | '/payments'
     | '/properties'
     | '/tenants'
+    | '/api/public/hooks/generate-monthly-invoices'
+    | '/api/public/mpesa/simulate-callback'
+    | '/api/public/mpesa/stk-push'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/billing' | '/meters' | '/payments' | '/properties' | '/tenants'
+  to:
+    | '/'
+    | '/billing'
+    | '/meters'
+    | '/payments'
+    | '/properties'
+    | '/tenants'
+    | '/api/public/hooks/generate-monthly-invoices'
+    | '/api/public/mpesa/simulate-callback'
+    | '/api/public/mpesa/stk-push'
   id:
     | '__root__'
     | '/'
@@ -91,6 +132,9 @@ export interface FileRouteTypes {
     | '/payments'
     | '/properties'
     | '/tenants'
+    | '/api/public/hooks/generate-monthly-invoices'
+    | '/api/public/mpesa/simulate-callback'
+    | '/api/public/mpesa/stk-push'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -100,6 +144,9 @@ export interface RootRouteChildren {
   PaymentsRoute: typeof PaymentsRoute
   PropertiesRoute: typeof PropertiesRoute
   TenantsRoute: typeof TenantsRoute
+  ApiPublicHooksGenerateMonthlyInvoicesRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
+  ApiPublicMpesaSimulateCallbackRoute: typeof ApiPublicMpesaSimulateCallbackRoute
+  ApiPublicMpesaStkPushRoute: typeof ApiPublicMpesaStkPushRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -146,6 +193,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/mpesa/stk-push': {
+      id: '/api/public/mpesa/stk-push'
+      path: '/api/public/mpesa/stk-push'
+      fullPath: '/api/public/mpesa/stk-push'
+      preLoaderRoute: typeof ApiPublicMpesaStkPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/mpesa/simulate-callback': {
+      id: '/api/public/mpesa/simulate-callback'
+      path: '/api/public/mpesa/simulate-callback'
+      fullPath: '/api/public/mpesa/simulate-callback'
+      preLoaderRoute: typeof ApiPublicMpesaSimulateCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/generate-monthly-invoices': {
+      id: '/api/public/hooks/generate-monthly-invoices'
+      path: '/api/public/hooks/generate-monthly-invoices'
+      fullPath: '/api/public/hooks/generate-monthly-invoices'
+      preLoaderRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -156,6 +224,10 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentsRoute: PaymentsRoute,
   PropertiesRoute: PropertiesRoute,
   TenantsRoute: TenantsRoute,
+  ApiPublicHooksGenerateMonthlyInvoicesRoute:
+    ApiPublicHooksGenerateMonthlyInvoicesRoute,
+  ApiPublicMpesaSimulateCallbackRoute: ApiPublicMpesaSimulateCallbackRoute,
+  ApiPublicMpesaStkPushRoute: ApiPublicMpesaStkPushRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
