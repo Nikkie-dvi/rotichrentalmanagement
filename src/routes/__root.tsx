@@ -16,6 +16,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 import { ThemeProvider } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
+import { useRentReminders } from "@/hooks/use-rent-reminders";
 
 function NotFoundComponent() {
   return (
@@ -114,12 +115,19 @@ function RootComponent() {
     import("../lib/pwa").then((m) => m.registerPWA()).catch(() => {});
   }, []);
   return (
+    <AppInner queryClient={queryClient} />
+  );
+}
+
+function AppInner({ queryClient }: { queryClient: QueryClient }) {
+  return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset>
             <AppHeader />
+            <ReminderRunner />
             <main className="flex-1 p-4 md:p-6">
               <Outlet />
             </main>
@@ -129,4 +137,9 @@ function RootComponent() {
       </ThemeProvider>
     </QueryClientProvider>
   );
+}
+
+function ReminderRunner() {
+  useRentReminders();
+  return null;
 }

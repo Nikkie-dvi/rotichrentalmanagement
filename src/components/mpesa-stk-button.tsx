@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+import { notify } from "@/lib/notifications";
 
 type Props = {
   tenantId: string;
@@ -82,6 +83,11 @@ export function MpesaStkButton({
       if (!res.ok) throw new Error(data.error ?? "STK Push failed");
       setTxId(data.transaction_id);
       setMessage(data.message ?? "Enter M-Pesa PIN on your phone…");
+      notify({
+        title: "M-Pesa: Pending PIN",
+        body: `Waiting for PIN entry on ${phone} for ${money(Number(amount))}.`,
+        tag: `mpesa-${data.transaction_id}`,
+      });
 
       pollRef.current = setInterval(async () => {
         const { data: tx } = await supabase
@@ -96,11 +102,21 @@ export function MpesaStkButton({
           if (pollRef.current) clearInterval(pollRef.current);
           qc.invalidateQueries();
           toast.success("M-Pesa payment successful");
+          notify({
+            title: "Payment successful",
+            body: `${money(Number(amount))} received. Receipt ${tx.mpesa_receipt_no}.`,
+            tag: `mpesa-${data.transaction_id}`,
+          });
         } else if (tx.status === "failed") {
           setStatus("failed");
           setMessage(tx.result_desc ?? "Payment failed");
           if (pollRef.current) clearInterval(pollRef.current);
           toast.error("M-Pesa payment failed");
+          notify({
+            title: "Payment failed",
+            body: tx.result_desc ?? "The M-Pesa payment did not complete.",
+            tag: `mpesa-${data.transaction_id}`,
+          });
         }
       }, 2000);
     } catch (e: any) {

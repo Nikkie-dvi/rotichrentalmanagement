@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Bell, BellOff, BellRing } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +8,27 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme";
 import { money } from "@/lib/types";
+import {
+  notificationPermission,
+  requestNotificationPermission,
+} from "@/lib/notifications";
+import { toast } from "sonner";
 
 export function AppHeader() {
   const { theme, toggle } = useTheme();
+  const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
+
+  useEffect(() => {
+    setPerm(notificationPermission());
+  }, []);
+
+  const askPerm = async () => {
+    const r = await requestNotificationPermission();
+    setPerm(r);
+    if (r === "granted") toast.success("Notifications enabled");
+    else if (r === "denied") toast.error("Notifications blocked in browser settings");
+    else if (r === "unsupported") toast.error("Notifications not supported on this device");
+  };
 
   const { data: summary } = useQuery({
     queryKey: ["summary"],
@@ -28,6 +47,9 @@ export function AppHeader() {
       return { totalUnits, occupied, collectedThisMonth, arrears };
     },
   });
+
+  const NotifIcon =
+    perm === "granted" ? BellRing : perm === "denied" || perm === "unsupported" ? BellOff : Bell;
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur">
@@ -50,6 +72,23 @@ export function AppHeader() {
         <Badge variant="destructive" className="hidden lg:inline-flex">
           Arrears: <span className="ml-1 font-semibold">{money(summary?.arrears ?? 0)}</span>
         </Badge>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={askPerm}
+          aria-label="Enable notifications"
+          title={
+            perm === "granted"
+              ? "Notifications on"
+              : perm === "denied"
+                ? "Notifications blocked"
+                : perm === "unsupported"
+                  ? "Not supported"
+                  : "Enable notifications"
+          }
+        >
+          <NotifIcon className="h-4 w-4" />
+        </Button>
         <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
