@@ -23,7 +23,7 @@ export const Route = createFileRoute("/api/public/hooks/generate-monthly-invoice
 
         const { data: tenants, error: tErr } = await supabase
           .from("tenants")
-          .select("id, rent_due_day, units(rent_amount)")
+          .select("id, owner_id, rent_due_day, units(rent_amount)")
           .eq("active", true)
           .eq("rent_due_day", day);
 
