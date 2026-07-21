@@ -9,44 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TenantsRouteImport } from './routes/tenants'
-import { Route as PropertiesRouteImport } from './routes/properties'
-import { Route as PaymentsRouteImport } from './routes/payments'
-import { Route as MetersRouteImport } from './routes/meters'
-import { Route as BillingRouteImport } from './routes/billing'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedTenantsRouteImport } from './routes/_authenticated/tenants'
+import { Route as AuthenticatedPropertiesRouteImport } from './routes/_authenticated/properties'
+import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
+import { Route as AuthenticatedMetersRouteImport } from './routes/_authenticated/meters'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
 import { Route as ApiPublicHooksGenerateMonthlyInvoicesRouteImport } from './routes/api/public/hooks/generate-monthly-invoices'
 
-const TenantsRoute = TenantsRouteImport.update({
-  id: '/tenants',
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/_authenticated/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTenantsRoute = AuthenticatedTenantsRouteImport.update({
+  id: '/_authenticated/tenants',
   path: '/tenants',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PropertiesRoute = PropertiesRouteImport.update({
-  id: '/properties',
+const AuthenticatedPropertiesRoute = AuthenticatedPropertiesRouteImport.update({
+  id: '/_authenticated/properties',
   path: '/properties',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PaymentsRoute = PaymentsRouteImport.update({
-  id: '/payments',
+const AuthenticatedPaymentsRoute = AuthenticatedPaymentsRouteImport.update({
+  id: '/_authenticated/payments',
   path: '/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MetersRoute = MetersRouteImport.update({
-  id: '/meters',
+const AuthenticatedMetersRoute = AuthenticatedMetersRouteImport.update({
+  id: '/_authenticated/meters',
   path: '/meters',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BillingRoute = BillingRouteImport.update({
-  id: '/billing',
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/_authenticated/billing',
   path: '/billing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicMpesaStkPushRoute = ApiPublicMpesaStkPushRouteImport.update({
@@ -68,35 +68,35 @@ const ApiPublicHooksGenerateMonthlyInvoicesRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/billing': typeof BillingRoute
-  '/meters': typeof MetersRoute
-  '/payments': typeof PaymentsRoute
-  '/properties': typeof PropertiesRoute
-  '/tenants': typeof TenantsRoute
+  '/billing': typeof AuthenticatedBillingRoute
+  '/meters': typeof AuthenticatedMetersRoute
+  '/payments': typeof AuthenticatedPaymentsRoute
+  '/properties': typeof AuthenticatedPropertiesRoute
+  '/tenants': typeof AuthenticatedTenantsRoute
+  '/': typeof AuthenticatedIndexRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/billing': typeof BillingRoute
-  '/meters': typeof MetersRoute
-  '/payments': typeof PaymentsRoute
-  '/properties': typeof PropertiesRoute
-  '/tenants': typeof TenantsRoute
+  '/billing': typeof AuthenticatedBillingRoute
+  '/meters': typeof AuthenticatedMetersRoute
+  '/payments': typeof AuthenticatedPaymentsRoute
+  '/properties': typeof AuthenticatedPropertiesRoute
+  '/tenants': typeof AuthenticatedTenantsRoute
+  '/': typeof AuthenticatedIndexRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/billing': typeof BillingRoute
-  '/meters': typeof MetersRoute
-  '/payments': typeof PaymentsRoute
-  '/properties': typeof PropertiesRoute
-  '/tenants': typeof TenantsRoute
+  '/_authenticated/billing': typeof AuthenticatedBillingRoute
+  '/_authenticated/meters': typeof AuthenticatedMetersRoute
+  '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
+  '/_authenticated/properties': typeof AuthenticatedPropertiesRoute
+  '/_authenticated/tenants': typeof AuthenticatedTenantsRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
@@ -104,46 +104,46 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/billing'
     | '/meters'
     | '/payments'
     | '/properties'
     | '/tenants'
+    | '/'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/billing'
     | '/meters'
     | '/payments'
     | '/properties'
     | '/tenants'
+    | '/'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
   id:
     | '__root__'
-    | '/'
-    | '/billing'
-    | '/meters'
-    | '/payments'
-    | '/properties'
-    | '/tenants'
+    | '/_authenticated/billing'
+    | '/_authenticated/meters'
+    | '/_authenticated/payments'
+    | '/_authenticated/properties'
+    | '/_authenticated/tenants'
+    | '/_authenticated/'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  BillingRoute: typeof BillingRoute
-  MetersRoute: typeof MetersRoute
-  PaymentsRoute: typeof PaymentsRoute
-  PropertiesRoute: typeof PropertiesRoute
-  TenantsRoute: typeof TenantsRoute
+  AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
+  AuthenticatedMetersRoute: typeof AuthenticatedMetersRoute
+  AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
+  AuthenticatedPropertiesRoute: typeof AuthenticatedPropertiesRoute
+  AuthenticatedTenantsRoute: typeof AuthenticatedTenantsRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   ApiPublicHooksGenerateMonthlyInvoicesRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   ApiPublicMpesaSimulateCallbackRoute: typeof ApiPublicMpesaSimulateCallbackRoute
   ApiPublicMpesaStkPushRoute: typeof ApiPublicMpesaStkPushRoute
@@ -151,46 +151,46 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tenants': {
-      id: '/tenants'
-      path: '/tenants'
-      fullPath: '/tenants'
-      preLoaderRoute: typeof TenantsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/properties': {
-      id: '/properties'
-      path: '/properties'
-      fullPath: '/properties'
-      preLoaderRoute: typeof PropertiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/payments': {
-      id: '/payments'
-      path: '/payments'
-      fullPath: '/payments'
-      preLoaderRoute: typeof PaymentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/meters': {
-      id: '/meters'
-      path: '/meters'
-      fullPath: '/meters'
-      preLoaderRoute: typeof MetersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/billing': {
-      id: '/billing'
-      path: '/billing'
-      fullPath: '/billing'
-      preLoaderRoute: typeof BillingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/tenants': {
+      id: '/_authenticated/tenants'
+      path: '/tenants'
+      fullPath: '/tenants'
+      preLoaderRoute: typeof AuthenticatedTenantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/properties': {
+      id: '/_authenticated/properties'
+      path: '/properties'
+      fullPath: '/properties'
+      preLoaderRoute: typeof AuthenticatedPropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/payments': {
+      id: '/_authenticated/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof AuthenticatedPaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/meters': {
+      id: '/_authenticated/meters'
+      path: '/meters'
+      fullPath: '/meters'
+      preLoaderRoute: typeof AuthenticatedMetersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/mpesa/stk-push': {
@@ -218,12 +218,12 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  BillingRoute: BillingRoute,
-  MetersRoute: MetersRoute,
-  PaymentsRoute: PaymentsRoute,
-  PropertiesRoute: PropertiesRoute,
-  TenantsRoute: TenantsRoute,
+  AuthenticatedBillingRoute: AuthenticatedBillingRoute,
+  AuthenticatedMetersRoute: AuthenticatedMetersRoute,
+  AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
+  AuthenticatedPropertiesRoute: AuthenticatedPropertiesRoute,
+  AuthenticatedTenantsRoute: AuthenticatedTenantsRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   ApiPublicHooksGenerateMonthlyInvoicesRoute:
     ApiPublicHooksGenerateMonthlyInvoicesRoute,
   ApiPublicMpesaSimulateCallbackRoute: ApiPublicMpesaSimulateCallbackRoute,

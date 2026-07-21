@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 
-export const Route = createFileRoute("/meters")({
+export const Route = createFileRoute("/_authenticated/meters")({
   head: () => ({
     meta: [
       { title: "Meter Readings & Utilities — Bomahut" },

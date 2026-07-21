@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 
-export const Route = createFileRoute("/properties")({
+export const Route = createFileRoute("/_authenticated/properties")({
   head: () => ({
     meta: [
       { title: "Properties & Units — Bomahut" },
