@@ -11,10 +11,10 @@ import { money } from "@/lib/types";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Bomahut" },
+      { title: "Rotich rental management new" },
       { name: "description", content: "Overview of your rental portfolio: units, occupancy, collections and arrears." },
-      { property: "og:title", content: "Dashboard — Bomahut" },
-      { property: "og:description", content: "Overview of units, occupancy, collections and arrears." },
+      { property: "og:title", content: "Rotich rental management new" },
+      { property: "og:description", content: "Overview of your rental portfolio: units, occupancy, collections and arrears." },
     ],
   }),
   component: Dashboard,
