@@ -54,9 +54,22 @@ export const Route = createFileRoute("/api/public/mpesa/stk-push")({
         const checkoutRequestId = "ws_CO_" + Math.random().toString(36).slice(2, 12).toUpperCase();
         const merchantRequestId = "MR_" + Math.random().toString(36).slice(2, 10).toUpperCase();
 
+        // Derive owner from tenant or invoice so RLS-owned rows are created correctly.
+        let ownerId: string | null = null;
+        if (parsed.data.tenant_id) {
+          const { data: t } = await supabase.from("tenants").select("owner_id").eq("id", parsed.data.tenant_id).maybeSingle();
+          ownerId = (t as any)?.owner_id ?? null;
+        }
+        if (!ownerId && parsed.data.invoice_id) {
+          const { data: inv } = await supabase.from("invoices").select("owner_id").eq("id", parsed.data.invoice_id).maybeSingle();
+          ownerId = (inv as any)?.owner_id ?? null;
+        }
+        if (!ownerId) return json({ error: "Unable to resolve owner for transaction" }, 400);
+
         const { data, error } = await supabase
           .from("mpesa_transactions")
           .insert({
+            owner_id: ownerId,
             tenant_id: parsed.data.tenant_id ?? null,
             invoice_id: parsed.data.invoice_id ?? null,
             phone_number: phone,
