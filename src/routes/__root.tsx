@@ -114,6 +114,12 @@ function RootComponent() {
     import("../lib/pwa").then((m) => m.registerPWA()).catch(() => {});
   }, []);
   return (
+    <AppInner queryClient={queryClient} />
+  );
+}
+
+function AppInner({ queryClient }: { queryClient: QueryClient }) {
+  return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <SidebarProvider>
