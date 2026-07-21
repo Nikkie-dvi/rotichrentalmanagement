@@ -15,6 +15,7 @@ export type Tenant = {
   deposit_paid: number;
   move_in_date: string | null;
   move_out_date: string | null;
+  rent_due_day: number | null;
   active: boolean;
   created_at: string;
 };

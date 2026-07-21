@@ -68,17 +68,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#10b981" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Bomahut" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { title: "Bomahut — Rental Property Management" },
-      { name: "description", content: "Personal rental property management dashboard for units, tenants, meters, invoices and payments." },
+      { name: "description", content: "Mobile-first rental property management with M-Pesa STK Push, auto monthly invoicing, meters and receipts." },
       { property: "og:title", content: "Bomahut — Rental Property Management" },
-      { property: "og:description", content: "Manage properties, tenants, meter readings, invoices and payments in one place." },
+      { property: "og:description", content: "Manage tenants, invoices, meters and M-Pesa payments from your phone." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -103,6 +110,9 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    import("../lib/pwa").then((m) => m.registerPWA()).catch(() => {});
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
