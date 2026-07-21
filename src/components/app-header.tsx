@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Moon, Sun, Bell, BellOff, BellRing } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { Moon, Sun, Bell, BellOff, BellRing, LogOut } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,16 @@ import { toast } from "sonner";
 
 export function AppHeader() {
   const { theme, toggle } = useTheme();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
+
+  const signOut = async () => {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
 
   useEffect(() => {
     setPerm(notificationPermission());
@@ -91,6 +101,9 @@ export function AppHeader() {
         </Button>
         <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
+        <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out" title="Sign out">
+          <LogOut className="h-4 w-4" />
         </Button>
       </div>
     </header>
