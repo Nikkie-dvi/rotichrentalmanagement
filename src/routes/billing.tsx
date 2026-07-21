@@ -1,0 +1,197 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
+import { FileText, Printer } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { money } from "@/lib/types";
+
+export const Route = createFileRoute("/billing")({
+  head: () => ({
+    meta: [
+      { title: "Billing & Invoices — Bomahut" },
+      { name: "description", content: "Generate monthly bills combining base rent and utility charges. Print or share invoices." },
+      { property: "og:title", content: "Billing & Invoices — Bomahut" },
+      { property: "og:description", content: "Generate and preview monthly rent invoices." },
+    ],
+  }),
+  component: BillingPage,
+});
+
+function BillingPage() {
+  const qc = useQueryClient();
+  const [month, setMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+  const [preview, setPreview] = useState<any>(null);
+
+  const { data: invoices } = useQuery({
+    queryKey: ["invoices", month],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("invoices")
+        .select("*,tenants(full_name,phone_number,units(unit_number,properties(name)))")
+        .eq("month_year", month)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const generate = useMutation({
+    mutationFn: async () => {
+      const { data: tenants } = await supabase
+        .from("tenants")
+        .select("id,units(rent_amount)")
+        .eq("active", true);
+      const [y, m] = month.split("-").map(Number);
+      const start = `${y}-${String(m).padStart(2, "0")}-01`;
+      const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+      let created = 0;
+      for (const t of tenants ?? []) {
+        const rent = Number((t as any).units?.rent_amount ?? 0);
+        const { data: readings } = await supabase
+          .from("utility_readings")
+          .select("total_amount")
+          .eq("tenant_id", (t as any).id)
+          .gte("reading_date", start)
+          .lt("reading_date", end);
+        const util = (readings ?? []).reduce((s, r: any) => s + Number(r.total_amount), 0);
+        const total = rent + util;
+        const { data: paidRows } = await supabase
+          .from("payments")
+          .select("amount_paid")
+          .eq("tenant_id", (t as any).id);
+        // We only care to reconcile the invoice's own balance later; new invoice starts unpaid.
+        const { error } = await supabase.from("invoices").upsert(
+          {
+            tenant_id: (t as any).id,
+            month_year: month,
+            base_rent: rent,
+            utility_amount: util,
+            total_due: total,
+            balance_remaining: total,
+            status: total === 0 ? "paid" : "unpaid",
+          },
+          { onConflict: "tenant_id,month_year" },
+        );
+        if (error) throw error;
+        // Suppress unused warning
+        void paidRows;
+        created++;
+      }
+      return created;
+    },
+    onSuccess: (n) => {
+      qc.invalidateQueries();
+      toast.success(`Generated ${n} invoice(s)`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Billing & Monthly Rent Roll</h2>
+        <p className="text-sm text-muted-foreground">Generate invoices combining rent + utilities per month.</p>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Generate Monthly Bills</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-3">
+          <div>
+            <Label>Billing Month</Label>
+            <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
+          </div>
+          <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
+            <FileText className="h-4 w-4" />Generate Bills for {month}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Invoices for {month}</CardTitle></CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tenant</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead className="text-right">Base Rent</TableHead>
+                <TableHead className="text-right">Utilities</TableHead>
+                <TableHead className="text-right">Total Due</TableHead>
+                <TableHead className="text-right">Balance</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(invoices ?? []).map((i: any) => (
+                <TableRow key={i.id}>
+                  <TableCell className="font-medium">{i.tenants?.full_name ?? "—"}</TableCell>
+                  <TableCell>{i.tenants?.units?.unit_number ?? "—"}</TableCell>
+                  <TableCell className="text-right">{money(Number(i.base_rent))}</TableCell>
+                  <TableCell className="text-right">{money(Number(i.utility_amount))}</TableCell>
+                  <TableCell className="text-right font-semibold">{money(Number(i.total_due))}</TableCell>
+                  <TableCell className="text-right">{money(Number(i.balance_remaining))}</TableCell>
+                  <TableCell>
+                    <Badge
+                      className={
+                        i.status === "paid"
+                          ? "bg-primary text-primary-foreground"
+                          : i.status === "partial"
+                            ? "bg-warning text-warning-foreground"
+                            : ""
+                      }
+                      variant={i.status === "unpaid" ? "destructive" : "default"}
+                    >
+                      {i.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="ghost" onClick={() => setPreview(i)}>Preview</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {(!invoices || invoices.length === 0) && (
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">No invoices for this month. Click generate above.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Invoice Preview</DialogTitle></DialogHeader>
+          {preview && (
+            <div className="space-y-3" id="invoice-print">
+              <div className="text-center">
+                <div className="text-lg font-bold">Bomahut Rental Invoice</div>
+                <div className="text-xs text-muted-foreground">{preview.month_year}</div>
+              </div>
+              <div className="text-sm space-y-1">
+                <div><b>Tenant:</b> {preview.tenants?.full_name}</div>
+                <div><b>Phone:</b> {preview.tenants?.phone_number ?? "—"}</div>
+                <div><b>Property:</b> {preview.tenants?.units?.properties?.name ?? "—"}</div>
+                <div><b>Unit:</b> {preview.tenants?.units?.unit_number ?? "—"}</div>
+              </div>
+              <div className="border rounded-md p-3 space-y-1 text-sm">
+                <div className="flex justify-between"><span>Base Rent</span><span>{money(Number(preview.base_rent))}</span></div>
+                <div className="flex justify-between"><span>Utility Charges</span><span>{money(Number(preview.utility_amount))}</span></div>
+                <div className="flex justify-between font-semibold border-t pt-1"><span>Total Due</span><span>{money(Number(preview.total_due))}</span></div>
+                <div className="flex justify-between text-destructive"><span>Balance Remaining</span><span>{money(Number(preview.balance_remaining))}</span></div>
+              </div>
+              <p className="text-xs text-muted-foreground">Please pay via M-Pesa / Bank / Cash. Reference your unit number.</p>
+              <Button className="w-full" onClick={() => window.print()}><Printer className="h-4 w-4" />Print / Save PDF</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
