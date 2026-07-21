@@ -14,7 +14,239 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      invoices: {
+        Row: {
+          balance_remaining: number
+          base_rent: number
+          created_at: string
+          id: string
+          month_year: string
+          status: string
+          tenant_id: string
+          total_due: number
+          utility_amount: number
+        }
+        Insert: {
+          balance_remaining?: number
+          base_rent?: number
+          created_at?: string
+          id?: string
+          month_year: string
+          status?: string
+          tenant_id: string
+          total_due?: number
+          utility_amount?: number
+        }
+        Update: {
+          balance_remaining?: number
+          base_rent?: number
+          created_at?: string
+          id?: string
+          month_year?: string
+          status?: string
+          tenant_id?: string
+          total_due?: number
+          utility_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          id: string
+          invoice_id: string | null
+          payment_date: string
+          payment_method: string
+          reference_no: string | null
+          tenant_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference_no?: string | null
+          tenant_id: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference_no?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      properties: {
+        Row: {
+          created_at: string
+          id: string
+          location: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      tenants: {
+        Row: {
+          active: boolean
+          created_at: string
+          deposit_paid: number
+          full_name: string
+          id: string
+          move_in_date: string | null
+          move_out_date: string | null
+          phone_number: string | null
+          unit_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          deposit_paid?: number
+          full_name: string
+          id?: string
+          move_in_date?: string | null
+          move_out_date?: string | null
+          phone_number?: string | null
+          unit_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          deposit_paid?: number
+          full_name?: string
+          id?: string
+          move_in_date?: string | null
+          move_out_date?: string | null
+          phone_number?: string | null
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          created_at: string
+          id: string
+          property_id: string
+          rent_amount: number
+          status: string
+          unit_number: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          property_id: string
+          rent_amount?: number
+          status?: string
+          unit_number: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          property_id?: string
+          rent_amount?: number
+          status?: string
+          unit_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utility_readings: {
+        Row: {
+          created_at: string
+          current_reading: number
+          id: string
+          previous_reading: number
+          reading_date: string
+          tenant_id: string
+          total_amount: number
+          unit_rate: number
+        }
+        Insert: {
+          created_at?: string
+          current_reading?: number
+          id?: string
+          previous_reading?: number
+          reading_date?: string
+          tenant_id: string
+          total_amount?: number
+          unit_rate?: number
+        }
+        Update: {
+          created_at?: string
+          current_reading?: number
+          id?: string
+          previous_reading?: number
+          reading_date?: string
+          tenant_id?: string
+          total_amount?: number
+          unit_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utility_readings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
