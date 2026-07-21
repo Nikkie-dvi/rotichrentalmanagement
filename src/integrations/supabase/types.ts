@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           id: string
           month_year: string
+          owner_id: string
           status: string
           tenant_id: string
           total_due: number
@@ -32,6 +33,7 @@ export type Database = {
           created_at?: string
           id?: string
           month_year: string
+          owner_id?: string
           status?: string
           tenant_id: string
           total_due?: number
@@ -43,6 +45,7 @@ export type Database = {
           created_at?: string
           id?: string
           month_year?: string
+          owner_id?: string
           status?: string
           tenant_id?: string
           total_due?: number
@@ -67,6 +70,7 @@ export type Database = {
           invoice_id: string | null
           merchant_request_id: string | null
           mpesa_receipt_no: string | null
+          owner_id: string
           phone_number: string
           result_desc: string | null
           status: string
@@ -81,6 +85,7 @@ export type Database = {
           invoice_id?: string | null
           merchant_request_id?: string | null
           mpesa_receipt_no?: string | null
+          owner_id?: string
           phone_number: string
           result_desc?: string | null
           status?: string
@@ -95,6 +100,7 @@ export type Database = {
           invoice_id?: string | null
           merchant_request_id?: string | null
           mpesa_receipt_no?: string | null
+          owner_id?: string
           phone_number?: string
           result_desc?: string | null
           status?: string
@@ -126,6 +132,7 @@ export type Database = {
           invoice_id: string | null
           mpesa_receipt_no: string | null
           mpesa_status: string | null
+          owner_id: string
           payment_date: string
           payment_method: string
           reference_no: string | null
@@ -138,6 +145,7 @@ export type Database = {
           invoice_id?: string | null
           mpesa_receipt_no?: string | null
           mpesa_status?: string | null
+          owner_id?: string
           payment_date?: string
           payment_method?: string
           reference_no?: string | null
@@ -150,6 +158,7 @@ export type Database = {
           invoice_id?: string | null
           mpesa_receipt_no?: string | null
           mpesa_status?: string | null
+          owner_id?: string
           payment_date?: string
           payment_method?: string
           reference_no?: string | null
@@ -178,18 +187,21 @@ export type Database = {
           id: string
           location: string | null
           name: string
+          owner_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           location?: string | null
           name: string
+          owner_id?: string
         }
         Update: {
           created_at?: string
           id?: string
           location?: string | null
           name?: string
+          owner_id?: string
         }
         Relationships: []
       }
@@ -202,6 +214,7 @@ export type Database = {
           id: string
           move_in_date: string | null
           move_out_date: string | null
+          owner_id: string
           phone_number: string | null
           rent_due_day: number | null
           unit_id: string | null
@@ -214,6 +227,7 @@ export type Database = {
           id?: string
           move_in_date?: string | null
           move_out_date?: string | null
+          owner_id?: string
           phone_number?: string | null
           rent_due_day?: number | null
           unit_id?: string | null
@@ -226,6 +240,7 @@ export type Database = {
           id?: string
           move_in_date?: string | null
           move_out_date?: string | null
+          owner_id?: string
           phone_number?: string | null
           rent_due_day?: number | null
           unit_id?: string | null
@@ -244,6 +259,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          owner_id: string
           property_id: string
           rent_amount: number
           status: string
@@ -252,6 +268,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          owner_id?: string
           property_id: string
           rent_amount?: number
           status?: string
@@ -260,6 +277,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          owner_id?: string
           property_id?: string
           rent_amount?: number
           status?: string
@@ -280,6 +298,7 @@ export type Database = {
           created_at: string
           current_reading: number
           id: string
+          owner_id: string
           previous_reading: number
           reading_date: string
           tenant_id: string
@@ -290,6 +309,7 @@ export type Database = {
           created_at?: string
           current_reading?: number
           id?: string
+          owner_id?: string
           previous_reading?: number
           reading_date?: string
           tenant_id: string
@@ -300,6 +320,7 @@ export type Database = {
           created_at?: string
           current_reading?: number
           id?: string
+          owner_id?: string
           previous_reading?: number
           reading_date?: string
           tenant_id?: string
