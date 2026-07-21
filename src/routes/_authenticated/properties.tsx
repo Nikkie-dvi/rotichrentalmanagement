@@ -118,6 +118,35 @@ function PropertiesPage() {
       </div>
 
       <Card>
+        <CardHeader><CardTitle className="text-base">Properties</CardTitle></CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead className="text-right">Units</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(properties ?? []).map((p: any) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">{p.name}</TableCell>
+                  <TableCell>{p.location ?? "—"}</TableCell>
+                  <TableCell className="text-right">
+                    {(units ?? []).filter((u: any) => u.property_id === p.id).length}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {(!properties || properties.length === 0) && (
+                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-6">No properties yet. Add one to get started.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="text-base">Units</CardTitle></CardHeader>
         <CardContent>
           <Table>
