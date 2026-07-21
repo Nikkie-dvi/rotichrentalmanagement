@@ -91,6 +91,7 @@ export const Route = createFileRoute("/api/public/mpesa/simulate-callback")({
           }
 
           await supabase.from("payments").insert({
+            owner_id: (tx as any).owner_id,
             tenant_id: tx.tenant_id,
             invoice_id: firstInvoiceId,
             amount_paid: Number(tx.amount),
