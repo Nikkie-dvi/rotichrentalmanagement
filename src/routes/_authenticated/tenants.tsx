@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, LogOut } from "lucide-react";
+import { UserPlus, LogOut, ContactRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,52 +115,14 @@ function TenantsPage() {
           <DialogTrigger asChild><Button><UserPlus className="h-4 w-4" />Assign Tenant</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Assign New Tenant</DialogTitle></DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const f = new FormData(e.currentTarget);
-                assign.mutate({
-                  full_name: String(f.get("full_name")),
-                  phone_number: String(f.get("phone_number")),
-                  unit_id: String(f.get("unit_id")),
-                  deposit_paid: Number(f.get("deposit_paid")) || 0,
-                  move_in_date: String(f.get("move_in_date")),
-                  rent_due_day: String(f.get("rent_due_day") ?? ""),
-                });
-              }}
-              className="space-y-3"
-            >
-              <div><Label>Full Name</Label><Input name="full_name" required /></div>
-              <div><Label>Phone Number</Label><Input name="phone_number" /></div>
-              <div>
-                <Label>Vacant Unit</Label>
-                <Select name="unit_id" required>
-                  <SelectTrigger><SelectValue placeholder="Select a vacant unit" /></SelectTrigger>
-                  <SelectContent>
-                    {(vacantUnits ?? []).map((u: any) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.properties?.name} — {u.unit_number} ({money(Number(u.rent_amount))})
-                      </SelectItem>
-                    ))}
-                    {(!vacantUnits || vacantUnits.length === 0) && <div className="p-2 text-sm text-muted-foreground">No vacant units</div>}
-                  </SelectContent>
-                </Select>
-                <input type="hidden" name="unit_id" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Deposit Paid</Label><Input type="number" name="deposit_paid" min={0} defaultValue={0} /></div>
-                <div><Label>Move-in Date</Label><Input type="date" name="move_in_date" /></div>
-                <div className="col-span-2">
-                  <Label>Rent Due Day (1–31)</Label>
-                  <Input type="number" name="rent_due_day" min={1} max={31} placeholder="Auto from move-in date" />
-                  <p className="text-[11px] text-muted-foreground mt-1">Cron auto-generates a new invoice every month on this day.</p>
-                </div>
-              </div>
-              <DialogFooter><Button type="submit" disabled={assign.isPending}>Assign</Button></DialogFooter>
-            </form>
+            <TenantForm
+              vacantUnits={vacantUnits ?? []}
+              onSubmit={(payload) => assign.mutate(payload)}
+            />
           </DialogContent>
         </Dialog>
       </div>
+
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
@@ -232,5 +194,145 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium">{value}</span>
     </div>
+  );
+}
+
+type TenantFormPayload = {
+  full_name: string;
+  phone_number: string;
+  unit_id: string;
+  deposit_paid: number;
+  move_in_date: string;
+  rent_due_day: string;
+};
+
+function TenantForm({
+  vacantUnits,
+  onSubmit,
+}: {
+  vacantUnits: any[];
+  onSubmit: (payload: TenantFormPayload) => void;
+}) {
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [unitId, setUnitId] = useState("");
+  const [deposit, setDeposit] = useState("0");
+  const [moveInDate, setMoveInDate] = useState("");
+  const [rentDueDay, setRentDueDay] = useState("");
+
+  const contactsSupported =
+    typeof navigator !== "undefined" &&
+    "contacts" in navigator &&
+    // @ts-expect-error - Contact Picker API is not in the default TS lib
+    typeof navigator.contacts?.select === "function";
+
+  const pickContact = async () => {
+    try {
+      // @ts-expect-error - Contact Picker API is not in the default TS lib
+      const contacts: Array<{ name?: string[]; tel?: string[] }> = await navigator.contacts.select(
+        ["name", "tel"],
+        { multiple: false },
+      );
+      const c = contacts?.[0];
+      if (!c) return;
+      const name = c.name?.[0] ?? "";
+      const tel = c.tel?.[0] ?? "";
+      if (name) setFullName(name);
+      if (tel) setPhone(tel.replace(/\s+/g, ""));
+      toast.success("Contact imported");
+    } catch (err: any) {
+      if (err?.name === "SecurityError") {
+        toast.error("Contact picker needs a secure context (HTTPS).");
+      } else if (err?.name !== "AbortError") {
+        toast.error(err?.message ?? "Couldn't read contact");
+      }
+    }
+  };
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit({
+          full_name: fullName,
+          phone_number: phone,
+          unit_id: unitId,
+          deposit_paid: Number(deposit) || 0,
+          move_in_date: moveInDate,
+          rent_due_day: rentDueDay,
+        });
+      }}
+      className="space-y-3"
+    >
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={pickContact}
+          disabled={!contactsSupported}
+          title={contactsSupported ? "Pick from your phone contacts" : "Contact picker only works on Android Chrome/Edge over HTTPS"}
+        >
+          <ContactRound className="h-4 w-4" />
+          Import from contacts
+        </Button>
+      </div>
+      {!contactsSupported && (
+        <p className="text-[11px] text-muted-foreground -mt-2">
+          Tip: open this app on an Android phone in Chrome/Edge to pick from contacts.
+        </p>
+      )}
+      <div>
+        <Label>Full Name</Label>
+        <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+      </div>
+      <div>
+        <Label>Phone Number</Label>
+        <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+2547XXXXXXXX" />
+      </div>
+      <div>
+        <Label>Vacant Unit</Label>
+        <Select value={unitId} onValueChange={setUnitId} required>
+          <SelectTrigger><SelectValue placeholder="Select a vacant unit" /></SelectTrigger>
+          <SelectContent>
+            {vacantUnits.map((u: any) => (
+              <SelectItem key={u.id} value={u.id}>
+                {u.properties?.name} — {u.unit_number} ({money(Number(u.rent_amount))})
+              </SelectItem>
+            ))}
+            {vacantUnits.length === 0 && (
+              <div className="p-2 text-sm text-muted-foreground">No vacant units</div>
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Deposit Paid</Label>
+          <Input type="number" min={0} value={deposit} onChange={(e) => setDeposit(e.target.value)} />
+        </div>
+        <div>
+          <Label>Move-in Date</Label>
+          <Input type="date" value={moveInDate} onChange={(e) => setMoveInDate(e.target.value)} />
+        </div>
+        <div className="col-span-2">
+          <Label>Rent Due Day (1–31)</Label>
+          <Input
+            type="number"
+            min={1}
+            max={31}
+            value={rentDueDay}
+            onChange={(e) => setRentDueDay(e.target.value)}
+            placeholder="Auto from move-in date"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Cron auto-generates a new invoice every month on this day.
+          </p>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button type="submit">Assign</Button>
+      </DialogFooter>
+    </form>
   );
 }
