@@ -126,6 +126,7 @@ function AppInner({ queryClient }: { queryClient: QueryClient }) {
           <AppSidebar />
           <SidebarInset>
             <AppHeader />
+            <ReminderRunner />
             <main className="flex-1 p-4 md:p-6">
               <Outlet />
             </main>
@@ -135,4 +136,11 @@ function AppInner({ queryClient }: { queryClient: QueryClient }) {
       </ThemeProvider>
     </QueryClientProvider>
   );
+}
+
+function ReminderRunner() {
+  // Lazy import to keep the hook out of the SSR path.
+  const { useRentReminders } = require("@/hooks/use-rent-reminders") as typeof import("@/hooks/use-rent-reminders");
+  useRentReminders();
+  return null;
 }
