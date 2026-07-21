@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -17,6 +18,7 @@ import { AppHeader } from "@/components/app-header";
 import { ThemeProvider } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
 import { useRentReminders } from "@/hooks/use-rent-reminders";
+import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   return (
@@ -115,28 +117,44 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAuthRoute = pathname.startsWith("/auth");
+
   useEffect(() => {
     import("../lib/pwa").then((m) => m.registerPWA()).catch(() => {});
   }, []);
-  return (
-    <AppInner queryClient={queryClient} />
-  );
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      router.invalidate();
+      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [router, queryClient]);
+
+  return <AppInner queryClient={queryClient} isAuthRoute={isAuthRoute} />;
 }
 
-function AppInner({ queryClient }: { queryClient: QueryClient }) {
+function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAuthRoute: boolean }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>
-            <AppHeader />
-            <ReminderRunner />
-            <main className="flex-1 p-4 md:p-6">
-              <Outlet />
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
+        {isAuthRoute ? (
+          <Outlet />
+        ) : (
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>
+              <AppHeader />
+              <ReminderRunner />
+              <main className="flex-1 p-4 md:p-6">
+                <Outlet />
+              </main>
+            </SidebarInset>
+          </SidebarProvider>
+        )}
         <Toaster richColors position="top-right" />
       </ThemeProvider>
     </QueryClientProvider>

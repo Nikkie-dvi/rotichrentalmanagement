@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 
-export const Route = createFileRoute("/payments")({
+export const Route = createFileRoute("/_authenticated/payments")({
   head: () => ({
     meta: [
       { title: "Payments & Receipts — Bomahut" },

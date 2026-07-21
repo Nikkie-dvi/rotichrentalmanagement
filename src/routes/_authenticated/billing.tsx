@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { MpesaStkButton } from "@/components/mpesa-stk-button";
 
-export const Route = createFileRoute("/billing")({
+export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({
     meta: [
       { title: "Billing & Invoices — Bomahut" },
