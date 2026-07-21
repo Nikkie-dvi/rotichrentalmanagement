@@ -140,8 +140,6 @@ function AppInner({ queryClient }: { queryClient: QueryClient }) {
 }
 
 function ReminderRunner() {
-  // Lazy import to keep the hook out of the SSR path.
-  const { useRentReminders } = require("@/hooks/use-rent-reminders") as typeof import("@/hooks/use-rent-reminders");
   useRentReminders();
   return null;
 }
