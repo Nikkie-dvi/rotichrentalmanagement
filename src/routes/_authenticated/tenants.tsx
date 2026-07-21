@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, LogOut } from "lucide-react";
+import { UserPlus, LogOut, ContactRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,23 +115,14 @@ function TenantsPage() {
           <DialogTrigger asChild><Button><UserPlus className="h-4 w-4" />Assign Tenant</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Assign New Tenant</DialogTitle></DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const f = new FormData(e.currentTarget);
-                assign.mutate({
-                  full_name: String(f.get("full_name")),
-                  phone_number: String(f.get("phone_number")),
-                  unit_id: String(f.get("unit_id")),
-                  deposit_paid: Number(f.get("deposit_paid")) || 0,
-                  move_in_date: String(f.get("move_in_date")),
-                  rent_due_day: String(f.get("rent_due_day") ?? ""),
-                });
-              }}
-              className="space-y-3"
-            >
-              <div><Label>Full Name</Label><Input name="full_name" required /></div>
-              <div><Label>Phone Number</Label><Input name="phone_number" /></div>
+            <TenantForm
+              vacantUnits={vacantUnits ?? []}
+              onSubmit={(payload) => assign.mutate(payload)}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
+
               <div>
                 <Label>Vacant Unit</Label>
                 <Select name="unit_id" required>
