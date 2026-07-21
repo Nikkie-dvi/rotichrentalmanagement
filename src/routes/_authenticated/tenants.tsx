@@ -123,35 +123,6 @@ function TenantsPage() {
         </Dialog>
       </div>
 
-              <div>
-                <Label>Vacant Unit</Label>
-                <Select name="unit_id" required>
-                  <SelectTrigger><SelectValue placeholder="Select a vacant unit" /></SelectTrigger>
-                  <SelectContent>
-                    {(vacantUnits ?? []).map((u: any) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.properties?.name} — {u.unit_number} ({money(Number(u.rent_amount))})
-                      </SelectItem>
-                    ))}
-                    {(!vacantUnits || vacantUnits.length === 0) && <div className="p-2 text-sm text-muted-foreground">No vacant units</div>}
-                  </SelectContent>
-                </Select>
-                <input type="hidden" name="unit_id" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Deposit Paid</Label><Input type="number" name="deposit_paid" min={0} defaultValue={0} /></div>
-                <div><Label>Move-in Date</Label><Input type="date" name="move_in_date" /></div>
-                <div className="col-span-2">
-                  <Label>Rent Due Day (1–31)</Label>
-                  <Input type="number" name="rent_due_day" min={1} max={31} placeholder="Auto from move-in date" />
-                  <p className="text-[11px] text-muted-foreground mt-1">Cron auto-generates a new invoice every month on this day.</p>
-                </div>
-              </div>
-              <DialogFooter><Button type="submit" disabled={assign.isPending}>Assign</Button></DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
