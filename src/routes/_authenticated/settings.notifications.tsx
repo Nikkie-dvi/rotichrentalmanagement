@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Bell, Play, Trash2, Upload, Volume2, VolumeX } from "lucide-react";
+import { Bell, BellRing, Play, Trash2, Upload, Volume2, VolumeX } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
   type ToneMeta,
 } from "@/lib/notification-sounds";
 import { notify, requestNotificationPermission } from "@/lib/notifications";
+import { disablePush, enablePush, hasActiveSubscription, pushStatus, pushSupported } from "@/lib/push";
 
 export const Route = createFileRoute("/_authenticated/settings/notifications")({
   head: () => ({
@@ -42,17 +43,47 @@ function NotificationTonesPage() {
   const [tones, setTones] = useState<ToneMeta[]>([]);
   const [selectedId, setSelectedIdState] = useState<string | null>(null);
   const [enabled, setEnabledState] = useState(true);
+  const [pushOn, setPushOn] = useState(false);
+  const [pushPerm, setPushPerm] = useState<"granted" | "denied" | "default" | "unsupported">("default");
+  const [pushBusy, setPushBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function refresh() {
     setTones(await listTones());
     setSelectedIdState(getSelectedToneId());
     setEnabledState(isSoundEnabled());
+    setPushPerm(await pushStatus());
+    setPushOn(await hasActiveSubscription());
   }
 
   useEffect(() => {
     refresh();
   }, []);
+
+  async function togglePush(v: boolean) {
+    setPushBusy(true);
+    try {
+      if (v) {
+        const res = await enablePush();
+        if (!res.ok) {
+          if (res.reason === "unsupported") toast.error("This browser doesn't support push notifications");
+          else if (res.reason === "denied") toast.error("Notifications blocked — enable them in your browser settings");
+          else toast.error("Couldn't enable push notifications");
+        } else {
+          toast.success("Background push notifications enabled");
+        }
+      } else {
+        await disablePush();
+        toast.success("Background push notifications disabled");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Push toggle failed");
+    } finally {
+      await refresh();
+      setPushBusy(false);
+    }
+  }
+
 
   async function onFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -112,6 +143,43 @@ function NotificationTonesPage() {
       </div>
 
       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BellRing className="h-4 w-4" /> Background notifications
+          </CardTitle>
+          <CardDescription>
+            Get rent reminders in your phone's notification bar even when the app is closed.
+            Install this app to your Home Screen first (iPhone: Share → Add to Home Screen).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="min-w-0">
+              <Label htmlFor="push-toggle" className="cursor-pointer font-medium">
+                Enable push notifications on this device
+              </Label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {pushPerm === "unsupported"
+                  ? "This browser doesn't support push notifications."
+                  : pushPerm === "denied"
+                  ? "Notifications are blocked. Enable them in your browser or phone settings."
+                  : pushOn
+                  ? "You're subscribed on this device. Daily rent reminders will arrive automatically."
+                  : "Turn on to receive alerts when rent is due or overdue."}
+              </p>
+            </div>
+            <Switch
+              id="push-toggle"
+              checked={pushOn}
+              disabled={pushBusy || pushPerm === "unsupported" || !pushSupported()}
+              onCheckedChange={togglePush}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Upload className="h-4 w-4" /> Add a tone
