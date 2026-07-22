@@ -20,6 +20,7 @@ import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
+import { Route as ApiPublicHooksSendPushRemindersRouteImport } from './routes/api/public/hooks/send-push-reminders'
 import { Route as ApiPublicHooksGenerateMonthlyInvoicesRouteImport } from './routes/api/public/hooks/generate-monthly-invoices'
 
 const AuthRoute = AuthRouteImport.update({
@@ -78,6 +79,12 @@ const ApiPublicMpesaSimulateCallbackRoute =
     path: '/api/public/mpesa/simulate-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksSendPushRemindersRoute =
+  ApiPublicHooksSendPushRemindersRouteImport.update({
+    id: '/api/public/hooks/send-push-reminders',
+    path: '/api/public/hooks/send-push-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksGenerateMonthlyInvoicesRoute =
   ApiPublicHooksGenerateMonthlyInvoicesRouteImport.update({
     id: '/api/public/hooks/generate-monthly-invoices',
@@ -95,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/tenants': typeof AuthenticatedTenantsRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
+  '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
@@ -108,6 +116,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
+  '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
@@ -123,6 +132,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
+  '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/tenants'
     | '/settings/notifications'
     | '/api/public/hooks/generate-monthly-invoices'
+    | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
   fileRoutesByTo: FileRoutesByTo
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/'
     | '/settings/notifications'
     | '/api/public/hooks/generate-monthly-invoices'
+    | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
   id:
@@ -165,6 +177,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/settings/notifications'
     | '/api/public/hooks/generate-monthly-invoices'
+    | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
   fileRoutesById: FileRoutesById
@@ -173,6 +186,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicHooksGenerateMonthlyInvoicesRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
+  ApiPublicHooksSendPushRemindersRoute: typeof ApiPublicHooksSendPushRemindersRoute
   ApiPublicMpesaSimulateCallbackRoute: typeof ApiPublicMpesaSimulateCallbackRoute
   ApiPublicMpesaStkPushRoute: typeof ApiPublicMpesaStkPushRoute
 }
@@ -256,6 +270,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMpesaSimulateCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/send-push-reminders': {
+      id: '/api/public/hooks/send-push-reminders'
+      path: '/api/public/hooks/send-push-reminders'
+      fullPath: '/api/public/hooks/send-push-reminders'
+      preLoaderRoute: typeof ApiPublicHooksSendPushRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/generate-monthly-invoices': {
       id: '/api/public/hooks/generate-monthly-invoices'
       path: '/api/public/hooks/generate-monthly-invoices'
@@ -295,6 +316,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiPublicHooksGenerateMonthlyInvoicesRoute:
     ApiPublicHooksGenerateMonthlyInvoicesRoute,
+  ApiPublicHooksSendPushRemindersRoute: ApiPublicHooksSendPushRemindersRoute,
   ApiPublicMpesaSimulateCallbackRoute: ApiPublicMpesaSimulateCallbackRoute,
   ApiPublicMpesaStkPushRoute: ApiPublicMpesaStkPushRoute,
 }
