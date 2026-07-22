@@ -43,17 +43,47 @@ function NotificationTonesPage() {
   const [tones, setTones] = useState<ToneMeta[]>([]);
   const [selectedId, setSelectedIdState] = useState<string | null>(null);
   const [enabled, setEnabledState] = useState(true);
+  const [pushOn, setPushOn] = useState(false);
+  const [pushPerm, setPushPerm] = useState<"granted" | "denied" | "default" | "unsupported">("default");
+  const [pushBusy, setPushBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function refresh() {
     setTones(await listTones());
     setSelectedIdState(getSelectedToneId());
     setEnabledState(isSoundEnabled());
+    setPushPerm(await pushStatus());
+    setPushOn(await hasActiveSubscription());
   }
 
   useEffect(() => {
     refresh();
   }, []);
+
+  async function togglePush(v: boolean) {
+    setPushBusy(true);
+    try {
+      if (v) {
+        const res = await enablePush();
+        if (!res.ok) {
+          if (res.reason === "unsupported") toast.error("This browser doesn't support push notifications");
+          else if (res.reason === "denied") toast.error("Notifications blocked — enable them in your browser settings");
+          else toast.error("Couldn't enable push notifications");
+        } else {
+          toast.success("Background push notifications enabled");
+        }
+      } else {
+        await disablePush();
+        toast.success("Background push notifications disabled");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Push toggle failed");
+    } finally {
+      await refresh();
+      setPushBusy(false);
+    }
+  }
+
 
   async function onFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
