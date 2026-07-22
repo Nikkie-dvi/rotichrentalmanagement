@@ -17,6 +17,7 @@ import { Route as AuthenticatedPropertiesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedMetersRouteImport } from './routes/_authenticated/meters'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
 import { Route as ApiPublicHooksGenerateMonthlyInvoicesRouteImport } from './routes/api/public/hooks/generate-monthly-invoices'
@@ -60,6 +61,12 @@ const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
   path: '/billing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsNotificationsRoute =
+  AuthenticatedSettingsNotificationsRouteImport.update({
+    id: '/settings/notifications',
+    path: '/settings/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicMpesaStkPushRoute = ApiPublicMpesaStkPushRouteImport.update({
   id: '/api/public/mpesa/stk-push',
   path: '/api/public/mpesa/stk-push',
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/payments': typeof AuthenticatedPaymentsRoute
   '/properties': typeof AuthenticatedPropertiesRoute
   '/tenants': typeof AuthenticatedTenantsRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
@@ -98,6 +106,7 @@ export interface FileRoutesByTo {
   '/properties': typeof AuthenticatedPropertiesRoute
   '/tenants': typeof AuthenticatedTenantsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
@@ -112,6 +121,7 @@ export interface FileRoutesById {
   '/_authenticated/properties': typeof AuthenticatedPropertiesRoute
   '/_authenticated/tenants': typeof AuthenticatedTenantsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/properties'
     | '/tenants'
+    | '/settings/notifications'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/properties'
     | '/tenants'
     | '/'
+    | '/settings/notifications'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
@@ -151,6 +163,7 @@ export interface FileRouteTypes {
     | '/_authenticated/properties'
     | '/_authenticated/tenants'
     | '/_authenticated/'
+    | '/_authenticated/settings/notifications'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
@@ -222,6 +235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBillingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/notifications': {
+      id: '/_authenticated/settings/notifications'
+      path: '/settings/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/mpesa/stk-push': {
       id: '/api/public/mpesa/stk-push'
       path: '/api/public/mpesa/stk-push'
@@ -253,6 +273,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPropertiesRoute: typeof AuthenticatedPropertiesRoute
   AuthenticatedTenantsRoute: typeof AuthenticatedTenantsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -262,6 +283,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPropertiesRoute: AuthenticatedPropertiesRoute,
   AuthenticatedTenantsRoute: AuthenticatedTenantsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedSettingsNotificationsRoute:
+    AuthenticatedSettingsNotificationsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
