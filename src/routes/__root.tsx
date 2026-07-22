@@ -154,6 +154,8 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
               <main className="flex-1 p-4 md:p-6">
                 <Outlet />
               </main>
+              <PaymentReminderPopup />
+
             </SidebarInset>
           </SidebarProvider>
         )}
