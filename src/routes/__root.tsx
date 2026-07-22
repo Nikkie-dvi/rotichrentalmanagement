@@ -18,6 +18,7 @@ import { AppHeader } from "@/components/app-header";
 import { ThemeProvider } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
 import { useRentReminders } from "@/hooks/use-rent-reminders";
+import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
@@ -163,5 +164,6 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
 
 function ReminderRunner() {
   useRentReminders();
+  useRealtimeInvalidate();
   return null;
 }
