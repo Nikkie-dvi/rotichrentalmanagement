@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Building2, Users, DollarSign, AlertCircle, Plus, Gauge, FileText } from "lucide-react";
@@ -5,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+
+type DrillKey = "units" | "occupancy" | "collected" | "arrears" | null;
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -81,17 +85,72 @@ function Dashboard() {
   };
 
   const kpis = [
-    { label: "Total Units", value: stats?.totalUnits ?? 0, icon: Building2, tone: "bg-secondary" },
-    { label: "Occupancy Rate", value: `${stats?.occupancy ?? 0}%`, sub: `${stats?.occupied ?? 0} occupied`, icon: Users, tone: "bg-accent" },
-    { label: "Collected (This Month)", value: money(stats?.collected ?? 0), icon: DollarSign, tone: "bg-primary/10 text-primary" },
-    { label: "Outstanding Arrears", value: money(stats?.arrears ?? 0), icon: AlertCircle, tone: "bg-destructive/10 text-destructive" },
+    { key: "units" as const, label: "Total Units", value: stats?.totalUnits ?? 0, icon: Building2, tone: "bg-secondary" },
+    { key: "occupancy" as const, label: "Occupancy Rate", value: `${stats?.occupancy ?? 0}%`, sub: `${stats?.occupied ?? 0} occupied`, icon: Users, tone: "bg-accent" },
+    { key: "collected" as const, label: "Collected (This Month)", value: money(stats?.collected ?? 0), icon: DollarSign, tone: "bg-primary/10 text-primary" },
+    { key: "arrears" as const, label: "Outstanding Arrears", value: money(stats?.arrears ?? 0), icon: AlertCircle, tone: "bg-destructive/10 text-destructive" },
   ];
+
+  const [drill, setDrill] = useState<DrillKey>(null);
+  const monthKey = new Date().toISOString().slice(0, 7);
+
+  const { data: unitsList } = useQuery({
+    queryKey: ["drill-units"],
+    enabled: drill === "units" || drill === "occupancy",
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("units")
+        .select("id,unit_number,rent_amount,status,properties(name,location)")
+        .order("unit_number");
+      return data ?? [];
+    },
+  });
+
+  const { data: collectedList } = useQuery({
+    queryKey: ["drill-collected", monthKey],
+    enabled: drill === "collected",
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("payments")
+        .select("id,amount_paid,payment_method,reference_no,payment_date,tenants(full_name)")
+        .gte("payment_date", `${monthKey}-01`)
+        .order("payment_date", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const { data: arrearsList } = useQuery({
+    queryKey: ["drill-arrears"],
+    enabled: drill === "arrears",
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("invoices")
+        .select("id,month_year,balance_remaining,total_due,status,tenants(full_name,units(unit_number,properties(name,location)))")
+        .gt("balance_remaining", 0)
+        .order("month_year", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const drillTitle: Record<Exclude<DrillKey, null>, string> = {
+    units: "All Units",
+    occupancy: "Occupied Units",
+    collected: `Payments Collected — ${monthKey}`,
+    arrears: "Tenants with Outstanding Arrears",
+  };
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((k) => (
-          <Card key={k.label}>
+          <Card
+            key={k.label}
+            role="button"
+            tabIndex={0}
+            onClick={() => setDrill(k.key)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDrill(k.key); } }}
+            className="cursor-pointer transition-colors hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">{k.label}</CardTitle>
               <div className={`flex h-8 w-8 items-center justify-center rounded-md ${k.tone}`}>
@@ -105,6 +164,113 @@ function Dashboard() {
           </Card>
         ))}
       </div>
+
+      <Dialog open={drill !== null} onOpenChange={(o) => !o && setDrill(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{drill ? drillTitle[drill] : ""}</DialogTitle>
+          </DialogHeader>
+
+          {(drill === "units" || drill === "occupancy") && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Property / Area</TableHead>
+                  <TableHead>Rent</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(unitsList ?? [])
+                  .filter((u: any) => drill === "units" || u.status === "occupied")
+                  .map((u: any) => {
+                    const prop = u.properties;
+                    const area = prop ? [prop.name, prop.location].filter(Boolean).join(" · ") : "—";
+                    return (
+                      <TableRow key={u.id}>
+                        <TableCell className="font-medium">{u.unit_number}</TableCell>
+                        <TableCell className="text-muted-foreground">{area}</TableCell>
+                        <TableCell>{money(Number(u.rent_amount))}</TableCell>
+                        <TableCell>
+                          <Badge variant={u.status === "occupied" ? "default" : "outline"} className="uppercase">{u.status}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                {unitsList && unitsList.length === 0 && (
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No units.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+
+          {drill === "collected" && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Tenant</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(collectedList ?? []).map((p: any) => (
+                  <TableRow key={p.id}>
+                    <TableCell>{p.payment_date}</TableCell>
+                    <TableCell className="font-medium">{p.tenants?.full_name ?? "—"}</TableCell>
+                    <TableCell><Badge variant="outline" className="uppercase">{p.payment_method}</Badge></TableCell>
+                    <TableCell className="text-right font-semibold text-primary">{money(Number(p.amount_paid))}</TableCell>
+                  </TableRow>
+                ))}
+                {collectedList && collectedList.length === 0 && (
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No payments this month.</TableCell></TableRow>
+                )}
+                {collectedList && collectedList.length > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="font-semibold text-right">Total</TableCell>
+                    <TableCell className="text-right font-bold text-primary">
+                      {money(collectedList.reduce((s: number, p: any) => s + Number(p.amount_paid), 0))}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+
+          {drill === "arrears" && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tenant</TableHead>
+                  <TableHead>Area / Unit</TableHead>
+                  <TableHead>Month</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(arrearsList ?? []).map((i: any) => {
+                  const prop = i.tenants?.units?.properties;
+                  const area = prop ? [prop.name, prop.location].filter(Boolean).join(" · ") : "—";
+                  const unit = i.tenants?.units?.unit_number;
+                  return (
+                    <TableRow key={i.id}>
+                      <TableCell className="font-medium">{i.tenants?.full_name ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{area}{unit ? ` · ${unit}` : ""}</TableCell>
+                      <TableCell>{i.month_year}</TableCell>
+                      <TableCell className="text-right font-semibold text-destructive">{money(Number(i.balance_remaining))}</TableCell>
+                    </TableRow>
+                  );
+                })}
+                {arrearsList && arrearsList.length === 0 && (
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No outstanding arrears.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
