@@ -17,9 +17,9 @@ import { money } from "@/lib/types";
 export const Route = createFileRoute("/_authenticated/payments")({
   head: () => ({
     meta: [
-      { title: "Payments & Receipts — Bomahut" },
+      { title: "Payments & Receipts — Rotich Management Systems" },
       { name: "description", content: "Log tenant payments across M-Pesa, bank and cash, and print receipts." },
-      { property: "og:title", content: "Payments & Receipts — Bomahut" },
+      { property: "og:title", content: "Payments & Receipts — Rotich Management Systems" },
       { property: "og:description", content: "Log payments and generate receipts." },
     ],
   }),
@@ -214,7 +214,7 @@ function PaymentsPage() {
           {receipt && (
             <div className="space-y-3">
               <div className="text-center">
-                <div className="text-lg font-bold">Bomahut Receipt</div>
+                <div className="text-lg font-bold">Rotich Management Systems Receipt</div>
                 <div className="text-xs text-muted-foreground">#{String(receipt.id).slice(0, 8).toUpperCase()}</div>
               </div>
               <div className="text-sm space-y-1">

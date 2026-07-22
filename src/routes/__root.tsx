@@ -76,7 +76,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#10b981" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "Bomahut" },
+      { name: "apple-mobile-web-app-title", content: "Rotich Management Systems" },
       { name: "mobile-web-app-capable", content: "yes" },
       { title: "Rotich rental management new" },
       { name: "description", content: "Overview of your rental portfolio: units, occupancy, collections and arrears." },

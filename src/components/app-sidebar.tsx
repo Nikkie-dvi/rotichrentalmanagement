@@ -32,7 +32,7 @@ export function AppSidebar() {
             B
           </div>
           <div className="group-data-[collapsible=icon]:hidden">
-            <div className="text-sm font-semibold text-sidebar-foreground">Bomahut</div>
+            <div className="text-sm font-semibold text-sidebar-foreground">Rotich Management Systems</div>
             <div className="text-xs text-sidebar-foreground/60">Rental Manager</div>
           </div>
         </div>

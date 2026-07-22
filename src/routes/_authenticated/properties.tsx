@@ -17,9 +17,9 @@ import { money } from "@/lib/types";
 export const Route = createFileRoute("/_authenticated/properties")({
   head: () => ({
     meta: [
-      { title: "Properties & Units — Bomahut" },
+      { title: "Properties & Units — Rotich Management Systems" },
       { name: "description", content: "Manage buildings and rental units, monthly rent and occupancy status." },
-      { property: "og:title", content: "Properties & Units — Bomahut" },
+      { property: "og:title", content: "Properties & Units — Rotich Management Systems" },
       { property: "og:description", content: "Manage buildings and rental units." },
     ],
   }),

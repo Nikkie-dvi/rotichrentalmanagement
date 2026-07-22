@@ -17,9 +17,9 @@ import { MpesaStkButton } from "@/components/mpesa-stk-button";
 export const Route = createFileRoute("/_authenticated/tenants")({
   head: () => ({
     meta: [
-      { title: "Tenants — Bomahut" },
+      { title: "Tenants — Rotich Management Systems" },
       { name: "description", content: "Manage active tenants: contacts, assigned units, deposits and arrears." },
-      { property: "og:title", content: "Tenants — Bomahut" },
+      { property: "og:title", content: "Tenants — Rotich Management Systems" },
       { property: "og:description", content: "Active tenants and their status." },
     ],
   }),

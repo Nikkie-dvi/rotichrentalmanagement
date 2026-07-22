@@ -23,9 +23,9 @@ import { notify, requestNotificationPermission } from "@/lib/notifications";
 export const Route = createFileRoute("/_authenticated/settings/notifications")({
   head: () => ({
     meta: [
-      { title: "Notification Tones — Bomahut" },
+      { title: "Notification Tones — Rotich Management Systems" },
       { name: "description", content: "Upload custom notification sounds from your phone for rent reminders and payment alerts." },
-      { property: "og:title", content: "Notification Tones — Bomahut" },
+      { property: "og:title", content: "Notification Tones — Rotich Management Systems" },
       { property: "og:description", content: "Personalize your rental alerts with your own sounds." },
     ],
   }),
