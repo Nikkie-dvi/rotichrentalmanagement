@@ -1,6 +1,7 @@
 // Lightweight browser notifications helper + rent-due reminder scheduling.
 // Uses the Web Notifications API (no push server). Falls back silently when
 // unsupported or permission is denied.
+import { playSelectedTone } from "./notification-sounds";
 
 const LS_PERMISSION_ASKED = "bomahut.notif.asked";
 const LS_REMINDED_PREFIX = "bomahut.reminded."; // + tenantId + ":" + YYYY-MM-DD
@@ -43,6 +44,8 @@ type NotifyOpts = {
 export function notify({ title, body, tag, icon = "/apple-touch-icon.png" }: NotifyOpts) {
   if (!notificationsSupported()) return;
   if (Notification.permission !== "granted") return;
+  // Play the user's chosen tone (if any) alongside the system notification.
+  playSelectedTone();
   try {
     // Prefer the service worker registration when available so notifications
     // survive tab focus loss on Android/desktop.
