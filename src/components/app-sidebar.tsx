@@ -29,11 +29,11 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold">
-            B
+            R
           </div>
           <div className="group-data-[collapsible=icon]:hidden">
-            <div className="text-sm font-semibold text-sidebar-foreground">Rotich Management Systems</div>
-            <div className="text-xs text-sidebar-foreground/60">Rental Manager</div>
+            <div className="text-sm font-semibold text-sidebar-foreground">Rotich Management</div>
+            <div className="text-xs text-sidebar-foreground/60">Systems</div>
           </div>
         </div>
       </SidebarHeader>
