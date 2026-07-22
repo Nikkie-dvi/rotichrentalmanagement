@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -19,6 +19,7 @@ const items = [
   { title: "Meter Readings", url: "/meters", icon: Gauge },
   { title: "Billing & Invoices", url: "/billing", icon: FileText },
   { title: "Payments & Receipts", url: "/payments", icon: Receipt },
+  { title: "Notification Tones", url: "/settings/notifications", icon: Bell },
 ];
 
 export function AppSidebar() {
