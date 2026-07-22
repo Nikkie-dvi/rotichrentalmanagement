@@ -2,7 +2,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,9 +28,9 @@ import { money } from "@/lib/types";
 export const Route = createFileRoute("/_authenticated/properties")({
   head: () => ({
     meta: [
-      { title: "Properties & Units — Bomahut" },
+      { title: "Properties & Units — Rotich Management Systems" },
       { name: "description", content: "Manage buildings and rental units, monthly rent and occupancy status." },
-      { property: "og:title", content: "Properties & Units — Bomahut" },
+      { property: "og:title", content: "Properties & Units — Rotich Management Systems" },
       { property: "og:description", content: "Manage buildings and rental units." },
     ],
   }),
@@ -76,6 +87,33 @@ function PropertiesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const deleteProperty = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("properties").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["properties"] });
+      qc.invalidateQueries({ queryKey: ["units-full"] });
+      toast.success("Property deleted");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const deleteUnit = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("units").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["units-full"] });
+      qc.invalidateQueries({ queryKey: ["summary"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      toast.success("Unit deleted");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -126,20 +164,48 @@ function PropertiesPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead className="text-right">Units</TableHead>
+                <TableHead className="w-16"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(properties ?? []).map((p: any) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell>{p.location ?? "—"}</TableCell>
-                  <TableCell className="text-right">
-                    {(units ?? []).filter((u: any) => u.property_id === p.id).length}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {(properties ?? []).map((p: any) => {
+                const unitCount = (units ?? []).filter((u: any) => u.property_id === p.id).length;
+                return (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell>{p.location ?? "—"}</TableCell>
+                    <TableCell className="text-right">{unitCount}</TableCell>
+                    <TableCell>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete property "{p.name}"?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {unitCount > 0
+                                ? `This property has ${unitCount} unit(s). Delete the units first before removing the property.`
+                                : "This will permanently remove the property."}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              disabled={unitCount > 0}
+                              onClick={() => deleteProperty.mutate(p.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {(!properties || properties.length === 0) && (
-                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-6">No properties yet. Add one to get started.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No properties yet. Add one to get started.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -156,7 +222,7 @@ function PropertiesPage() {
                 <TableHead>Property</TableHead>
                 <TableHead className="text-right">Monthly Rent</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-16"></TableHead>
+                <TableHead className="w-24"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -171,9 +237,35 @@ function PropertiesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(u); setUnitOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => { setEditing(u); setUnitOpen(true); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete unit "{u.unit_number}"?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {u.status === "occupied"
+                                ? "This unit is occupied. Move the tenant out first before deleting."
+                                : "This will permanently remove the unit."}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              disabled={u.status === "occupied"}
+                              onClick={() => deleteUnit.mutate(u.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

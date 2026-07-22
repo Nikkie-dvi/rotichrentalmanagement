@@ -15,9 +15,9 @@ import { money } from "@/lib/types";
 export const Route = createFileRoute("/_authenticated/meters")({
   head: () => ({
     meta: [
-      { title: "Meter Readings & Utilities — Bomahut" },
+      { title: "Meter Readings & Utilities — Rotich Management Systems" },
       { name: "description", content: "Log utility meter readings and compute per-tenant utility bills automatically." },
-      { property: "og:title", content: "Meter Readings & Utilities — Bomahut" },
+      { property: "og:title", content: "Meter Readings & Utilities — Rotich Management Systems" },
       { property: "og:description", content: "Log meter readings; auto-calc utility bills." },
     ],
   }),
