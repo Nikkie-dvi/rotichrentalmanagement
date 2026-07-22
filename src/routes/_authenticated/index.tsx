@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Building2, Users, DollarSign, AlertCircle, Plus, Gauge, FileText } from "lucide-react";
@@ -5,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+
+type DrillKey = "units" | "occupancy" | "collected" | "arrears" | null;
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
