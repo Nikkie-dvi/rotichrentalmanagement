@@ -52,6 +52,34 @@ function Dashboard() {
     },
   });
 
+  const { data: tenantsList } = useQuery({
+    queryKey: ["dashboard-tenants"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tenants")
+        .select("id,full_name,move_in_date,active,units(unit_number,properties(name,location))")
+        .eq("active", true)
+        .order("move_in_date", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const tenancyDuration = (moveIn: string | null) => {
+    if (!moveIn) return "—";
+    const start = new Date(moveIn);
+    const now = new Date();
+    let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+    if (now.getDate() < start.getDate()) months -= 1;
+    if (months < 0) months = 0;
+    const years = Math.floor(months / 12);
+    const rem = months % 12;
+    const days = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    if (months < 1) return `${days} day${days === 1 ? "" : "s"}`;
+    if (years === 0) return `${rem} mo`;
+    if (rem === 0) return `${years} yr${years === 1 ? "" : "s"}`;
+    return `${years} yr${years === 1 ? "" : "s"} ${rem} mo`;
+  };
+
   const kpis = [
     { label: "Total Units", value: stats?.totalUnits ?? 0, icon: Building2, tone: "bg-secondary" },
     { label: "Occupancy Rate", value: `${stats?.occupancy ?? 0}%`, sub: `${stats?.occupied ?? 0} occupied`, icon: Users, tone: "bg-accent" },
@@ -122,6 +150,43 @@ function Dashboard() {
               ))}
               {(!recent || recent.length === 0) && (
                 <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No payments yet.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Tenants & Tenancy Duration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tenant</TableHead>
+                <TableHead>Property / Area</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead>Move-in</TableHead>
+                <TableHead className="text-right">Duration</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(tenantsList ?? []).map((t: any) => {
+                const prop = t.units?.properties;
+                const area = prop ? [prop.name, prop.location].filter(Boolean).join(" · ") : "—";
+                return (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-medium">{t.full_name}</TableCell>
+                    <TableCell className="text-muted-foreground">{area}</TableCell>
+                    <TableCell>{t.units?.unit_number ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{t.move_in_date ?? "—"}</TableCell>
+                    <TableCell className="text-right font-semibold">{tenancyDuration(t.move_in_date)}</TableCell>
+                  </TableRow>
+                );
+              })}
+              {(!tenantsList || tenantsList.length === 0) && (
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No active tenants yet.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
