@@ -164,5 +164,6 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
 
 function ReminderRunner() {
   useRentReminders();
+  useRealtimeInvalidate();
   return null;
 }
