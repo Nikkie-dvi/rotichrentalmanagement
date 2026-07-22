@@ -155,6 +155,43 @@ function Dashboard() {
           </Table>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Tenants & Tenancy Duration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tenant</TableHead>
+                <TableHead>Property / Area</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead>Move-in</TableHead>
+                <TableHead className="text-right">Duration</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(tenantsList ?? []).map((t: any) => {
+                const prop = t.units?.properties;
+                const area = prop ? [prop.name, prop.location].filter(Boolean).join(" · ") : "—";
+                return (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-medium">{t.full_name}</TableCell>
+                    <TableCell className="text-muted-foreground">{area}</TableCell>
+                    <TableCell>{t.units?.unit_number ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{t.move_in_date ?? "—"}</TableCell>
+                    <TableCell className="text-right font-semibold">{tenancyDuration(t.move_in_date)}</TableCell>
+                  </TableRow>
+                );
+              })}
+              {(!tenantsList || tenantsList.length === 0) && (
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No active tenants yet.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
