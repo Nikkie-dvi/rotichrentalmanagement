@@ -19,6 +19,7 @@ import { ThemeProvider } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
 import { useRentReminders } from "@/hooks/use-rent-reminders";
 import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
+import { PaymentReminderPopup } from "@/components/payment-reminder-popup";
 import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
