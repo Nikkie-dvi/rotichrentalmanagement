@@ -87,6 +87,33 @@ function PropertiesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const deleteProperty = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("properties").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["properties"] });
+      qc.invalidateQueries({ queryKey: ["units-full"] });
+      toast.success("Property deleted");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const deleteUnit = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("units").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["units-full"] });
+      qc.invalidateQueries({ queryKey: ["summary"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      toast.success("Unit deleted");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
