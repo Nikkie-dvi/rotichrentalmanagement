@@ -205,7 +205,7 @@ function PropertiesPage() {
                 );
               })}
               {(!properties || properties.length === 0) && (
-                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-6">No properties yet. Add one to get started.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No properties yet. Add one to get started.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -222,7 +222,7 @@ function PropertiesPage() {
                 <TableHead>Property</TableHead>
                 <TableHead className="text-right">Monthly Rent</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-16"></TableHead>
+                <TableHead className="w-24"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -237,9 +237,35 @@ function PropertiesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(u); setUnitOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => { setEditing(u); setUnitOpen(true); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete unit "{u.unit_number}"?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {u.status === "occupied"
+                                ? "This unit is occupied. Move the tenant out first before deleting."
+                                : "This will permanently remove the unit."}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              disabled={u.status === "occupied"}
+                              onClick={() => deleteUnit.mutate(u.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
