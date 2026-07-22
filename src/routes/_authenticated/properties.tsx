@@ -164,18 +164,46 @@ function PropertiesPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead className="text-right">Units</TableHead>
+                <TableHead className="w-16"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(properties ?? []).map((p: any) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell>{p.location ?? "—"}</TableCell>
-                  <TableCell className="text-right">
-                    {(units ?? []).filter((u: any) => u.property_id === p.id).length}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {(properties ?? []).map((p: any) => {
+                const unitCount = (units ?? []).filter((u: any) => u.property_id === p.id).length;
+                return (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell>{p.location ?? "—"}</TableCell>
+                    <TableCell className="text-right">{unitCount}</TableCell>
+                    <TableCell>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete property "{p.name}"?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {unitCount > 0
+                                ? `This property has ${unitCount} unit(s). Delete the units first before removing the property.`
+                                : "This will permanently remove the property."}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              disabled={unitCount > 0}
+                              onClick={() => deleteProperty.mutate(p.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {(!properties || properties.length === 0) && (
                 <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-6">No properties yet. Add one to get started.</TableCell></TableRow>
               )}
