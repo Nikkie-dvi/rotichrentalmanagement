@@ -288,8 +288,10 @@ export type Database = {
       tenants: {
         Row: {
           active: boolean
+          approval_status: string
           auth_user_id: string | null
           created_at: string
+          declined_reason: string | null
           deposit_paid: number
           email: string | null
           full_name: string
@@ -305,8 +307,10 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          approval_status?: string
           auth_user_id?: string | null
           created_at?: string
+          declined_reason?: string | null
           deposit_paid?: number
           email?: string | null
           full_name: string
@@ -322,8 +326,10 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          approval_status?: string
           auth_user_id?: string | null
           created_at?: string
+          declined_reason?: string | null
           deposit_paid?: number
           email?: string | null
           full_name?: string
