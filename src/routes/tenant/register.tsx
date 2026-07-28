@@ -108,7 +108,8 @@ function RegisterPage() {
         data: { fullName: fullName.trim(), phone: phone.trim(), email: email.trim(), unitId },
       });
 
-      // 3) Save lease signature and activate; mark unit occupied.
+      // 3) Save lease signature. Do NOT activate or occupy the unit yet —
+      //    the landlord must approve the application first.
       const signaturePayload =
         signature.kind === "drawn"
           ? signature.dataUrl
@@ -117,21 +118,14 @@ function RegisterPage() {
       const { error: tErr } = await supabase
         .from("tenants")
         .update({
-          active: true,
           lease_signature: signaturePayload,
           lease_signed_at: new Date().toISOString(),
-          move_in_date: new Date().toISOString().slice(0, 10),
+          approval_status: "pending",
         })
         .eq("id", tenantId);
       if (tErr) throw tErr;
 
-      const { error: uErr } = await supabase
-        .from("units")
-        .update({ status: "occupied" })
-        .eq("id", unitId);
-      if (uErr) throw uErr;
-
-      toast.success("Welcome home! Lease signed.");
+      toast.success("Application submitted! Awaiting landlord approval.");
       navigate({ to: "/tenant/dashboard" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Registration failed");
