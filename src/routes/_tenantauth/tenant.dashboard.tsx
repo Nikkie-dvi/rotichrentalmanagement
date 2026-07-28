@@ -64,7 +64,7 @@ function DashboardPage() {
       if (!user.user) throw new Error("No session");
       const { data, error } = await supabase
         .from("tenants")
-        .select("id, owner_id, full_name, phone_number, email, active, rent_due_day, move_in_date, deposit_paid, lease_signed_at, unit_id, units(id, unit_number, rent_amount, status, properties(name, location))")
+        .select("id, owner_id, full_name, phone_number, email, active, approval_status, declined_reason, rent_due_day, move_in_date, deposit_paid, lease_signed_at, unit_id, units(id, unit_number, rent_amount, status, properties(name, location))")
         .eq("auth_user_id", user.user.id)
         .maybeSingle();
       if (error) throw error;
@@ -135,8 +135,15 @@ function DashboardPage() {
     );
   }
 
-  const leaseStatus = t.active ? "Active" : "Pending signature";
-  const leaseClass = t.active ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-amber-500/10 text-amber-700 dark:text-amber-300";
+  const status = (t as any).approval_status as "pending" | "approved" | "declined" | undefined;
+  const leaseStatus =
+    status === "approved" || t.active ? "Active" :
+    status === "declined" ? "Declined" :
+    "Awaiting approval";
+  const leaseClass =
+    status === "approved" || t.active ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" :
+    status === "declined" ? "bg-red-500/10 text-red-700 dark:text-red-300" :
+    "bg-amber-500/10 text-amber-700 dark:text-amber-300";
 
   return (
     <div className="mx-auto w-full max-w-3xl p-4 md:p-6">
@@ -156,12 +163,23 @@ function DashboardPage() {
         </Button>
       </div>
 
-      {!t.active && (
+      {status === "pending" && (
         <Card className="mb-4 border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
           <CardContent className="flex items-start gap-3 p-4 text-sm">
             <AlertCircle className="mt-0.5 h-4 w-4 text-amber-600" />
             <div>
-              Your lease is not yet signed. Please contact your landlord or complete registration to activate.
+              Your application is <b>awaiting landlord approval</b>. You'll get access to rent, invoices and maintenance once approved.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {status === "declined" && (
+        <Card className="mb-4 border-red-300 bg-red-50/50 dark:bg-red-950/20">
+          <CardContent className="flex items-start gap-3 p-4 text-sm">
+            <AlertCircle className="mt-0.5 h-4 w-4 text-red-600" />
+            <div>
+              Your application was <b>declined</b>.{(t as any).declined_reason ? <> Reason: {(t as any).declined_reason}</> : null} Please contact your landlord.
             </div>
           </CardContent>
         </Card>
