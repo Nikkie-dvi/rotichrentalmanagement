@@ -121,7 +121,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isAuthRoute = pathname.startsWith("/auth");
+  const isAuthRoute = pathname.startsWith("/auth") || pathname.startsWith("/tenant");
 
   useEffect(() => {
     import("../lib/pwa").then((m) => m.registerPWA()).catch(() => {});
