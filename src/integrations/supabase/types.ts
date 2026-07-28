@@ -61,6 +61,53 @@ export type Database = {
           },
         ]
       }
+      maintenance_tickets: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          owner_id: string
+          status: string
+          tenant_id: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          image_url?: string | null
+          owner_id: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+          urgency: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          owner_id?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mpesa_transactions: {
         Row: {
           amount: number
@@ -241,10 +288,14 @@ export type Database = {
       tenants: {
         Row: {
           active: boolean
+          auth_user_id: string | null
           created_at: string
           deposit_paid: number
+          email: string | null
           full_name: string
           id: string
+          lease_signature: string | null
+          lease_signed_at: string | null
           move_in_date: string | null
           move_out_date: string | null
           owner_id: string
@@ -254,10 +305,14 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          auth_user_id?: string | null
           created_at?: string
           deposit_paid?: number
+          email?: string | null
           full_name: string
           id?: string
+          lease_signature?: string | null
+          lease_signed_at?: string | null
           move_in_date?: string | null
           move_out_date?: string | null
           owner_id?: string
@@ -267,10 +322,14 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          auth_user_id?: string | null
           created_at?: string
           deposit_paid?: number
+          email?: string | null
           full_name?: string
           id?: string
+          lease_signature?: string | null
+          lease_signed_at?: string | null
           move_in_date?: string | null
           move_out_date?: string | null
           owner_id?: string

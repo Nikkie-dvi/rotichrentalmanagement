@@ -10,13 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as TenantauthRouteRouteImport } from './routes/_tenantauth/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as TenantIndexRouteImport } from './routes/tenant/index'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as TenantRegisterRouteImport } from './routes/tenant/register'
+import { Route as TenantLoginRouteImport } from './routes/tenant/login'
 import { Route as AuthenticatedTenantsRouteImport } from './routes/_authenticated/tenants'
 import { Route as AuthenticatedPropertiesRouteImport } from './routes/_authenticated/properties'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedMetersRouteImport } from './routes/_authenticated/meters'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
+import { Route as TenantauthTenantDashboardRouteImport } from './routes/_tenantauth/tenant.dashboard'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
@@ -28,14 +33,33 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TenantauthRouteRoute = TenantauthRouteRouteImport.update({
+  id: '/_tenantauth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TenantIndexRoute = TenantIndexRouteImport.update({
+  id: '/tenant/',
+  path: '/tenant/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const TenantRegisterRoute = TenantRegisterRouteImport.update({
+  id: '/tenant/register',
+  path: '/tenant/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TenantLoginRoute = TenantLoginRouteImport.update({
+  id: '/tenant/login',
+  path: '/tenant/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTenantsRoute = AuthenticatedTenantsRouteImport.update({
   id: '/tenants',
@@ -62,6 +86,12 @@ const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
   path: '/billing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const TenantauthTenantDashboardRoute =
+  TenantauthTenantDashboardRouteImport.update({
+    id: '/tenant/dashboard',
+    path: '/tenant/dashboard',
+    getParentRoute: () => TenantauthRouteRoute,
+  } as any)
 const AuthenticatedSettingsNotificationsRoute =
   AuthenticatedSettingsNotificationsRouteImport.update({
     id: '/settings/notifications',
@@ -100,21 +130,29 @@ export interface FileRoutesByFullPath {
   '/payments': typeof AuthenticatedPaymentsRoute
   '/properties': typeof AuthenticatedPropertiesRoute
   '/tenants': typeof AuthenticatedTenantsRoute
+  '/tenant/login': typeof TenantLoginRoute
+  '/tenant/register': typeof TenantRegisterRoute
+  '/tenant/': typeof TenantIndexRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/meters': typeof AuthenticatedMetersRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/properties': typeof AuthenticatedPropertiesRoute
   '/tenants': typeof AuthenticatedTenantsRoute
-  '/': typeof AuthenticatedIndexRoute
+  '/tenant/login': typeof TenantLoginRoute
+  '/tenant/register': typeof TenantRegisterRoute
+  '/tenant': typeof TenantIndexRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
@@ -123,14 +161,19 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_tenantauth': typeof TenantauthRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/meters': typeof AuthenticatedMetersRoute
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/properties': typeof AuthenticatedPropertiesRoute
   '/_authenticated/tenants': typeof AuthenticatedTenantsRoute
+  '/tenant/login': typeof TenantLoginRoute
+  '/tenant/register': typeof TenantRegisterRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/tenant/': typeof TenantIndexRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/_tenantauth/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
@@ -146,21 +189,29 @@ export interface FileRouteTypes {
     | '/payments'
     | '/properties'
     | '/tenants'
+    | '/tenant/login'
+    | '/tenant/register'
+    | '/tenant/'
     | '/settings/notifications'
+    | '/tenant/dashboard'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/auth'
     | '/billing'
     | '/meters'
     | '/payments'
     | '/properties'
     | '/tenants'
-    | '/'
+    | '/tenant/login'
+    | '/tenant/register'
+    | '/tenant'
     | '/settings/notifications'
+    | '/tenant/dashboard'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
@@ -168,14 +219,19 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/_tenantauth'
     | '/auth'
     | '/_authenticated/billing'
     | '/_authenticated/meters'
     | '/_authenticated/payments'
     | '/_authenticated/properties'
     | '/_authenticated/tenants'
+    | '/tenant/login'
+    | '/tenant/register'
     | '/_authenticated/'
+    | '/tenant/'
     | '/_authenticated/settings/notifications'
+    | '/_tenantauth/tenant/dashboard'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
@@ -184,7 +240,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  TenantauthRouteRoute: typeof TenantauthRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  TenantLoginRoute: typeof TenantLoginRoute
+  TenantRegisterRoute: typeof TenantRegisterRoute
+  TenantIndexRoute: typeof TenantIndexRoute
   ApiPublicHooksGenerateMonthlyInvoicesRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   ApiPublicHooksSendPushRemindersRoute: typeof ApiPublicHooksSendPushRemindersRoute
   ApiPublicMpesaSimulateCallbackRoute: typeof ApiPublicMpesaSimulateCallbackRoute
@@ -200,11 +260,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_tenantauth': {
+      id: '/_tenantauth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof TenantauthRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tenant/': {
+      id: '/tenant/'
+      path: '/tenant'
+      fullPath: '/tenant/'
+      preLoaderRoute: typeof TenantIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -213,6 +287,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/tenant/register': {
+      id: '/tenant/register'
+      path: '/tenant/register'
+      fullPath: '/tenant/register'
+      preLoaderRoute: typeof TenantRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tenant/login': {
+      id: '/tenant/login'
+      path: '/tenant/login'
+      fullPath: '/tenant/login'
+      preLoaderRoute: typeof TenantLoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/tenants': {
       id: '/_authenticated/tenants'
@@ -248,6 +336,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/billing'
       preLoaderRoute: typeof AuthenticatedBillingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_tenantauth/tenant/dashboard': {
+      id: '/_tenantauth/tenant/dashboard'
+      path: '/tenant/dashboard'
+      fullPath: '/tenant/dashboard'
+      preLoaderRoute: typeof TenantauthTenantDashboardRouteImport
+      parentRoute: typeof TenantauthRouteRoute
     }
     '/_authenticated/settings/notifications': {
       id: '/_authenticated/settings/notifications'
@@ -311,9 +406,25 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface TenantauthRouteRouteChildren {
+  TenantauthTenantDashboardRoute: typeof TenantauthTenantDashboardRoute
+}
+
+const TenantauthRouteRouteChildren: TenantauthRouteRouteChildren = {
+  TenantauthTenantDashboardRoute: TenantauthTenantDashboardRoute,
+}
+
+const TenantauthRouteRouteWithChildren = TenantauthRouteRoute._addFileChildren(
+  TenantauthRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  TenantauthRouteRoute: TenantauthRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  TenantLoginRoute: TenantLoginRoute,
+  TenantRegisterRoute: TenantRegisterRoute,
+  TenantIndexRoute: TenantIndexRoute,
   ApiPublicHooksGenerateMonthlyInvoicesRoute:
     ApiPublicHooksGenerateMonthlyInvoicesRoute,
   ApiPublicHooksSendPushRemindersRoute: ApiPublicHooksSendPushRemindersRoute,
@@ -323,13 +434,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
