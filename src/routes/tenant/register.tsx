@@ -119,13 +119,11 @@ function RegisterPage() {
         },
       });
 
+      toast.success("Application submitted! Awaiting landlord approval.");
       if (!signUp.session) {
-        toast.success("Application submitted! Check your email to confirm your account, then sign in.");
         navigate({ to: "/tenant/login" });
         return;
       }
-
-      toast.success("Application submitted! Awaiting landlord approval.");
       navigate({ to: "/tenant/dashboard" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Registration failed");
