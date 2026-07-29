@@ -89,41 +89,41 @@ function RegisterPage() {
     if (!agreed) return toast.error("You must agree to the terms");
     setSubmitting(true);
     try {
-      // 1) Create the auth user (this signs the user in immediately unless
-      //    the project requires email confirmation).
+      // 1) Create the auth user. May or may not return a session depending on
+      //    whether email confirmation is required.
       const { data: signUp, error: signUpErr } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: { emailRedirectTo: window.location.origin + "/tenant/login" },
       });
       if (signUpErr) throw signUpErr;
+      const authUserId = signUp.user?.id;
+      if (!authUserId) throw new Error("Sign up failed — please try again");
 
-      if (!signUp.session) {
-        toast.info("Check your email to confirm your account, then sign in to finish.");
-        return;
-      }
-
-      // 2) Create tenant row via server fn (server picks landlord owner_id from the unit).
-      const { tenantId } = await registerFn({
-        data: { fullName: fullName.trim(), phone: phone.trim(), email: email.trim(), unitId },
-      });
-
-      // 3) Save lease signature. Do NOT activate or occupy the unit yet —
-      //    the landlord must approve the application first.
+      // 2) Submit the application (tenant row + lease signature) in one shot,
+      //    server-side, no bearer token required. Landlord will see it as
+      //    pending immediately, and the tenant can sign in later.
       const signaturePayload =
         signature.kind === "drawn"
           ? signature.dataUrl
           : `typed:${signature.typedName}`;
 
-      const { error: tErr } = await supabase
-        .from("tenants")
-        .update({
-          lease_signature: signaturePayload,
-          lease_signed_at: new Date().toISOString(),
-          approval_status: "pending",
-        })
-        .eq("id", tenantId);
-      if (tErr) throw tErr;
+      await submitFn({
+        data: {
+          authUserId,
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
+          unitId,
+          leaseSignature: signaturePayload,
+        },
+      });
+
+      if (!signUp.session) {
+        toast.success("Application submitted! Check your email to confirm your account, then sign in.");
+        navigate({ to: "/tenant/login" });
+        return;
+      }
 
       toast.success("Application submitted! Awaiting landlord approval.");
       navigate({ to: "/tenant/dashboard" });
@@ -133,6 +133,7 @@ function RegisterPage() {
       setSubmitting(false);
     }
   };
+
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-2xl p-4 md:p-6">
