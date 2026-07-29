@@ -36,7 +36,7 @@ const KES = (n: number) => `KES ${Math.round(n).toLocaleString()}`;
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const registerFn = useServerFn(registerTenantProfile);
+  const submitFn = useServerFn(submitTenantApplication);
   const [step, setStep] = useState<Step>(1);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
