@@ -22,32 +22,44 @@ export const getVacantUnits = createServerFn({ method: "GET" }).handler(async ()
   }));
 });
 
-export const registerTenantProfile = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+export const submitTenantApplication = createServerFn({ method: "POST" })
   .inputValidator((data: {
+    authUserId: string;
     fullName: string;
     phone: string;
     email: string;
     unitId: string;
+    leaseSignature: string;
   }) => {
+    const authUserId = data?.authUserId?.trim();
     const fullName = data?.fullName?.trim();
     const phone = data?.phone?.trim();
     const email = data?.email?.trim().toLowerCase();
     const unitId = data?.unitId?.trim();
+    const leaseSignature = (data?.leaseSignature ?? "").slice(0, 500_000);
+    if (!authUserId) throw new Error("Missing auth user");
     if (!fullName || fullName.length > 100) throw new Error("Invalid name");
     if (!phone || phone.length > 32) throw new Error("Invalid phone number");
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Invalid email");
     if (!unitId) throw new Error("Please pick a unit");
-    return { fullName, phone, email, unitId };
+    if (!leaseSignature) throw new Error("Signature required");
+    return { authUserId, fullName, phone, email, unitId, leaseSignature };
   })
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Verify the auth user actually exists (prevents spoofing arbitrary IDs).
+    const { data: userLookup, error: userErr } = await supabaseAdmin.auth.admin.getUserById(data.authUserId);
+    if (userErr || !userLookup?.user) throw new Error("Auth user not found");
+    if ((userLookup.user.email ?? "").toLowerCase() !== data.email) {
+      throw new Error("Email does not match account");
+    }
 
     // Reuse an existing profile for this auth user (rerun of signup)
     const { data: existing } = await supabaseAdmin
       .from("tenants")
-      .select("id, unit_id, active")
-      .eq("auth_user_id", context.userId)
+      .select("id")
+      .eq("auth_user_id", data.authUserId)
       .maybeSingle();
     if (existing) {
       return { tenantId: existing.id as string, alreadyExists: true };
@@ -70,12 +82,16 @@ export const registerTenantProfile = createServerFn({ method: "POST" })
         full_name: data.fullName,
         phone_number: data.phone,
         email: data.email,
-        auth_user_id: context.userId,
+        auth_user_id: data.authUserId,
         active: false,
         deposit_paid: 0,
+        approval_status: "pending",
+        lease_signature: data.leaseSignature,
+        lease_signed_at: new Date().toISOString(),
       })
       .select("id")
       .single();
     if (iErr) throw new Error(iErr.message);
     return { tenantId: inserted.id as string, alreadyExists: false };
   });
+
