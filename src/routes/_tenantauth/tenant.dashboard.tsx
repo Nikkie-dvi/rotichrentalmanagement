@@ -252,6 +252,12 @@ function DashboardPage() {
                   View attached photo
                 </button>
               )}
+              {ticket.landlord_note && (
+                <p className="mt-2 rounded-md bg-muted p-2 text-sm">
+                  <span className="font-medium">Landlord: </span>
+                  {ticket.landlord_note}
+                </p>
+              )}
             </div>
           ))}
         </CardContent>
