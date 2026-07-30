@@ -209,6 +209,10 @@ function DashboardPage() {
         <TicketModal tenantId={t.id} ownerId={t.owner_id} />
       </div>
 
+      <MoveOutCard tenantId={t.id} ownerId={t.owner_id} />
+
+
+
       {/* Tickets */}
       <Card>
         <CardHeader className="pb-2">
