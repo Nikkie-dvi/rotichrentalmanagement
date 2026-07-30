@@ -79,7 +79,7 @@ function DashboardPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("maintenance_tickets")
-        .select("id, category, urgency, description, status, created_at, image_url")
+        .select("id, category, urgency, description, status, created_at, image_url, landlord_note")
         .eq("tenant_id", tenantQuery.data!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
