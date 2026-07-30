@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle } from "lucide-react";
 import { TicketModal } from "@/components/tenant/ticket-modal";
+import { MoveOutCard } from "@/components/tenant/move-out-card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
@@ -78,7 +79,7 @@ function DashboardPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("maintenance_tickets")
-        .select("id, category, urgency, description, status, created_at, image_url")
+        .select("id, category, urgency, description, status, created_at, image_url, landlord_note")
         .eq("tenant_id", tenantQuery.data!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -208,6 +209,10 @@ function DashboardPage() {
         <TicketModal tenantId={t.id} ownerId={t.owner_id} />
       </div>
 
+      <MoveOutCard tenantId={t.id} ownerId={t.owner_id} />
+
+
+
       {/* Tickets */}
       <Card>
         <CardHeader className="pb-2">
@@ -246,6 +251,12 @@ function DashboardPage() {
                 >
                   View attached photo
                 </button>
+              )}
+              {ticket.landlord_note && (
+                <p className="mt-2 rounded-md bg-muted p-2 text-sm">
+                  <span className="font-medium">Landlord: </span>
+                  {ticket.landlord_note}
+                </p>
               )}
             </div>
           ))}

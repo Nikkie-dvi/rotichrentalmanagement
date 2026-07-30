@@ -68,6 +68,7 @@ export type Database = {
           description: string
           id: string
           image_url: string | null
+          landlord_note: string | null
           owner_id: string
           status: string
           tenant_id: string
@@ -80,6 +81,7 @@ export type Database = {
           description: string
           id?: string
           image_url?: string | null
+          landlord_note?: string | null
           owner_id: string
           status?: string
           tenant_id: string
@@ -92,6 +94,7 @@ export type Database = {
           description?: string
           id?: string
           image_url?: string | null
+          landlord_note?: string | null
           owner_id?: string
           status?: string
           tenant_id?: string
@@ -101,6 +104,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "maintenance_tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      move_out_requests: {
+        Row: {
+          created_at: string
+          id: string
+          landlord_response: string | null
+          owner_id: string
+          reason: string
+          requested_date: string | null
+          responded_at: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          landlord_response?: string | null
+          owner_id: string
+          reason: string
+          requested_date?: string | null
+          responded_at?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          landlord_response?: string | null
+          owner_id?: string
+          reason?: string
+          requested_date?: string | null
+          responded_at?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "move_out_requests_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"

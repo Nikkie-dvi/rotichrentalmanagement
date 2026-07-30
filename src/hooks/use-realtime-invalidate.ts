@@ -10,6 +10,8 @@ const DEFAULT_TABLES = [
   "payments",
   "utility_readings",
   "mpesa_transactions",
+  "maintenance_tickets",
+  "move_out_requests",
 ] as const;
 
 /**
