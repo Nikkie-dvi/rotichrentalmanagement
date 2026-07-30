@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
