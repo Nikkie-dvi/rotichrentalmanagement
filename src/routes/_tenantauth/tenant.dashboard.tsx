@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle } from "lucide-react";
 import { TicketModal } from "@/components/tenant/ticket-modal";
+import { MoveOutCard } from "@/components/tenant/move-out-card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
