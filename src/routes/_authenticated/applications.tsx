@@ -86,7 +86,29 @@ function ApplicationsPage() {
         .update({ status: "occupied" })
         .eq("id", t.unit_id);
       if (uErr) throw uErr;
+
+      // Merge any older, unlinked tenant card for the same unit into this
+      // registered tenant so invoices/payments show on their dashboard.
+      const { data: dupes } = await supabase
+        .from("tenants")
+        .select("id")
+        .eq("unit_id", t.unit_id)
+        .is("auth_user_id", null)
+        .eq("active", true)
+        .neq("id", t.id);
+
+      for (const d of dupes ?? []) {
+        for (const table of ["invoices", "payments", "utility_readings", "mpesa_transactions", "maintenance_tickets"] as const) {
+          await supabase.from(table).update({ tenant_id: t.id }).eq("tenant_id", d.id);
+        }
+        await supabase
+          .from("tenants")
+          .update({ active: false, move_out_date: today })
+          .eq("id", d.id);
+      }
+      return { merged: dupes?.length ?? 0 };
     },
+
     onSuccess: () => {
       toast.success("Tenant approved");
       qc.invalidateQueries({ queryKey: ["applications"] });
