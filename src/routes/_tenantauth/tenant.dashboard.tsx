@@ -87,6 +87,34 @@ function DashboardPage() {
     },
   });
 
+  // Account balance: invoices + payments for this tenant.
+  const accountQuery = useQuery({
+    queryKey: ["tenant", "account", tenantQuery.data?.id],
+    enabled: Boolean(tenantQuery.data?.id),
+    queryFn: async () => {
+      const tenantId = tenantQuery.data!.id;
+      const [inv, pay] = await Promise.all([
+        supabase
+          .from("invoices")
+          .select("id, month_year, total_due, balance_remaining, status, created_at")
+          .eq("tenant_id", tenantId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("payments")
+          .select("id, amount_paid, payment_method, reference_no, payment_date")
+          .eq("tenant_id", tenantId)
+          .order("payment_date", { ascending: false })
+          .limit(5),
+      ]);
+      if (inv.error) throw inv.error;
+      if (pay.error) throw pay.error;
+      const invoices = inv.data ?? [];
+      const balance = invoices.reduce((s, i) => s + Number(i.balance_remaining), 0);
+      return { invoices, payments: pay.data ?? [], balance };
+    },
+  });
+
+
   const t = tenantQuery.data;
   const unit = (t as any)?.units;
   const property = unit?.properties;
