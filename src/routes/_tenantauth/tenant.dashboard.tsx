@@ -87,23 +87,58 @@ function DashboardPage() {
     },
   });
 
+  // Account balance: invoices + payments for this tenant.
+  const accountQuery = useQuery({
+    queryKey: ["tenant", "account", tenantQuery.data?.id],
+    enabled: Boolean(tenantQuery.data?.id),
+    queryFn: async () => {
+      const tenantId = tenantQuery.data!.id;
+      const [inv, pay] = await Promise.all([
+        supabase
+          .from("invoices")
+          .select("id, month_year, total_due, balance_remaining, status, created_at")
+          .eq("tenant_id", tenantId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("payments")
+          .select("id, amount_paid, payment_method, reference_no, payment_date")
+          .eq("tenant_id", tenantId)
+          .order("payment_date", { ascending: false })
+          .limit(5),
+      ]);
+      if (inv.error) throw inv.error;
+      if (pay.error) throw pay.error;
+      const invoices = inv.data ?? [];
+      const balance = invoices.reduce((s, i) => s + Number(i.balance_remaining), 0);
+      return { invoices, payments: pay.data ?? [], balance };
+    },
+  });
+
+
   const t = tenantQuery.data;
   const unit = (t as any)?.units;
   const property = unit?.properties;
   const nextDue = useMemo(() => (t ? nextDueDate(t.rent_due_day ?? null) : null), [t]);
 
   useEffect(() => {
-    // Subscribe to ticket updates so status changes appear live.
+    // Subscribe to ticket, invoice and payment updates so changes appear live.
     if (!t?.id) return;
     const channel = supabase
-      .channel(`tickets-${t.id}`)
+      .channel(`tenant-live-${t.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "maintenance_tickets", filter: `tenant_id=eq.${t.id}` }, () => {
         ticketsQuery.refetch();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: `tenant_id=eq.${t.id}` }, () => {
+        accountQuery.refetch();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments", filter: `tenant_id=eq.${t.id}` }, () => {
+        accountQuery.refetch();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t?.id]);
+
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -203,6 +238,67 @@ function DashboardPage() {
           </Badge>
         </CardContent>
       </Card>
+
+      {/* Account balance */}
+      <Card className="mb-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base"><Wallet className="h-4 w-4" /> My account balance</CardTitle>
+          <CardDescription>Updates automatically when your landlord records a payment or invoice.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {accountQuery.isLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between gap-3">
+                <div className={`text-2xl font-bold ${(accountQuery.data?.balance ?? 0) > 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  {KES(accountQuery.data?.balance ?? 0)}
+                </div>
+                <Badge variant="outline">
+                  {(accountQuery.data?.balance ?? 0) > 0 ? "Outstanding" : "Cleared"}
+                </Badge>
+              </div>
+
+              {accountQuery.data?.invoices.length ? (
+                <div className="grid gap-1.5">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Invoices</div>
+                  {accountQuery.data.invoices.slice(0, 6).map((i: any) => (
+                    <div key={i.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
+                      <div>
+                        <div className="font-medium">{i.month_year}</div>
+                        <div className="text-xs capitalize text-muted-foreground">{String(i.status).replace("_", " ")}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold">{KES(Number(i.balance_remaining))}</div>
+                        <div className="text-xs text-muted-foreground">of {KES(Number(i.total_due))}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No invoices yet.</p>
+              )}
+
+              {accountQuery.data?.payments.length ? (
+                <div className="grid gap-1.5">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Recent payments</div>
+                  {accountQuery.data.payments.map((p: any) => (
+                    <div key={p.id} className="flex items-center justify-between rounded-md bg-muted/50 p-2 text-sm">
+                      <div>
+                        <div className="font-medium">{KES(Number(p.amount_paid))}</div>
+                        <div className="text-xs capitalize text-muted-foreground">{p.payment_method}{p.reference_no ? ` · ${p.reference_no}` : ""}</div>
+                      </div>
+                      <div className="text-xs text-muted-foreground">{new Date(p.payment_date).toLocaleDateString()}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+
 
       {/* Report issue */}
       <div className="mb-4">

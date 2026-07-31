@@ -76,6 +76,10 @@ function TenantLoginPage() {
           <p className="mt-4 text-center text-sm text-muted-foreground">
             New here? <Link to="/tenant/register" className="font-medium text-primary underline">Register</Link>
           </p>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            Landlord? <Link to="/auth" className="font-medium underline">Sign in here</Link>
+          </p>
+
         </CardContent>
       </Card>
     </div>

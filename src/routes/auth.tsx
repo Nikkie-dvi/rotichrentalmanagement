@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Building2, User } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -83,13 +83,20 @@ function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Rotich Rental Management</CardTitle>
-          <CardDescription>Sign in to manage your properties</CardDescription>
+          <CardDescription>Choose how you want to sign in</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="grid gap-2 rounded-lg border p-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Building2 className="h-4 w-4" /> Landlord
+            </div>
+            <p className="text-xs text-muted-foreground">Manage properties, tenants, billing and payments.</p>
+          </div>
+
           <Button
             type="button"
             variant="outline"
@@ -143,7 +150,25 @@ function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
+
+          <div className="rounded-lg border border-dashed p-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <User className="h-4 w-4" /> Are you a tenant?
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Sign in to your unit, view your balance and report issues.
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/tenant/login">Tenant sign in</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/tenant/register">Register as tenant</Link>
+              </Button>
+            </div>
+          </div>
         </CardContent>
+
       </Card>
     </div>
   );
