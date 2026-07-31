@@ -150,7 +150,25 @@ function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
+
+          <div className="rounded-lg border border-dashed p-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <User className="h-4 w-4" /> Are you a tenant?
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Sign in to your unit, view your balance and report issues.
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/tenant/login">Tenant sign in</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/tenant/register">Register as tenant</Link>
+              </Button>
+            </div>
+          </div>
         </CardContent>
+
       </Card>
     </div>
   );
