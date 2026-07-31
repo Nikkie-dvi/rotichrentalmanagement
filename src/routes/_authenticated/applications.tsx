@@ -109,8 +109,9 @@ function ApplicationsPage() {
       return { merged: dupes?.length ?? 0 };
     },
 
-    onSuccess: () => {
-      toast.success("Tenant approved");
+    onSuccess: (res) => {
+      toast.success(res?.merged ? "Tenant approved — existing rent records linked to their account" : "Tenant approved");
+
       qc.invalidateQueries({ queryKey: ["applications"] });
       qc.invalidateQueries({ queryKey: ["tenants"] });
       qc.invalidateQueries({ queryKey: ["units"] });
