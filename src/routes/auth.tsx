@@ -83,13 +83,20 @@ function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Rotich Rental Management</CardTitle>
-          <CardDescription>Sign in to manage your properties</CardDescription>
+          <CardDescription>Choose how you want to sign in</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="grid gap-2 rounded-lg border p-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Building2 className="h-4 w-4" /> Landlord
+            </div>
+            <p className="text-xs text-muted-foreground">Manage properties, tenants, billing and payments.</p>
+          </div>
+
           <Button
             type="button"
             variant="outline"
