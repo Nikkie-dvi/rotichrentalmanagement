@@ -121,17 +121,24 @@ function DashboardPage() {
   const nextDue = useMemo(() => (t ? nextDueDate(t.rent_due_day ?? null) : null), [t]);
 
   useEffect(() => {
-    // Subscribe to ticket updates so status changes appear live.
+    // Subscribe to ticket, invoice and payment updates so changes appear live.
     if (!t?.id) return;
     const channel = supabase
-      .channel(`tickets-${t.id}`)
+      .channel(`tenant-live-${t.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "maintenance_tickets", filter: `tenant_id=eq.${t.id}` }, () => {
         ticketsQuery.refetch();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: `tenant_id=eq.${t.id}` }, () => {
+        accountQuery.refetch();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments", filter: `tenant_id=eq.${t.id}` }, () => {
+        accountQuery.refetch();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t?.id]);
+
 
   const signOut = async () => {
     await supabase.auth.signOut();
