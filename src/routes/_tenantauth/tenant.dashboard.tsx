@@ -239,6 +239,67 @@ function DashboardPage() {
         </CardContent>
       </Card>
 
+      {/* Account balance */}
+      <Card className="mb-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base"><Wallet className="h-4 w-4" /> My account balance</CardTitle>
+          <CardDescription>Updates automatically when your landlord records a payment or invoice.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {accountQuery.isLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between gap-3">
+                <div className={`text-2xl font-bold ${(accountQuery.data?.balance ?? 0) > 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  {KES(accountQuery.data?.balance ?? 0)}
+                </div>
+                <Badge variant="outline">
+                  {(accountQuery.data?.balance ?? 0) > 0 ? "Outstanding" : "Cleared"}
+                </Badge>
+              </div>
+
+              {accountQuery.data?.invoices.length ? (
+                <div className="grid gap-1.5">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Invoices</div>
+                  {accountQuery.data.invoices.slice(0, 6).map((i: any) => (
+                    <div key={i.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
+                      <div>
+                        <div className="font-medium">{i.month_year}</div>
+                        <div className="text-xs capitalize text-muted-foreground">{String(i.status).replace("_", " ")}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold">{KES(Number(i.balance_remaining))}</div>
+                        <div className="text-xs text-muted-foreground">of {KES(Number(i.total_due))}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No invoices yet.</p>
+              )}
+
+              {accountQuery.data?.payments.length ? (
+                <div className="grid gap-1.5">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Recent payments</div>
+                  {accountQuery.data.payments.map((p: any) => (
+                    <div key={p.id} className="flex items-center justify-between rounded-md bg-muted/50 p-2 text-sm">
+                      <div>
+                        <div className="font-medium">{KES(Number(p.amount_paid))}</div>
+                        <div className="text-xs capitalize text-muted-foreground">{p.payment_method}{p.reference_no ? ` · ${p.reference_no}` : ""}</div>
+                      </div>
+                      <div className="text-xs text-muted-foreground">{new Date(p.payment_date).toLocaleDateString()}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+
+
       {/* Report issue */}
       <div className="mb-4">
         <TicketModal tenantId={t.id} ownerId={t.owner_id} />
