@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, XCircle, ShieldAlert, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, ShieldAlert, Loader2, CalendarClock, Wallet } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import {
   useIsSuperAdmin,
+  subscriptionState,
   MONTHLY_FEE,
   PAYMENT_NUMBER,
   type LandlordAccount,
@@ -37,6 +38,8 @@ function LandlordsPage() {
   const qc = useQueryClient();
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  type PayDraft = { amount: string; date: string; months: string; reference: string };
+  const [payDrafts, setPayDrafts] = useState<Record<string, PayDraft>>({});
 
   const { data: accounts, isLoading } = useQuery({
     queryKey: ["landlord-accounts-all"],
