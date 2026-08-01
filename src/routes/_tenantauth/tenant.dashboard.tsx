@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle } from "lucide-react";
 import { TicketModal } from "@/components/tenant/ticket-modal";
 import { MoveOutCard } from "@/components/tenant/move-out-card";
+import { TenantBackBar } from "@/components/tenant/back-bar";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
@@ -183,6 +184,7 @@ function DashboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl p-4 md:p-6">
+      <TenantBackBar title="Tenant dashboard" />
       {/* Header */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
