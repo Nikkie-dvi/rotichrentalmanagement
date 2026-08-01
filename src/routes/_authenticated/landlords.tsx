@@ -89,6 +89,87 @@ function LandlordsPage() {
   const approved = (accounts ?? []).filter((a) => a.status === "approved");
   const declined = (accounts ?? []).filter((a) => a.status === "declined");
 
+  const SubscriptionBlock = ({ row }: { row: LandlordAccount }) => {
+    const sub = subscriptionState(row);
+    const draft = payDrafts[row.id] ?? {
+      amount: String(row.monthly_fee ?? MONTHLY_FEE),
+      date: new Date().toISOString().slice(0, 10),
+      months: "1",
+      reference: "",
+    };
+    const set = (patch: Partial<typeof draft>) =>
+      setPayDrafts((d) => ({ ...d, [row.id]: { ...draft, ...patch } }));
+
+    const record = async () => {
+      setBusy(row.id);
+      const { error } = await supabase.from("landlord_subscription_payments").insert({
+        landlord_account_id: row.id,
+        amount: Number(draft.amount) || 0,
+        payment_date: draft.date,
+        months_covered: Math.max(1, Number(draft.months) || 1),
+        reference: draft.reference || null,
+      });
+      setBusy(null);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Subscription payment recorded");
+      setPayDrafts((d) => ({ ...d, [row.id]: { ...draft, reference: "" } }));
+      qc.invalidateQueries({ queryKey: ["landlord-accounts-all"] });
+      qc.invalidateQueries({ queryKey: ["landlord-account"] });
+    };
+
+    return (
+      <div className="mt-3 rounded-md border bg-muted/30 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <CalendarClock className="h-4 w-4" /> Subscription
+          </div>
+          <Badge
+            variant={sub.tone === "active" ? "default" : sub.tone === "overdue" ? "destructive" : "secondary"}
+          >
+            {sub.label}
+          </Badge>
+        </div>
+        <div className="mt-2 grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
+          <div>Paid until: {sub.paidUntil ? sub.paidUntil.toLocaleDateString() : "—"}</div>
+          <div>
+            Last payment:{" "}
+            {row.last_payment_at
+              ? `${money(Number(row.last_payment_amount ?? 0))} on ${new Date(row.last_payment_at).toLocaleDateString()}`
+              : "—"}
+          </div>
+        </div>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-4">
+          <div>
+            <Label className="text-xs">Amount</Label>
+            <Input type="number" value={draft.amount} onChange={(e) => set({ amount: e.target.value })} />
+          </div>
+          <div>
+            <Label className="text-xs">Date paid</Label>
+            <Input type="date" value={draft.date} onChange={(e) => set({ date: e.target.value })} />
+          </div>
+          <div>
+            <Label className="text-xs">Months</Label>
+            <Input type="number" min={1} value={draft.months} onChange={(e) => set({ months: e.target.value })} />
+          </div>
+          <div>
+            <Label className="text-xs">M-Pesa code</Label>
+            <Input value={draft.reference} onChange={(e) => set({ reference: e.target.value })} placeholder="e.g. TFG7..." />
+          </div>
+        </div>
+        <Button size="sm" className="mt-2" disabled={busy === row.id} onClick={record}>
+          {busy === row.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+          Record payment
+        </Button>
+      </div>
+    );
+  };
+
+
+
   const Row = ({ row }: { row: LandlordAccount }) => (
     <div className="rounded-lg border p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
