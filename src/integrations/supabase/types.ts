@@ -61,6 +61,51 @@ export type Database = {
           },
         ]
       }
+      landlord_accounts: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          declined_reason: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          monthly_fee: number
+          payment_reference: string | null
+          phone: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          declined_reason?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          monthly_fee?: number
+          payment_reference?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          declined_reason?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          monthly_fee?: number
+          payment_reference?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       maintenance_tickets: {
         Row: {
           category: string
@@ -490,7 +535,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_super_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
