@@ -1,1 +1,0 @@
-REVOKE ALL ON FUNCTION public.apply_subscription_payment() FROM PUBLIC, anon, authenticated;
