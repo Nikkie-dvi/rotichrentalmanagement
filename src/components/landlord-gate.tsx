@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, ShieldCheck, Smartphone, Copy, LogOut, XCircle } from "lucide-react";
+import { Loader2, ShieldCheck, Smartphone, Copy, LogOut, XCircle, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +10,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import {
   useLandlordAccount,
+  subscriptionState,
   MONTHLY_FEE,
   PAYMENT_NUMBER,
 } from "@/hooks/use-landlord-account";
+
+async function copyText(value: string) {
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.success("Copied");
+  } catch {
+    toast.error("Copy not supported");
+  }
+}
 
 /**
  * Blocks the landlord dashboard until the main account approves the landlord.
@@ -70,14 +80,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   };
 
-  const copy = async (value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success("Copied");
-    } catch {
-      toast.error("Copy not supported");
-    }
-  };
+  const copy = copyText;
 
   return (
     <div className="flex min-h-[70vh] items-start justify-center px-1 py-4">
