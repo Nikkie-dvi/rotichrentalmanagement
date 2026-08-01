@@ -31,7 +31,35 @@ export function LandlordGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!account || account.status === "approved") return <>{children}</>;
+  if (!account) return <>{children}</>;
+
+  if (account.status === "approved") {
+    const sub = subscriptionState(account);
+    return (
+      <>
+        {sub.tone !== "active" && (
+          <div
+            className={`mb-3 flex flex-wrap items-center gap-2 rounded-lg border p-3 text-sm ${
+              sub.tone === "overdue"
+                ? "border-destructive/40 bg-destructive/5"
+                : "border-amber-500/40 bg-amber-500/5"
+            }`}
+          >
+            <CalendarClock className="h-4 w-4 shrink-0" />
+            <span className="font-medium">Subscription: {sub.label}.</span>
+            <span className="text-muted-foreground">
+              Send {money(Number(account.monthly_fee ?? MONTHLY_FEE))} to {PAYMENT_NUMBER} to stay active.
+            </span>
+            <Button size="sm" variant="ghost" className="ml-auto" onClick={() => copyText(PAYMENT_NUMBER)}>
+              <Copy className="h-4 w-4" /> Copy number
+            </Button>
+          </div>
+        )}
+        {children}
+      </>
+    );
+  }
+
 
   const declined = account.status === "declined";
 
