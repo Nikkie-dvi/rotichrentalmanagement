@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { LandlordGate } from "@/components/landlord-gate";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -10,5 +11,9 @@ export const Route = createFileRoute("/_authenticated")({
     }
     return { user: data.user };
   },
-  component: () => <Outlet />,
+  component: () => (
+    <LandlordGate>
+      <Outlet />
+    </LandlordGate>
+  ),
 });
