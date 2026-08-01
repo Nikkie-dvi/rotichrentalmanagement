@@ -17,8 +17,35 @@ export type LandlordAccount = {
   approved_at: string | null;
   monthly_fee: number;
   payment_reference: string | null;
+  paid_until: string | null;
+  last_payment_at: string | null;
+  last_payment_amount: number | null;
+  last_payment_reference: string | null;
   created_at: string;
 };
+
+export type SubscriptionState = {
+  label: string;
+  tone: "active" | "due" | "overdue" | "none";
+  daysLeft: number | null;
+  paidUntil: Date | null;
+};
+
+/** Derives a human subscription state from a landlord account's paid_until date. */
+export function subscriptionState(account: Pick<LandlordAccount, "paid_until">): SubscriptionState {
+  if (!account.paid_until) {
+    return { label: "No payment recorded", tone: "none", daysLeft: null, paidUntil: null };
+  }
+  const paidUntil = new Date(account.paid_until + "T00:00:00");
+  const daysLeft = Math.ceil((paidUntil.getTime() - Date.now()) / 86400000);
+  if (daysLeft < 0) {
+    return { label: `Overdue by ${Math.abs(daysLeft)} day${Math.abs(daysLeft) === 1 ? "" : "s"}`, tone: "overdue", daysLeft, paidUntil };
+  }
+  if (daysLeft <= 5) {
+    return { label: daysLeft === 0 ? "Due today" : `Due in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`, tone: "due", daysLeft, paidUntil };
+  }
+  return { label: `Active — ${daysLeft} days left`, tone: "active", daysLeft, paidUntil };
+}
 
 export function useIsSuperAdmin() {
   const [isSuper, setIsSuper] = useState(false);

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, ShieldCheck, Smartphone, Copy, LogOut, XCircle } from "lucide-react";
+import { Loader2, ShieldCheck, Smartphone, Copy, LogOut, XCircle, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +10,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import {
   useLandlordAccount,
+  subscriptionState,
   MONTHLY_FEE,
   PAYMENT_NUMBER,
 } from "@/hooks/use-landlord-account";
+
+async function copyText(value: string) {
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.success("Copied");
+  } catch {
+    toast.error("Copy not supported");
+  }
+}
 
 /**
  * Blocks the landlord dashboard until the main account approves the landlord.
@@ -31,7 +41,35 @@ export function LandlordGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!account || account.status === "approved") return <>{children}</>;
+  if (!account) return <>{children}</>;
+
+  if (account.status === "approved") {
+    const sub = subscriptionState(account);
+    return (
+      <>
+        {sub.tone !== "active" && (
+          <div
+            className={`mb-3 flex flex-wrap items-center gap-2 rounded-lg border p-3 text-sm ${
+              sub.tone === "overdue"
+                ? "border-destructive/40 bg-destructive/5"
+                : "border-amber-500/40 bg-amber-500/5"
+            }`}
+          >
+            <CalendarClock className="h-4 w-4 shrink-0" />
+            <span className="font-medium">Subscription: {sub.label}.</span>
+            <span className="text-muted-foreground">
+              Send {money(Number(account.monthly_fee ?? MONTHLY_FEE))} to {PAYMENT_NUMBER} to stay active.
+            </span>
+            <Button size="sm" variant="ghost" className="ml-auto" onClick={() => copyText(PAYMENT_NUMBER)}>
+              <Copy className="h-4 w-4" /> Copy number
+            </Button>
+          </div>
+        )}
+        {children}
+      </>
+    );
+  }
+
 
   const declined = account.status === "declined";
 
@@ -42,14 +80,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   };
 
-  const copy = async (value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success("Copied");
-    } catch {
-      toast.error("Copy not supported");
-    }
-  };
+  const copy = copyText;
 
   return (
     <div className="flex min-h-[70vh] items-start justify-center px-1 py-4">
