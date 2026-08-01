@@ -110,6 +110,10 @@ function LandlordsPage() {
         <p className="mt-2 text-xs text-muted-foreground">Reason: {row.declined_reason}</p>
       )}
 
+      <SubscriptionBlock row={row} />
+
+
+
       <div className="mt-3 flex flex-wrap items-end gap-2">
         {row.status !== "approved" && (
           <Button size="sm" disabled={busy === row.id} onClick={() => setStatus(row, "approved")}>
