@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+/** Kept for display purposes only; admin rights come from the database admin list. */
 export const SUPER_ADMIN_EMAIL = "lnick8081@gmail.com";
 export const MONTHLY_FEE = 2500;
 export const PAYMENT_NUMBER = "0706747498";
