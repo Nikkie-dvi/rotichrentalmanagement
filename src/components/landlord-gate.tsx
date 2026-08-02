@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import {
   useLandlordAccount,
+  useIsSuperAdmin,
   subscriptionState,
   MONTHLY_FEE,
   PAYMENT_NUMBER,
