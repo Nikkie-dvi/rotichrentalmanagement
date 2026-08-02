@@ -78,7 +78,12 @@ export function useLandlordAccount() {
       const user = userRes.user;
       if (!user) return null;
 
-      const isSuper = (user.email ?? "").toLowerCase() === SUPER_ADMIN_EMAIL;
+      const { data: adminRow } = await supabase
+        .from("super_admins")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const isSuper = !!adminRow;
 
       // A tenant account has no landlord record and should not get one.
       const { data: tenantRow } = await supabase
