@@ -47,12 +47,21 @@ export function subscriptionState(account: Pick<LandlordAccount, "paid_until">):
   return { label: `Active — ${daysLeft} days left`, tone: "active", daysLeft, paidUntil };
 }
 
+/** UI hint only — real admin power is enforced by database access rules. */
 export function useIsSuperAdmin() {
   const [isSuper, setIsSuper] = useState(false);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setIsSuper((data.user?.email ?? "").toLowerCase() === SUPER_ADMIN_EMAIL);
-    });
+    let active = true;
+    (async () => {
+      const { data: userRes } = await supabase.auth.getUser();
+      const user = userRes.user;
+      if (!user) return;
+      const { data } = await supabase.from("super_admins").select("user_id").eq("user_id", user.id).maybeSingle();
+      if (active) setIsSuper(!!data);
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
   return isSuper;
 }
