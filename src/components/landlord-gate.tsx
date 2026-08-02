@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import {
   useLandlordAccount,
+  useIsSuperAdmin,
   subscriptionState,
   MONTHLY_FEE,
   PAYMENT_NUMBER,
@@ -30,6 +31,7 @@ async function copyText(value: string) {
  */
 export function LandlordGate({ children }: { children: ReactNode }) {
   const { data: account, isLoading, refetch, isRefetching } = useLandlordAccount();
+  const isSuper = useIsSuperAdmin();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -41,7 +43,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!account) return <>{children}</>;
+  if (!account || isSuper) return <>{children}</>;
 
   if (account.status === "approved") {
     const sub = subscriptionState(account);

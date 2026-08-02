@@ -52,4 +52,4 @@ export type Payment = {
 };
 
 export const money = (n: number) =>
-  new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(n || 0);
+  `KES ${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n || 0)}`;
