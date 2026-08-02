@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+/** Kept for display purposes only; admin rights come from the database admin list. */
 export const SUPER_ADMIN_EMAIL = "lnick8081@gmail.com";
 export const MONTHLY_FEE = 2500;
 export const PAYMENT_NUMBER = "0706747498";
@@ -47,12 +48,21 @@ export function subscriptionState(account: Pick<LandlordAccount, "paid_until">):
   return { label: `Active — ${daysLeft} days left`, tone: "active", daysLeft, paidUntil };
 }
 
+/** UI hint only — real admin power is enforced by database access rules. */
 export function useIsSuperAdmin() {
   const [isSuper, setIsSuper] = useState(false);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setIsSuper((data.user?.email ?? "").toLowerCase() === SUPER_ADMIN_EMAIL);
-    });
+    let active = true;
+    (async () => {
+      const { data: userRes } = await supabase.auth.getUser();
+      const user = userRes.user;
+      if (!user) return;
+      const { data } = await supabase.from("super_admins").select("user_id").eq("user_id", user.id).maybeSingle();
+      if (active) setIsSuper(!!data);
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
   return isSuper;
 }
@@ -69,7 +79,12 @@ export function useLandlordAccount() {
       const user = userRes.user;
       if (!user) return null;
 
-      const isSuper = (user.email ?? "").toLowerCase() === SUPER_ADMIN_EMAIL;
+      const { data: adminRow } = await supabase
+        .from("super_admins")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const isSuper = !!adminRow;
 
       // A tenant account has no landlord record and should not get one.
       const { data: tenantRow } = await supabase
