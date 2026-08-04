@@ -36,7 +36,7 @@ export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
 
         const { data: tenants } = await supabaseAdmin
           .from("tenants")
-          .select("id, owner_id, full_name, rent_due_day, active, units(unit_number, rent_amount, properties(name))")
+          .select("id, owner_id, auth_user_id, full_name, rent_due_day, active, units(unit_number, rent_amount, properties(name))")
           .eq("active", true);
 
         const { data: unpaidInvoices } = await supabaseAdmin
@@ -82,6 +82,32 @@ export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
             const list = byOwner.get(t.owner_id) ?? [];
             list.push(reminder);
             byOwner.set(t.owner_id, list);
+
+            // Notify the tenant themselves (own wording) when they have a portal account.
+            if (t.auth_user_id) {
+              const amount = unpaidBalance && unpaidBalance > 0 && diff <= 0 ? unpaidBalance : rentAmount;
+              const tenantReminder: Reminder =
+                unpaidBalance && unpaidBalance > 0 && diff <= 0
+                  ? {
+                      title: "Your rent is overdue",
+                      body: `${label} — KES ${Math.round(amount).toLocaleString()} is still outstanding (was due day ${effectiveDue}).`,
+                      tag: `my-overdue-${t.id}-${monthYear}`,
+                    }
+                  : diff === 0
+                    ? {
+                        title: "Your rent is due today",
+                        body: `${label} — KES ${Math.round(amount).toLocaleString()} is due today.`,
+                        tag: `my-due-${t.id}-${monthYear}`,
+                      }
+                    : {
+                        title: "Rent due soon",
+                        body: `${label} — KES ${Math.round(amount).toLocaleString()} is due in ${diff} day${diff === 1 ? "" : "s"}.`,
+                        tag: `my-upcoming-${t.id}-${monthYear}-${diff}`,
+                      };
+              const tList = byOwner.get(t.auth_user_id) ?? [];
+              tList.push(tenantReminder);
+              byOwner.set(t.auth_user_id, tList);
+            }
           }
         }
 
