@@ -5,10 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle } from "lucide-react";
+import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle, RefreshCw } from "lucide-react";
 import { TicketModal } from "@/components/tenant/ticket-modal";
 import { MoveOutCard } from "@/components/tenant/move-out-card";
 import { TenantBackBar } from "@/components/tenant/back-bar";
+import { RentRemindersCard } from "@/components/tenant/rent-reminders-card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
@@ -92,6 +93,10 @@ function DashboardPage() {
   const accountQuery = useQuery({
     queryKey: ["tenant", "account", tenantQuery.data?.id],
     enabled: Boolean(tenantQuery.data?.id),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
     queryFn: async () => {
       const tenantId = tenantQuery.data!.id;
       const [inv, pay] = await Promise.all([
@@ -129,11 +134,14 @@ function DashboardPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "maintenance_tickets", filter: `tenant_id=eq.${t.id}` }, () => {
         ticketsQuery.refetch();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: `tenant_id=eq.${t.id}` }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "invoices" }, () => {
         accountQuery.refetch();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "payments", filter: `tenant_id=eq.${t.id}` }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => {
         accountQuery.refetch();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "tenants", filter: `id=eq.${t.id}` }, () => {
+        tenantQuery.refetch();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -244,7 +252,18 @@ function DashboardPage() {
       {/* Account balance */}
       <Card className="mb-4">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base"><Wallet className="h-4 w-4" /> My account balance</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-2 text-base"><Wallet className="h-4 w-4" /> My account balance</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => accountQuery.refetch()}
+              disabled={accountQuery.isFetching}
+              aria-label="Refresh balance"
+            >
+              <RefreshCw className={`h-4 w-4 ${accountQuery.isFetching ? "animate-spin" : ""}`} />
+            </Button>
+          </div>
           <CardDescription>Updates automatically when your landlord records a payment or invoice.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
@@ -301,6 +320,8 @@ function DashboardPage() {
       </Card>
 
 
+
+      <RentRemindersCard />
 
       {/* Report issue */}
       <div className="mb-4">
