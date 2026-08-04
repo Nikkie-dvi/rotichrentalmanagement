@@ -36,27 +36,58 @@ function bufferToBase64Url(buffer: ArrayBuffer | null) {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`${label} timed out`)), ms)),
+  ]);
+}
+
 async function ensureRegistration(): Promise<ServiceWorkerRegistration> {
   const existing = await navigator.serviceWorker.getRegistration(PUSH_SW_SCOPE);
-  if (existing) return existing;
-  return navigator.serviceWorker.register(PUSH_SW_URL, { scope: PUSH_SW_SCOPE });
+  const reg =
+    existing ?? (await navigator.serviceWorker.register(PUSH_SW_URL, { scope: PUSH_SW_SCOPE }));
+
+  // Wait for THIS registration to become active. Never use
+  // navigator.serviceWorker.ready here: the page isn't in PUSH_SW_SCOPE, so
+  // that promise never resolves and the button spins forever.
+  if (reg.active) return reg;
+  await withTimeout(
+    new Promise<void>((resolve) => {
+      const worker = reg.installing ?? reg.waiting;
+      if (!worker) return resolve();
+      const onChange = () => {
+        if (worker.state === "activated" || worker.state === "redundant") {
+          worker.removeEventListener("statechange", onChange);
+          resolve();
+        }
+      };
+      worker.addEventListener("statechange", onChange);
+    }),
+    10000,
+    "Service worker activation",
+  );
+  return reg;
 }
 
 export async function enablePush(): Promise<{ ok: boolean; reason?: string }> {
   if (!pushSupported()) return { ok: false, reason: "unsupported" };
 
-  const perm = await Notification.requestPermission();
+  const perm = await withTimeout(Notification.requestPermission(), 60000, "Permission prompt");
   if (perm !== "granted") return { ok: false, reason: "denied" };
 
   const reg = await ensureRegistration();
-  await navigator.serviceWorker.ready;
 
   let sub = await reg.pushManager.getSubscription();
   if (!sub) {
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    });
+    sub = await withTimeout(
+      reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      }),
+      20000,
+      "Push subscribe",
+    );
   }
 
   const json = sub.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
