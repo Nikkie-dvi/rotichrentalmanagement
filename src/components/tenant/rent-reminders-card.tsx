@@ -40,11 +40,21 @@ export function RentRemindersCard() {
         }
       }
     } catch (e: any) {
-      toast.error(e?.message ?? "Could not update reminders");
+      // Background push failed (blocked in preview iframe, SW timeout, etc.).
+      // Fall back to the same on-device alerts the landlord app uses.
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        setEnabled(true);
+        toast.success("Reminders on for this device", {
+          description: "Background delivery is unavailable here, so alerts show while the app is open.",
+        });
+      } else {
+        toast.error(e?.message ?? "Could not update reminders");
+      }
     } finally {
       setBusy(false);
     }
   };
+
 
   return (
     <Card className="mb-4">
