@@ -67,7 +67,7 @@ function DashboardPage() {
       if (!user.user) throw new Error("No session");
       const { data, error } = await supabase
         .from("tenants")
-        .select("id, owner_id, full_name, phone_number, email, active, approval_status, declined_reason, rent_due_day, move_in_date, deposit_paid, lease_signed_at, unit_id, units(id, unit_number, rent_amount, status, properties(name, location))")
+        .select("id, owner_id, full_name, phone_number, email, active, move_out_date, approval_status, declined_reason, rent_due_day, move_in_date, deposit_paid, lease_signed_at, unit_id, units(id, unit_number, rent_amount, status, properties(name, location))")
         .eq("auth_user_id", user.user.id)
         .maybeSingle();
       if (error) throw error;
@@ -179,6 +179,29 @@ function DashboardPage() {
       </div>
     );
   }
+  // Tenancy ended — no access to unit/property data anymore.
+  const movedOut = !(t as any).active || Boolean((t as any).move_out_date);
+  if (movedOut) {
+    return (
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-4 p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Your tenancy has ended</CardTitle>
+            <CardDescription>
+              You moved out{(t as any).move_out_date ? ` on ${(t as any).move_out_date}` : ""}, so this portal no longer
+              shows unit, rent or maintenance details. Contact your landlord if this is a mistake.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            <Button variant="outline" onClick={signOut}>
+              <LogOut className="mr-2 h-4 w-4" /> Sign out
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
 
   const status = (t as any).approval_status as "pending" | "approved" | "declined" | undefined;
   const leaseStatus =
