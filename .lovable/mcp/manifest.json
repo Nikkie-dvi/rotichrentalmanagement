@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://lujdfakhndceqmrpsxwm.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "homebase-manager",
+      "version": "0.1.0",
+      "title": "HomeBase Manager"
+    },
+    "tools": [
+      {
+        "name": "list_properties",
+        "title": "List properties and units",
+        "description": "List the signed-in landlord's properties with their units, rent amounts and occupancy status.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "description": "Maximum number of properties to return."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_tenants",
+        "title": "List tenants",
+        "description": "List the signed-in landlord's tenants, including unit, move-in date, rent due day and approval status.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "active_only": {
+              "type": "boolean",
+              "default": true,
+              "description": "Only return currently active tenants."
+            },
+            "search": {
+              "type": "string",
+              "description": "Optional case-insensitive filter on tenant name."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100,
+              "description": "Maximum number of tenants to return."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_invoices",
+        "title": "List invoices and arrears",
+        "description": "List the signed-in landlord's rent invoices with amounts due, remaining balance and payment status. Use status 'unpaid' or 'partial' to review arrears.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "all",
+                "unpaid",
+                "partial",
+                "paid"
+              ],
+              "default": "all",
+              "description": "Filter invoices by payment status."
+            },
+            "month_year": {
+              "type": "string",
+              "description": "Optional month filter, e.g. '2026-08'."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100,
+              "description": "Maximum number of invoices to return."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_maintenance_tickets",
+        "title": "List maintenance tickets",
+        "description": "List maintenance/issue tickets raised by the signed-in landlord's tenants, with category, urgency and status.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "all",
+                "pending",
+                "in_progress",
+                "resolved"
+              ],
+              "default": "all",
+              "description": "Filter tickets by status."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "description": "Maximum number of tickets to return."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "record_payment",
+        "title": "Record a rent payment",
+        "description": "Record a payment received from one of the signed-in landlord's tenants and apply it to their oldest outstanding invoices.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tenant_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Tenant the payment came from."
+            },
+            "amount": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Amount received, in KES."
+            },
+            "payment_method": {
+              "type": "string",
+              "enum": [
+                "mpesa",
+                "bank",
+                "cash"
+              ],
+              "default": "mpesa",
+              "description": "How the payment was made."
+            },
+            "reference_no": {
+              "type": "string",
+              "description": "Optional M-Pesa or bank reference number."
+            },
+            "payment_date": {
+              "type": "string",
+              "description": "Payment date as YYYY-MM-DD. Defaults to today."
+            }
+          },
+          "required": [
+            "tenant_id",
+            "amount"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

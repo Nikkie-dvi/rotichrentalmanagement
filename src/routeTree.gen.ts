@@ -26,6 +26,7 @@ import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated/applications'
 import { Route as TenantauthTenantDashboardRouteImport } from './routes/_tenantauth/tenant.dashboard'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
 import { Route as ApiPublicHooksSendPushRemindersRouteImport } from './routes/api/public/hooks/send-push-reminders'
@@ -118,6 +119,11 @@ const AuthenticatedSettingsNotificationsRoute =
     path: '/settings/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMpesaStkPushRoute = ApiPublicMpesaStkPushRouteImport.update({
   id: '/api/public/mpesa/stk-push',
   path: '/api/public/mpesa/stk-push',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
   '/tenant/': typeof TenantIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
   '/tenant': typeof TenantIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/tenant/register': typeof TenantRegisterRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/tenant/': typeof TenantIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_tenantauth/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/tenant/login'
     | '/tenant/register'
     | '/tenant/'
+    | '/.lovable/oauth/consent'
     | '/settings/notifications'
     | '/tenant/dashboard'
     | '/api/public/hooks/generate-monthly-invoices'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/tenant/login'
     | '/tenant/register'
     | '/tenant'
+    | '/.lovable/oauth/consent'
     | '/settings/notifications'
     | '/tenant/dashboard'
     | '/api/public/hooks/generate-monthly-invoices'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/tenant/register'
     | '/_authenticated/'
     | '/tenant/'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/settings/notifications'
     | '/_tenantauth/tenant/dashboard'
     | '/api/public/hooks/generate-monthly-invoices'
@@ -283,6 +295,7 @@ export interface RootRouteChildren {
   TenantLoginRoute: typeof TenantLoginRoute
   TenantRegisterRoute: typeof TenantRegisterRoute
   TenantIndexRoute: typeof TenantIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicHooksGenerateMonthlyInvoicesRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   ApiPublicHooksSendPushRemindersRoute: typeof ApiPublicHooksSendPushRemindersRoute
   ApiPublicMpesaSimulateCallbackRoute: typeof ApiPublicMpesaSimulateCallbackRoute
@@ -410,6 +423,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/mpesa/stk-push': {
       id: '/api/public/mpesa/stk-push'
       path: '/api/public/mpesa/stk-push'
@@ -490,6 +510,7 @@ const rootRouteChildren: RootRouteChildren = {
   TenantLoginRoute: TenantLoginRoute,
   TenantRegisterRoute: TenantRegisterRoute,
   TenantIndexRoute: TenantIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicHooksGenerateMonthlyInvoicesRoute:
     ApiPublicHooksGenerateMonthlyInvoicesRoute,
   ApiPublicHooksSendPushRemindersRoute: ApiPublicHooksSendPushRemindersRoute,
