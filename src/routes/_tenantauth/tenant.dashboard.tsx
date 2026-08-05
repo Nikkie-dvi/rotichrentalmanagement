@@ -67,7 +67,7 @@ function DashboardPage() {
       if (!user.user) throw new Error("No session");
       const { data, error } = await supabase
         .from("tenants")
-        .select("id, owner_id, full_name, phone_number, email, active, approval_status, declined_reason, rent_due_day, move_in_date, deposit_paid, lease_signed_at, unit_id, units(id, unit_number, rent_amount, status, properties(name, location))")
+        .select("id, owner_id, full_name, phone_number, email, active, move_out_date, approval_status, declined_reason, rent_due_day, move_in_date, deposit_paid, lease_signed_at, unit_id, units(id, unit_number, rent_amount, status, properties(name, location))")
         .eq("auth_user_id", user.user.id)
         .maybeSingle();
       if (error) throw error;
