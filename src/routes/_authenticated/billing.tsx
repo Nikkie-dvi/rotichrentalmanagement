@@ -163,8 +163,54 @@ function BillingPage() {
           <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
             <FileText className="h-4 w-4" />Generate Bills for {month}
           </Button>
+          <Button variant="outline" onClick={() => setSingleOpen(true)}>
+            <UserPlus className="h-4 w-4" />Invoice one tenant
+          </Button>
         </CardContent>
       </Card>
+
+      <Dialog open={singleOpen} onOpenChange={setSingleOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Invoice a single tenant</DialogTitle></DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label>Tenant</Label>
+              <Select value={singleTenant} onValueChange={pickTenant}>
+                <SelectTrigger><SelectValue placeholder="Choose tenant" /></SelectTrigger>
+                <SelectContent>
+                  {(activeTenants ?? []).map((t: any) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.full_name}{t.units?.unit_number ? ` — Unit ${t.units.unit_number}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Billing month</Label>
+              <Input type="month" value={singleMonth} onChange={(e) => setSingleMonth(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label>Base rent</Label>
+                <Input type="number" min="0" value={singleRent} onChange={(e) => setSingleRent(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Utilities / extras</Label>
+                <Input type="number" min="0" value={singleUtil} onChange={(e) => setSingleUtil(e.target.value)} />
+              </div>
+            </div>
+            <div className="rounded-md bg-muted/50 p-3 text-sm flex justify-between">
+              <span>Total due</span>
+              <span className="font-semibold">{money((Number(singleRent) || 0) + (Number(singleUtil) || 0))}</span>
+            </div>
+            <Button onClick={() => invoiceOne.mutate()} disabled={invoiceOne.isPending || !singleTenant}>
+              Send invoice
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       <Card>
         <CardHeader><CardTitle className="text-base">Invoices for {month}</CardTitle></CardHeader>
