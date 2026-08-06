@@ -301,13 +301,19 @@ function DashboardPage() {
           ) : (
             <>
               <div className="flex items-baseline justify-between gap-3">
-                <div className={`text-2xl font-bold ${(accountQuery.data?.balance ?? 0) > 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
-                  {KES(accountQuery.data?.balance ?? 0)}
+                <div className={`text-2xl font-bold ${(accountQuery.data?.net ?? 0) < 0 ? "text-destructive" : (accountQuery.data?.net ?? 0) > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                  {(accountQuery.data?.net ?? 0) > 0 ? "+" : (accountQuery.data?.net ?? 0) < 0 ? "-" : ""}
+                  {KES(Math.abs(accountQuery.data?.net ?? 0))}
                 </div>
                 <Badge variant="outline">
-                  {(accountQuery.data?.balance ?? 0) > 0 ? "Outstanding" : "Cleared"}
+                  {(accountQuery.data?.net ?? 0) < 0 ? "Balance due" : (accountQuery.data?.net ?? 0) > 0 ? "Credit" : "Cleared"}
                 </Badge>
               </div>
+              {(accountQuery.data?.net ?? 0) > 0 && (
+                <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                  You've paid ahead. This credit of {KES(accountQuery.data!.net)} is carried forward to next month's rent.
+                </p>
+              )}
 
               {accountQuery.data?.invoices.length ? (
                 <div className="grid gap-1.5">
