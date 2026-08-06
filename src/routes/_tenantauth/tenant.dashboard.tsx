@@ -99,7 +99,7 @@ function DashboardPage() {
     refetchInterval: 30000,
     queryFn: async () => {
       const tenantId = tenantQuery.data!.id;
-      const [inv, pay] = await Promise.all([
+      const [inv, pay, allPay] = await Promise.all([
         supabase
           .from("invoices")
           .select("id, month_year, total_due, balance_remaining, status, created_at")
@@ -111,12 +111,18 @@ function DashboardPage() {
           .eq("tenant_id", tenantId)
           .order("payment_date", { ascending: false })
           .limit(5),
+        supabase.from("payments").select("amount_paid").eq("tenant_id", tenantId),
       ]);
       if (inv.error) throw inv.error;
       if (pay.error) throw pay.error;
+      if (allPay.error) throw allPay.error;
       const invoices = inv.data ?? [];
-      const balance = invoices.reduce((s, i) => s + Number(i.balance_remaining), 0);
-      return { invoices, payments: pay.data ?? [], balance };
+      const outstanding = invoices.reduce((s, i) => s + Number(i.balance_remaining), 0);
+      const totalInvoiced = invoices.reduce((s, i) => s + Number(i.total_due), 0);
+      const totalPaid = (allPay.data ?? []).reduce((s: number, p: any) => s + Number(p.amount_paid), 0);
+      // Signed balance: negative = owed, positive = credit carried to next month.
+      const net = outstanding > 0 ? -outstanding : Math.max(0, totalPaid - totalInvoiced);
+      return { invoices, payments: pay.data ?? [], balance: outstanding, net };
     },
   });
 
