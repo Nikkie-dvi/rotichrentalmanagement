@@ -30,6 +30,58 @@ function BillingPage() {
   const qc = useQueryClient();
   const [month, setMonth] = useState<string>(new Date().toISOString().slice(0, 7));
   const [preview, setPreview] = useState<any>(null);
+  const [singleOpen, setSingleOpen] = useState(false);
+  const [singleTenant, setSingleTenant] = useState<string>("");
+  const [singleMonth, setSingleMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+  const [singleRent, setSingleRent] = useState<string>("");
+  const [singleUtil, setSingleUtil] = useState<string>("0");
+
+  const { data: activeTenants } = useQuery({
+    queryKey: ["billing-tenants"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tenants")
+        .select("id,full_name,units(unit_number,rent_amount,properties(name))")
+        .eq("active", true)
+        .order("full_name");
+      return data ?? [];
+    },
+  });
+
+  const pickTenant = (id: string) => {
+    setSingleTenant(id);
+    const t: any = (activeTenants ?? []).find((x: any) => x.id === id);
+    setSingleRent(String(Number(t?.units?.rent_amount ?? 0)));
+  };
+
+  const invoiceOne = useMutation({
+    mutationFn: async () => {
+      if (!singleTenant) throw new Error("Choose a tenant");
+      const rent = Number(singleRent) || 0;
+      const util = Number(singleUtil) || 0;
+      const total = rent + util;
+      const { error } = await supabase.from("invoices").upsert(
+        {
+          tenant_id: singleTenant,
+          month_year: singleMonth,
+          base_rent: rent,
+          utility_amount: util,
+          total_due: total,
+          balance_remaining: total,
+          status: total === 0 ? "paid" : "unpaid",
+        },
+        { onConflict: "tenant_id,month_year" },
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries();
+      toast.success("Invoice sent to tenant");
+      setSingleOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
 
   const { data: invoices } = useQuery({
     queryKey: ["invoices", month],
