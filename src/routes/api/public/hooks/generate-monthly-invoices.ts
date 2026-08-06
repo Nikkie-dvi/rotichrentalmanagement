@@ -48,6 +48,17 @@ export const Route = createFileRoute("/api/public/hooks/generate-monthly-invoice
             0,
           );
           const total = rent + util;
+
+          // Carry forward any overpayment credit from previous months.
+          const [{ data: prevInv }, { data: prevPay }] = await Promise.all([
+            supabase.from("invoices").select("total_due").eq("tenant_id", (t as any).id),
+            supabase.from("payments").select("amount_paid").eq("tenant_id", (t as any).id),
+          ]);
+          const invoiced = (prevInv ?? []).reduce((s: number, r: any) => s + Number(r.total_due), 0);
+          const paid = (prevPay ?? []).reduce((s: number, r: any) => s + Number(r.amount_paid), 0);
+          const credit = Math.max(0, paid - invoiced);
+          const balance = Math.max(0, total - credit);
+
           const { error } = await supabase.from("invoices").upsert(
             {
               tenant_id: (t as any).id,
@@ -56,8 +67,8 @@ export const Route = createFileRoute("/api/public/hooks/generate-monthly-invoice
               base_rent: rent,
               utility_amount: util,
               total_due: total,
-              balance_remaining: total,
-              status: total === 0 ? "paid" : "unpaid",
+              balance_remaining: balance,
+              status: balance === 0 ? "paid" : balance < total ? "partial" : "unpaid",
             },
             { onConflict: "tenant_id,month_year" },
           );

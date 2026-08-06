@@ -99,7 +99,7 @@ function DashboardPage() {
     refetchInterval: 30000,
     queryFn: async () => {
       const tenantId = tenantQuery.data!.id;
-      const [inv, pay] = await Promise.all([
+      const [inv, pay, allPay] = await Promise.all([
         supabase
           .from("invoices")
           .select("id, month_year, total_due, balance_remaining, status, created_at")
@@ -111,12 +111,18 @@ function DashboardPage() {
           .eq("tenant_id", tenantId)
           .order("payment_date", { ascending: false })
           .limit(5),
+        supabase.from("payments").select("amount_paid").eq("tenant_id", tenantId),
       ]);
       if (inv.error) throw inv.error;
       if (pay.error) throw pay.error;
+      if (allPay.error) throw allPay.error;
       const invoices = inv.data ?? [];
-      const balance = invoices.reduce((s, i) => s + Number(i.balance_remaining), 0);
-      return { invoices, payments: pay.data ?? [], balance };
+      const outstanding = invoices.reduce((s, i) => s + Number(i.balance_remaining), 0);
+      const totalInvoiced = invoices.reduce((s, i) => s + Number(i.total_due), 0);
+      const totalPaid = (allPay.data ?? []).reduce((s: number, p: any) => s + Number(p.amount_paid), 0);
+      // Signed balance: negative = owed, positive = credit carried to next month.
+      const net = outstanding > 0 ? -outstanding : Math.max(0, totalPaid - totalInvoiced);
+      return { invoices, payments: pay.data ?? [], balance: outstanding, net };
     },
   });
 
@@ -295,13 +301,19 @@ function DashboardPage() {
           ) : (
             <>
               <div className="flex items-baseline justify-between gap-3">
-                <div className={`text-2xl font-bold ${(accountQuery.data?.balance ?? 0) > 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
-                  {KES(accountQuery.data?.balance ?? 0)}
+                <div className={`text-2xl font-bold ${(accountQuery.data?.net ?? 0) < 0 ? "text-destructive" : (accountQuery.data?.net ?? 0) > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                  {(accountQuery.data?.net ?? 0) > 0 ? "+" : (accountQuery.data?.net ?? 0) < 0 ? "-" : ""}
+                  {KES(Math.abs(accountQuery.data?.net ?? 0))}
                 </div>
                 <Badge variant="outline">
-                  {(accountQuery.data?.balance ?? 0) > 0 ? "Outstanding" : "Cleared"}
+                  {(accountQuery.data?.net ?? 0) < 0 ? "Balance due" : (accountQuery.data?.net ?? 0) > 0 ? "Credit" : "Cleared"}
                 </Badge>
               </div>
+              {(accountQuery.data?.net ?? 0) > 0 && (
+                <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                  You've paid ahead. This credit of {KES(accountQuery.data!.net)} is carried forward to next month's rent.
+                </p>
+              )}
 
               {accountQuery.data?.invoices.length ? (
                 <div className="grid gap-1.5">
