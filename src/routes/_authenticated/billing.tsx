@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Printer } from "lucide-react";
+import { FileText, Printer, UserPlus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,58 @@ function BillingPage() {
   const qc = useQueryClient();
   const [month, setMonth] = useState<string>(new Date().toISOString().slice(0, 7));
   const [preview, setPreview] = useState<any>(null);
+  const [singleOpen, setSingleOpen] = useState(false);
+  const [singleTenant, setSingleTenant] = useState<string>("");
+  const [singleMonth, setSingleMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+  const [singleRent, setSingleRent] = useState<string>("");
+  const [singleUtil, setSingleUtil] = useState<string>("0");
+
+  const { data: activeTenants } = useQuery({
+    queryKey: ["billing-tenants"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tenants")
+        .select("id,full_name,units(unit_number,rent_amount,properties(name))")
+        .eq("active", true)
+        .order("full_name");
+      return data ?? [];
+    },
+  });
+
+  const pickTenant = (id: string) => {
+    setSingleTenant(id);
+    const t: any = (activeTenants ?? []).find((x: any) => x.id === id);
+    setSingleRent(String(Number(t?.units?.rent_amount ?? 0)));
+  };
+
+  const invoiceOne = useMutation({
+    mutationFn: async () => {
+      if (!singleTenant) throw new Error("Choose a tenant");
+      const rent = Number(singleRent) || 0;
+      const util = Number(singleUtil) || 0;
+      const total = rent + util;
+      const { error } = await supabase.from("invoices").upsert(
+        {
+          tenant_id: singleTenant,
+          month_year: singleMonth,
+          base_rent: rent,
+          utility_amount: util,
+          total_due: total,
+          balance_remaining: total,
+          status: total === 0 ? "paid" : "unpaid",
+        },
+        { onConflict: "tenant_id,month_year" },
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries();
+      toast.success("Invoice sent to tenant");
+      setSingleOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
 
   const { data: invoices } = useQuery({
     queryKey: ["invoices", month],
@@ -111,8 +164,54 @@ function BillingPage() {
           <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
             <FileText className="h-4 w-4" />Generate Bills for {month}
           </Button>
+          <Button variant="outline" onClick={() => setSingleOpen(true)}>
+            <UserPlus className="h-4 w-4" />Invoice one tenant
+          </Button>
         </CardContent>
       </Card>
+
+      <Dialog open={singleOpen} onOpenChange={setSingleOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Invoice a single tenant</DialogTitle></DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label>Tenant</Label>
+              <Select value={singleTenant} onValueChange={pickTenant}>
+                <SelectTrigger><SelectValue placeholder="Choose tenant" /></SelectTrigger>
+                <SelectContent>
+                  {(activeTenants ?? []).map((t: any) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.full_name}{t.units?.unit_number ? ` — Unit ${t.units.unit_number}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Billing month</Label>
+              <Input type="month" value={singleMonth} onChange={(e) => setSingleMonth(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label>Base rent</Label>
+                <Input type="number" min="0" value={singleRent} onChange={(e) => setSingleRent(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Utilities / extras</Label>
+                <Input type="number" min="0" value={singleUtil} onChange={(e) => setSingleUtil(e.target.value)} />
+              </div>
+            </div>
+            <div className="rounded-md bg-muted/50 p-3 text-sm flex justify-between">
+              <span>Total due</span>
+              <span className="font-semibold">{money((Number(singleRent) || 0) + (Number(singleUtil) || 0))}</span>
+            </div>
+            <Button onClick={() => invoiceOne.mutate()} disabled={invoiceOne.isPending || !singleTenant}>
+              Send invoice
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       <Card>
         <CardHeader><CardTitle className="text-base">Invoices for {month}</CardTitle></CardHeader>

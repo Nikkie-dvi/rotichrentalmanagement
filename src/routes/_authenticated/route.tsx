@@ -9,6 +9,14 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.user) {
       throw redirect({ to: "/auth" });
     }
+    // A signed-in tenant must never land on the landlord dashboard.
+    const [{ data: tenantRow }, { data: landlordRow }] = await Promise.all([
+      supabase.from("tenants").select("id").eq("auth_user_id", data.user.id).limit(1).maybeSingle(),
+      supabase.from("landlord_accounts").select("id").eq("user_id", data.user.id).limit(1).maybeSingle(),
+    ]);
+    if (tenantRow && !landlordRow) {
+      throw redirect({ to: "/tenant/dashboard" });
+    }
     return { user: data.user };
   },
   component: () => (
