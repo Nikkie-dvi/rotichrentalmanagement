@@ -59,6 +59,8 @@ function statusBadge(status: string) {
 
 function DashboardPage() {
   const navigate = useNavigate();
+  const [leaseOpen, setLeaseOpen] = useState(false);
+
 
   // Fetch tenant profile + unit + property.
   const tenantQuery = useQuery({
