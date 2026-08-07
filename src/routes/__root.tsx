@@ -124,7 +124,12 @@ function RootComponent() {
   const isAuthRoute = pathname.startsWith("/auth") || pathname.startsWith("/tenant");
 
   useEffect(() => {
-    import("../lib/pwa").then((m) => m.registerPWA()).catch(() => {});
+    import("../lib/pwa")
+      .then((m) => {
+        m.installChunkErrorRecovery();
+        return m.registerPWA();
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
