@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature } from "lucide-react";
 import { useIsSuperAdmin } from "@/hooks/use-landlord-account";
 import {
   Sidebar,
@@ -18,6 +18,7 @@ const items = [
   { title: "Properties & Units", url: "/properties", icon: Building2 },
   { title: "Tenants", url: "/tenants", icon: Users },
   { title: "Applications", url: "/applications", icon: ClipboardCheck },
+  { title: "Lease Agreements", url: "/leases", icon: FileSignature },
   { title: "Issues & Move-outs", url: "/maintenance", icon: Wrench },
   { title: "Meter Readings", url: "/meters", icon: Gauge },
   { title: "Billing & Invoices", url: "/billing", icon: FileText },
