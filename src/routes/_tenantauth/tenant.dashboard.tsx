@@ -1,15 +1,16 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle, RefreshCw, FileSignature } from "lucide-react";
 import { TicketModal } from "@/components/tenant/ticket-modal";
 import { MoveOutCard } from "@/components/tenant/move-out-card";
 import { TenantBackBar } from "@/components/tenant/back-bar";
 import { RentRemindersCard } from "@/components/tenant/rent-reminders-card";
+import { LeaseDialog } from "@/components/lease-document";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
@@ -58,6 +59,8 @@ function statusBadge(status: string) {
 
 function DashboardPage() {
   const navigate = useNavigate();
+  const [leaseOpen, setLeaseOpen] = useState(false);
+
 
   // Fetch tenant profile + unit + property.
   const tenantQuery = useQuery({
@@ -67,7 +70,7 @@ function DashboardPage() {
       if (!user.user) throw new Error("No session");
       const { data, error } = await supabase
         .from("tenants")
-        .select("id, owner_id, full_name, phone_number, email, active, move_out_date, approval_status, declined_reason, rent_due_day, move_in_date, deposit_paid, lease_signed_at, unit_id, units(id, unit_number, rent_amount, status, properties(name, location))")
+        .select("id, owner_id, full_name, phone_number, email, active, move_out_date, approval_status, declined_reason, rent_due_day, move_in_date, deposit_paid, lease_signature, lease_signed_at, unit_id, units(id, unit_number, rent_amount, status, properties(name, location))")
         .eq("auth_user_id", user.user.id)
         .maybeSingle();
       if (error) throw error;
@@ -354,9 +357,44 @@ function DashboardPage() {
         </CardContent>
       </Card>
 
+      {/* Lease agreement */}
+      <Card className="mb-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base"><FileSignature className="h-4 w-4" /> My lease agreement</CardTitle>
+          <CardDescription>
+            {(t as any).lease_signed_at
+              ? `Signed ${new Date((t as any).lease_signed_at).toLocaleString()}`
+              : "Not signed yet"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" size="sm" onClick={() => setLeaseOpen(true)}>
+            View full lease &amp; signature
+          </Button>
+        </CardContent>
+      </Card>
 
+      <LeaseDialog
+        open={leaseOpen}
+        onOpenChange={setLeaseOpen}
+        lease={{
+          full_name: t.full_name,
+          phone_number: (t as any).phone_number,
+          email: (t as any).email,
+          deposit_paid: (t as any).deposit_paid,
+          move_in_date: (t as any).move_in_date,
+          rent_due_day: t.rent_due_day,
+          lease_signature: (t as any).lease_signature,
+          lease_signed_at: (t as any).lease_signed_at,
+          unit_number: unit?.unit_number ?? null,
+          rent_amount: unit?.rent_amount ?? null,
+          property_name: property?.name ?? null,
+          property_location: property?.location ?? null,
+        }}
+      />
 
       <RentRemindersCard />
+
 
       {/* Report issue */}
       <div className="mb-4">
