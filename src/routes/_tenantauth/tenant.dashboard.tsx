@@ -1,15 +1,16 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle, RefreshCw, FileSignature } from "lucide-react";
 import { TicketModal } from "@/components/tenant/ticket-modal";
 import { MoveOutCard } from "@/components/tenant/move-out-card";
 import { TenantBackBar } from "@/components/tenant/back-bar";
 import { RentRemindersCard } from "@/components/tenant/rent-reminders-card";
+import { LeaseDialog } from "@/components/lease-document";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
@@ -67,7 +68,7 @@ function DashboardPage() {
       if (!user.user) throw new Error("No session");
       const { data, error } = await supabase
         .from("tenants")
-        .select("id, owner_id, full_name, phone_number, email, active, move_out_date, approval_status, declined_reason, rent_due_day, move_in_date, deposit_paid, lease_signed_at, unit_id, units(id, unit_number, rent_amount, status, properties(name, location))")
+        .select("id, owner_id, full_name, phone_number, email, active, move_out_date, approval_status, declined_reason, rent_due_day, move_in_date, deposit_paid, lease_signature, lease_signed_at, unit_id, units(id, unit_number, rent_amount, status, properties(name, location))")
         .eq("auth_user_id", user.user.id)
         .maybeSingle();
       if (error) throw error;

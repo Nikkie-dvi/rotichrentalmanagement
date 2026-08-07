@@ -265,21 +265,26 @@ function ApplicationsPage() {
       </Tabs>
 
       {/* Lease preview dialog */}
-      <Dialog open={Boolean(preview)} onOpenChange={(o) => !o && setPreview(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Lease agreement — {preview?.full_name}</DialogTitle>
-            <DialogDescription>
-              {preview?.units ? `Unit ${preview.units.unit_number}` : "No unit"}
-              {preview?.lease_signed_at ? ` · Signed ${new Date(preview.lease_signed_at).toLocaleString()}` : ""}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3">
-            <Label>Signature</Label>
-            {renderSignature(preview?.lease_signature ?? null)}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LeaseDialog
+        open={Boolean(preview)}
+        onOpenChange={(o) => !o && setPreview(null)}
+        lease={
+          preview
+            ? {
+                full_name: preview.full_name,
+                phone_number: preview.phone_number,
+                email: preview.email,
+                lease_signature: preview.lease_signature,
+                lease_signed_at: preview.lease_signed_at,
+                unit_number: preview.units?.unit_number ?? null,
+                rent_amount: preview.units?.rent_amount ?? null,
+                property_name: preview.units?.properties?.name ?? null,
+                property_location: preview.units?.properties?.location ?? null,
+              }
+            : null
+        }
+      />
+
 
       {/* Decline dialog */}
       <Dialog open={Boolean(declineFor)} onOpenChange={(o) => !o && setDeclineFor(null)}>
