@@ -355,9 +355,44 @@ function DashboardPage() {
         </CardContent>
       </Card>
 
+      {/* Lease agreement */}
+      <Card className="mb-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base"><FileSignature className="h-4 w-4" /> My lease agreement</CardTitle>
+          <CardDescription>
+            {(t as any).lease_signed_at
+              ? `Signed ${new Date((t as any).lease_signed_at).toLocaleString()}`
+              : "Not signed yet"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" size="sm" onClick={() => setLeaseOpen(true)}>
+            View full lease &amp; signature
+          </Button>
+        </CardContent>
+      </Card>
 
+      <LeaseDialog
+        open={leaseOpen}
+        onOpenChange={setLeaseOpen}
+        lease={{
+          full_name: t.full_name,
+          phone_number: (t as any).phone_number,
+          email: (t as any).email,
+          deposit_paid: (t as any).deposit_paid,
+          move_in_date: (t as any).move_in_date,
+          rent_due_day: t.rent_due_day,
+          lease_signature: (t as any).lease_signature,
+          lease_signed_at: (t as any).lease_signed_at,
+          unit_number: unit?.unit_number ?? null,
+          rent_amount: unit?.rent_amount ?? null,
+          property_name: property?.name ?? null,
+          property_location: property?.location ?? null,
+        }}
+      />
 
       <RentRemindersCard />
+
 
       {/* Report issue */}
       <div className="mb-4">
