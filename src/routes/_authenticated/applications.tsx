@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Check, X, Mail, Phone, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
+import { LeaseDialog } from "@/components/lease-document";
 
 export const Route = createFileRoute("/_authenticated/applications")({
   head: () => ({
