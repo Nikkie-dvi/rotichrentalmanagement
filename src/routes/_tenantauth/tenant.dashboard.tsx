@@ -223,8 +223,30 @@ function DashboardPage() {
     "bg-amber-500/10 text-amber-700 dark:text-amber-300";
 
   return (
-    <div className="mx-auto w-full max-w-3xl p-4 md:p-6">
+    <div className="relative min-h-screen w-full overflow-hidden">
+      {/* Futuristic animated background */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-background to-muted/40" />
+      <div
+        className="tenant-bg-grid absolute inset-0 -z-10 opacity-20"
+        style={{ animation: "tenant-grid-fade 8s ease-in-out infinite" }}
+      />
+      <div
+        className="tenant-bg-orb -z-10 h-72 w-72 bg-primary/30"
+        style={{ top: "-8%", left: "-12%", animation: "tenant-orb-1 14s ease-in-out infinite" }}
+      />
+      <div
+        className="tenant-bg-orb -z-10 h-64 w-64 bg-accent/25"
+        style={{ bottom: "-5%", right: "-10%", animation: "tenant-orb-2 16s ease-in-out infinite" }}
+      />
+      <div
+        className="tenant-bg-orb -z-10 h-48 w-48 bg-primary/20"
+        style={{ top: "45%", left: "55%", animation: "tenant-orb-3 12s ease-in-out infinite" }}
+      />
+
+      {/* Same layout, glass-styled cards */}
+      <div className="mx-auto w-full max-w-3xl p-4 md:p-6 [&_.rounded-xl]:border-border/60 [&_.rounded-xl]:bg-card/70 [&_.rounded-xl]:shadow-lg [&_.rounded-xl]:backdrop-blur-xl">
       <TenantBackBar title="Tenant dashboard" />
+
       {/* Header */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
