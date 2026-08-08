@@ -121,3 +121,41 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
+
+/* ---- Futuristic tenant portal background ---- */
+@keyframes tenant-orb-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.15); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+@keyframes tenant-orb-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 30px) scale(0.85); }
+  66% { transform: translate(25px, -15px) scale(1.2); }
+}
+@keyframes tenant-orb-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20px, 25px) scale(1.1); }
+}
+@keyframes tenant-grid-fade {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.08; }
+}
+@keyframes tenant-logo-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.62 0.16 155 / 0.4); }
+  50% { box-shadow: 0 0 0 12px oklch(0.62 0.16 155 / 0); }
+}
+
+@utility tenant-bg-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+@utility tenant-bg-grid {
+  background-image:
+    linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
