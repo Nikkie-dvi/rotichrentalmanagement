@@ -250,6 +250,9 @@ function DashboardPage() {
         className="tenant-bg-grid absolute inset-0 -z-10 opacity-20"
         style={{ animation: "tenant-grid-fade 8s ease-in-out infinite" }}
       />
+
+      {/* "ROTICH / RENTALS" square watermark */}
+      <div className="tenant-watermark -z-10" />
       <div
         className="tenant-bg-orb -z-10 h-72 w-72 bg-primary/30"
         style={{ top: "-8%", left: "-12%", animation: "tenant-orb-1 14s ease-in-out infinite" }}
