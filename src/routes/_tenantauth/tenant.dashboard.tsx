@@ -123,9 +123,7 @@ function DashboardPage() {
       const outstanding = invoices.reduce((s, i) => s + Number(i.balance_remaining), 0);
       const totalInvoiced = invoices.reduce((s, i) => s + Number(i.total_due), 0);
       const totalPaid = (allPay.data ?? []).reduce((s: number, p: any) => s + Number(p.amount_paid), 0);
-      // Signed balance: negative = owed, positive = credit carried to next month.
-      const net = outstanding > 0 ? -outstanding : Math.max(0, totalPaid - totalInvoiced);
-      return { invoices, payments: pay.data ?? [], balance: outstanding, net };
+      return { invoices, payments: pay.data ?? [], balance: outstanding, totalInvoiced, totalPaid };
     },
   });
 
@@ -134,6 +132,28 @@ function DashboardPage() {
   const unit = (t as any)?.units;
   const property = unit?.properties;
   const nextDue = useMemo(() => (t ? nextDueDate(t.rent_due_day ?? null) : null), [t]);
+
+  // Rent accrues automatically on every anniversary of the move-in / due day,
+  // even before the landlord issues an invoice.
+  const accrued = useMemo(() => {
+    const rent = Number(unit?.rent_amount ?? 0);
+    const start = (t as any)?.move_in_date ? new Date((t as any).move_in_date) : null;
+    if (!rent || !start || Number.isNaN(start.getTime())) return 0;
+    const now = new Date();
+    let cycles = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()) + 1;
+    const dueDay = Math.max(1, Math.min(31, (t as any)?.rent_due_day ?? start.getDate()));
+    if (now.getDate() < Math.min(dueDay, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate())) cycles -= 1;
+    return Math.max(0, cycles) * rent;
+  }, [t, unit?.rent_amount]);
+
+  const net = useMemo(() => {
+    const d = accountQuery.data;
+    if (!d) return 0;
+    const owed = Math.max(Number(d.totalInvoiced ?? 0), accrued);
+    return Number(d.totalPaid ?? 0) - owed;
+  }, [accountQuery.data, accrued]);
+
+  const rentSettled = net >= 0;
 
   useEffect(() => {
     // Subscribe to ticket, invoice and payment updates so changes appear live.
@@ -244,7 +264,7 @@ function DashboardPage() {
       />
 
       {/* Same layout, glass-styled cards */}
-      <div className="mx-auto w-full max-w-3xl p-4 md:p-6 [&_.rounded-xl]:border-border/60 [&_.rounded-xl]:bg-card/70 [&_.rounded-xl]:shadow-lg [&_.rounded-xl]:backdrop-blur-xl">
+      <div className="mx-auto w-full max-w-3xl p-4 md:p-6 [&_.rounded-xl]:border-border/50 [&_.rounded-xl]:bg-card/55 [&_.rounded-xl]:shadow-lg [&_.rounded-xl]:backdrop-blur-xl">
       <TenantBackBar title="Tenant dashboard" />
 
       {/* Header */}
@@ -286,9 +306,18 @@ function DashboardPage() {
       )}
 
       {/* Rent due summary */}
-      <Card className="mb-4">
+      <Card
+        className={`mb-4 backdrop-blur-xl ${
+          rentSettled
+            ? "!border-emerald-500/40 !bg-emerald-500/10"
+            : "!border-red-500/40 !bg-red-500/10"
+        }`}
+      >
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base"><CalendarClock className="h-4 w-4" /> Next rent due</CardTitle>
+          <CardDescription className={rentSettled ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}>
+            {rentSettled ? "Rent is paid up — nothing due right now." : "Rent is due — please clear your balance."}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
@@ -297,14 +326,27 @@ function DashboardPage() {
               {nextDue ? nextDue.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "—"}
             </div>
           </div>
-          <Badge variant="secondary" className="text-sm">
+          <Badge
+            variant="outline"
+            className={`text-sm backdrop-blur ${
+              rentSettled
+                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                : "border-red-500/40 bg-red-500/15 text-red-700 dark:text-red-300"
+            }`}
+          >
             <Wallet className="mr-1 h-3.5 w-3.5" /> {nextDue?.label ?? "—"}
           </Badge>
         </CardContent>
       </Card>
 
       {/* Account balance */}
-      <Card className="mb-4">
+      <Card
+        className={`mb-4 backdrop-blur-xl ${
+          net < 0
+            ? "!border-red-500/40 !bg-red-500/10"
+            : "!border-emerald-500/40 !bg-emerald-500/10"
+        }`}
+      >
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-base"><Wallet className="h-4 w-4" /> My account balance</CardTitle>
@@ -318,7 +360,7 @@ function DashboardPage() {
               <RefreshCw className={`h-4 w-4 ${accountQuery.isFetching ? "animate-spin" : ""}`} />
             </Button>
           </div>
-          <CardDescription>Updates automatically when your landlord records a payment or invoice.</CardDescription>
+          <CardDescription>Rent is added automatically each month on your due date, and updates when payments are recorded.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
           {accountQuery.isLoading ? (
@@ -326,19 +368,23 @@ function DashboardPage() {
           ) : (
             <>
               <div className="flex items-baseline justify-between gap-3">
-                <div className={`text-2xl font-bold ${(accountQuery.data?.net ?? 0) < 0 ? "text-destructive" : (accountQuery.data?.net ?? 0) > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
-                  {(accountQuery.data?.net ?? 0) > 0 ? "+" : (accountQuery.data?.net ?? 0) < 0 ? "-" : ""}
-                  {KES(Math.abs(accountQuery.data?.net ?? 0))}
+                <div className={`text-2xl font-bold ${net < 0 ? "text-destructive" : net > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                  {net > 0 ? "+" : net < 0 ? "-" : ""}
+                  {KES(Math.abs(net))}
                 </div>
-                <Badge variant="outline">
-                  {(accountQuery.data?.net ?? 0) < 0 ? "Balance due" : (accountQuery.data?.net ?? 0) > 0 ? "Credit" : "Cleared"}
+                <Badge
+                  variant="outline"
+                  className={`backdrop-blur ${net < 0 ? "border-red-500/40 bg-red-500/15 text-red-700 dark:text-red-300" : "border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"}`}
+                >
+                  {net < 0 ? "Balance due" : net > 0 ? "Credit" : "Cleared"}
                 </Badge>
               </div>
-              {(accountQuery.data?.net ?? 0) > 0 && (
+              {net > 0 && (
                 <p className="text-xs text-emerald-700 dark:text-emerald-400">
-                  You've paid ahead. This credit of {KES(accountQuery.data!.net)} is carried forward to next month's rent.
+                  You've paid ahead. This credit of {KES(net)} is carried forward to next month's rent.
                 </p>
               )}
+
 
               {accountQuery.data?.invoices.length ? (
                 <div className="grid gap-1.5">
