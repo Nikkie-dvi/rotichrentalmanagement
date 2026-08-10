@@ -134,7 +134,10 @@ function RegisterPage() {
 
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-2xl p-4 md:p-6">
+    <div className="relative min-h-screen w-full overflow-hidden">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-background to-muted/40" />
+      <div className="tenant-watermark -z-10" />
+      <div className="mx-auto min-h-screen w-full max-w-2xl p-4 md:p-6">
       <div className="mb-4 flex items-center justify-between">
         <Button asChild variant="ghost" size="sm">
           <Link to="/tenant"><ChevronLeft className="mr-1 h-4 w-4" /> Back</Link>
