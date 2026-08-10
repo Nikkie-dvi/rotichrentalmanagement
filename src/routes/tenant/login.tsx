@@ -87,6 +87,7 @@ function TenantLoginPage() {
 
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
