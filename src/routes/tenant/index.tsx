@@ -30,6 +30,9 @@ function TenantLanding() {
         style={{ animation: "tenant-grid-fade 8s ease-in-out infinite" }}
       />
 
+      {/* "ROTICH / RENTALS" square watermark */}
+      <div className="tenant-watermark -z-10" />
+
       {/* Floating gradient orbs */}
       <div
         className="tenant-bg-orb -z-10 h-72 w-72 bg-primary/30"
