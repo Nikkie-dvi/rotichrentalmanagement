@@ -123,9 +123,7 @@ function DashboardPage() {
       const outstanding = invoices.reduce((s, i) => s + Number(i.balance_remaining), 0);
       const totalInvoiced = invoices.reduce((s, i) => s + Number(i.total_due), 0);
       const totalPaid = (allPay.data ?? []).reduce((s: number, p: any) => s + Number(p.amount_paid), 0);
-      // Signed balance: negative = owed, positive = credit carried to next month.
-      const net = outstanding > 0 ? -outstanding : Math.max(0, totalPaid - totalInvoiced);
-      return { invoices, payments: pay.data ?? [], balance: outstanding, net };
+      return { invoices, payments: pay.data ?? [], balance: outstanding, totalInvoiced, totalPaid };
     },
   });
 
@@ -134,6 +132,28 @@ function DashboardPage() {
   const unit = (t as any)?.units;
   const property = unit?.properties;
   const nextDue = useMemo(() => (t ? nextDueDate(t.rent_due_day ?? null) : null), [t]);
+
+  // Rent accrues automatically on every anniversary of the move-in / due day,
+  // even before the landlord issues an invoice.
+  const accrued = useMemo(() => {
+    const rent = Number(unit?.rent_amount ?? 0);
+    const start = (t as any)?.move_in_date ? new Date((t as any).move_in_date) : null;
+    if (!rent || !start || Number.isNaN(start.getTime())) return 0;
+    const now = new Date();
+    let cycles = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()) + 1;
+    const dueDay = Math.max(1, Math.min(31, (t as any)?.rent_due_day ?? start.getDate()));
+    if (now.getDate() < Math.min(dueDay, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate())) cycles -= 1;
+    return Math.max(0, cycles) * rent;
+  }, [t, unit?.rent_amount]);
+
+  const net = useMemo(() => {
+    const d = accountQuery.data;
+    if (!d) return 0;
+    const owed = Math.max(Number(d.totalInvoiced ?? 0), accrued);
+    return Number(d.totalPaid ?? 0) - owed;
+  }, [accountQuery.data, accrued]);
+
+  const rentSettled = net >= 0;
 
   useEffect(() => {
     // Subscribe to ticket, invoice and payment updates so changes appear live.
