@@ -206,22 +206,34 @@ function TenantsPage() {
           </DialogContent>
         </Dialog>
       </div>
-
+      {flagged.length > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>
+            <b>{flagged.length}</b> tenant{flagged.length === 1 ? "" : "s"} overdue · <b>{money(atRisk)}</b> at risk
+          </span>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
           const balance = balances?.get(t.id) ?? 0;
+          const risk: Risk = risks.get(t.id) ?? {
+            level: balance > 0 ? "soon" : "clear",
+            total: balance,
+            monthsUnpaid: 0,
+            daysLate: 0,
+          };
+          const flaggedCard = risk.level === "overdue" || risk.level === "high";
           return (
-            <Card key={t.id}>
+            <Card key={t.id} className={flaggedCard ? "border-l-4 border-l-destructive" : undefined}>
               <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <div>
                     <CardTitle className="text-base">{t.full_name}</CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">{t.phone_number ?? "No phone"}</p>
                   </div>
-                  <Badge className={balance > 0 ? "" : "bg-primary text-primary-foreground"} variant={balance > 0 ? "destructive" : "default"}>
-                    {balance > 0 ? "Arrears" : "Clear"}
-                  </Badge>
+                  <RiskBadge risk={risk} />
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
