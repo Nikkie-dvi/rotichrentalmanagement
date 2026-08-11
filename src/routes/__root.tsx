@@ -145,6 +145,7 @@ function RootComponent() {
 }
 
 function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAuthRoute: boolean }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -157,7 +158,9 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
               <AppHeader />
               <ReminderRunner />
               <main className="flex-1 p-4 md:p-6">
-                <Outlet />
+                <div key={pathname} className="route-transition">
+                  <Outlet />
+                </div>
               </main>
               <PaymentReminderPopup />
 
