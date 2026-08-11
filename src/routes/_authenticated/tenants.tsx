@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, LogOut, ContactRound } from "lucide-react";
+import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,35 @@ export const Route = createFileRoute("/_authenticated/tenants")({
   component: TenantsPage,
 });
 
+type RiskLevel = "clear" | "soon" | "overdue" | "high";
+type Risk = { level: RiskLevel; total: number; monthsUnpaid: number; daysLate: number };
+
+function RiskBadge({ risk }: { risk: Risk }) {
+  if (risk.level === "high")
+    return (
+      <Badge variant="destructive" className="animate-pulse gap-1">
+        <AlertTriangle className="h-3.5 w-3.5" /> High risk · {risk.monthsUnpaid} mo
+      </Badge>
+    );
+  if (risk.level === "overdue")
+    return (
+      <Badge variant="destructive" className="gap-1">
+        <AlertTriangle className="h-3.5 w-3.5" /> Overdue {risk.daysLate}d
+      </Badge>
+    );
+  if (risk.level === "soon")
+    return (
+      <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-300">
+        <Clock className="h-3.5 w-3.5" /> Due soon
+      </Badge>
+    );
+  return (
+    <Badge className="gap-1 bg-primary text-primary-foreground">
+      <CheckCircle2 className="h-3.5 w-3.5" /> Clear
+    </Badge>
+  );
+}
+
 function TenantsPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -41,15 +70,20 @@ function TenantsPage() {
     },
   });
 
-  const { data: balances } = useQuery({
+  const { data: unpaidInvoices } = useQuery({
     queryKey: ["tenant-balances"],
     queryFn: async () => {
-      const { data } = await supabase.from("invoices").select("tenant_id,balance_remaining");
-      const map = new Map<string, number>();
-      for (const inv of data ?? []) map.set(inv.tenant_id, (map.get(inv.tenant_id) ?? 0) + Number(inv.balance_remaining));
-      return map;
+      const { data } = await supabase.from("invoices").select("tenant_id,month_year,balance_remaining");
+      return data ?? [];
     },
   });
+
+  const balances = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const inv of unpaidInvoices ?? [])
+      map.set(inv.tenant_id, (map.get(inv.tenant_id) ?? 0) + Number(inv.balance_remaining));
+    return map;
+  }, [unpaidInvoices]);
 
   const { data: vacantUnits } = useQuery({
     queryKey: ["vacant-units"],
@@ -101,8 +135,58 @@ function TenantsPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const active = (tenants ?? []).filter((t: any) => t.active);
+  // Compute after mount so server/client date math can't mismatch.
+  const [today, setToday] = useState<Date | null>(null);
+  useEffect(() => setToday(new Date()), []);
+
+  const risks = useMemo(() => {
+    const map = new Map<string, Risk>();
+    if (!today) return map;
+    const currentMonth = today.toISOString().slice(0, 7);
+    const byTenant = new Map<string, string[]>();
+    for (const inv of unpaidInvoices ?? []) {
+      if (Number(inv.balance_remaining) <= 0) continue;
+      const list = byTenant.get(inv.tenant_id) ?? [];
+      list.push(inv.month_year);
+      byTenant.set(inv.tenant_id, list);
+    }
+    for (const t of tenants ?? []) {
+      const months = (byTenant.get((t as any).id) ?? []).sort();
+      const total = balances.get((t as any).id) ?? 0;
+      if (!months.length || total <= 0) {
+        map.set((t as any).id, { level: "clear", total, monthsUnpaid: 0, daysLate: 0 });
+        continue;
+      }
+      const oldest = months[0];
+      const pastMonths = months.filter((m) => m < currentMonth).length;
+      const dueDay =
+        Number((t as any).rent_due_day) ||
+        ((t as any).move_in_date ? new Date((t as any).move_in_date).getUTCDate() : 0) ||
+        1;
+      const [y, m] = oldest.split("-").map(Number);
+      const due = new Date(Date.UTC(y, m - 1, Math.min(dueDay, 28)));
+      const daysLate = Math.floor((today.getTime() - due.getTime()) / 86400000);
+      const level: Risk["level"] =
+        pastMonths >= 2 ? "high" : daysLate > 0 ? "overdue" : "soon";
+      map.set((t as any).id, { level, total, monthsUnpaid: months.length, daysLate });
+    }
+    return map;
+  }, [tenants, unpaidInvoices, balances, today]);
+
+  const rank: Record<RiskLevel, number> = { high: 0, overdue: 1, soon: 2, clear: 3 };
+  const active = (tenants ?? [])
+    .filter((t: any) => t.active)
+    .sort(
+      (a: any, b: any) =>
+        rank[risks.get(a.id)?.level ?? "clear"] - rank[risks.get(b.id)?.level ?? "clear"],
+    );
   const inactive = (tenants ?? []).filter((t: any) => !t.active);
+
+  const flagged = active.filter((t: any) => {
+    const l = risks.get(t.id)?.level;
+    return l === "overdue" || l === "high";
+  });
+  const atRisk = flagged.reduce((s: number, t: any) => s + (balances.get(t.id) ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -122,22 +206,34 @@ function TenantsPage() {
           </DialogContent>
         </Dialog>
       </div>
-
+      {flagged.length > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>
+            <b>{flagged.length}</b> tenant{flagged.length === 1 ? "" : "s"} overdue · <b>{money(atRisk)}</b> at risk
+          </span>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
           const balance = balances?.get(t.id) ?? 0;
+          const risk: Risk = risks.get(t.id) ?? {
+            level: balance > 0 ? "soon" : "clear",
+            total: balance,
+            monthsUnpaid: 0,
+            daysLate: 0,
+          };
+          const flaggedCard = risk.level === "overdue" || risk.level === "high";
           return (
-            <Card key={t.id}>
+            <Card key={t.id} className={flaggedCard ? "border-l-4 border-l-destructive" : undefined}>
               <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <div>
                     <CardTitle className="text-base">{t.full_name}</CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">{t.phone_number ?? "No phone"}</p>
                   </div>
-                  <Badge className={balance > 0 ? "" : "bg-primary text-primary-foreground"} variant={balance > 0 ? "destructive" : "default"}>
-                    {balance > 0 ? "Arrears" : "Clear"}
-                  </Badge>
+                  <RiskBadge risk={risk} />
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
