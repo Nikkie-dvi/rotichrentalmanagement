@@ -145,6 +145,7 @@ function RootComponent() {
 }
 
 function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAuthRoute: boolean }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
