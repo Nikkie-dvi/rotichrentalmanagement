@@ -50,16 +50,31 @@ export function AppSidebar() {
           <SidebarGroupLabel>Manage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menu.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menu.map((item) => {
+                const active = pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      className={`nav-tab-glass ${active ? "nav-tab-active text-sidebar-primary-foreground" : ""}`}
+                    >
+                      <Link to={item.url}>
+                        <item.icon
+                          className={active ? "text-sidebar-primary" : ""}
+                          style={active ? { animation: "nav-icon-pop 0.4s cubic-bezier(0.34,1.56,0.64,1)" } : undefined}
+                        />
+                        <span
+                          style={active ? { animation: "nav-text-slide 0.3s ease-out" } : undefined}
+                        >
+                          {item.title}
+                        </span>
+                        {active && <span className="nav-active-bar" aria-hidden />}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
