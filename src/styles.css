@@ -122,6 +122,64 @@
   }
 }
 
+/* ---- Sidebar nav: translucent glass tabs & animated active indicator ---- */
+@keyframes nav-indicator-in {
+  0% { opacity: 0; transform: scaleX(0.6) scaleY(0.8); }
+  60% { opacity: 1; transform: scaleX(1.04) scaleY(1.02); }
+  100% { opacity: 1; transform: scaleX(1) scaleY(1); }
+}
+@keyframes nav-icon-pop {
+  0% { transform: scale(0.8) rotate(-8deg); opacity: 0.6; }
+  60% { transform: scale(1.12) rotate(2deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+@keyframes nav-text-slide {
+  0% { opacity: 0.5; transform: translateX(-4px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* Glass pill for active sidebar tab */
+@utility nav-tab-active {
+  background: color-mix(in oklab, var(--sidebar-primary) 16%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid color-mix(in oklab, var(--sidebar-primary) 28%, transparent);
+  box-shadow:
+    0 4px 16px -6px color-mix(in oklab, var(--sidebar-primary) 40%, transparent),
+    inset 0 1px 0 color-mix(in oklab, white 10%, transparent);
+}
+/* Translucent hover tint for inactive tabs */
+@utility nav-tab-glass {
+  transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+.nav-tab-glass:hover {
+  background: color-mix(in oklab, var(--sidebar-foreground) 8%, transparent);
+  backdrop-filter: blur(8px);
+  transform: translateX(2px);
+}
+
+/* Animated active indicator bar (left edge glow) */
+@utility nav-active-bar {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(to bottom, var(--sidebar-primary), color-mix(in oklab, var(--sidebar-primary) 50%, transparent));
+  box-shadow: 0 0 12px color-mix(in oklab, var(--sidebar-primary) 60%, transparent);
+  animation: nav-indicator-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- Route transition animation between tabs ---- */
+@keyframes route-enter {
+  0% { opacity: 0; transform: translateY(8px) scale(0.99); filter: blur(4px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@utility route-transition {
+  animation: route-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* ---- Futuristic tenant portal background ---- */
 @keyframes tenant-orb-1 {
   0%, 100% { transform: translate(0, 0) scale(1); }
