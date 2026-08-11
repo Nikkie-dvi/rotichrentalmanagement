@@ -41,15 +41,20 @@ function TenantsPage() {
     },
   });
 
-  const { data: balances } = useQuery({
+  const { data: unpaidInvoices } = useQuery({
     queryKey: ["tenant-balances"],
     queryFn: async () => {
-      const { data } = await supabase.from("invoices").select("tenant_id,balance_remaining");
-      const map = new Map<string, number>();
-      for (const inv of data ?? []) map.set(inv.tenant_id, (map.get(inv.tenant_id) ?? 0) + Number(inv.balance_remaining));
-      return map;
+      const { data } = await supabase.from("invoices").select("tenant_id,month_year,balance_remaining");
+      return data ?? [];
     },
   });
+
+  const balances = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const inv of unpaidInvoices ?? [])
+      map.set(inv.tenant_id, (map.get(inv.tenant_id) ?? 0) + Number(inv.balance_remaining));
+    return map;
+  }, [unpaidInvoices]);
 
   const { data: vacantUnits } = useQuery({
     queryKey: ["vacant-units"],
