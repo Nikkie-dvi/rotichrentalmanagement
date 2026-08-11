@@ -1,26 +1,31 @@
-# Polish the tenant header, sign-out and dashboard KPI tabs
+# Overdue warning badges on the tenant list
 
-Pure visual/presentation work. No data logic, queries or rules change.
+Today each tenant card shows only "Arrears" or "Clear" based on the sum of unpaid invoice balances. That doesn't tell you *how late* someone is. This adds an at-a-glance risk badge.
 
-## Tenant dashboard (`/tenant/dashboard`)
+## What changes
 
-- **Tenant name speaks out**: replace the small "Tenant" label + name with a bold identity block — a gradient-filled, larger tracking-tight name (text-2xl/3xl), an avatar-style initial chip with a soft glow ring, and the property/unit line as a subtle pill row underneath. Lease status badge gets a soft glow matching its state.
-- **Sign out becomes a real button**: outlined glass button with a red-tinted hover state, icon that slides/rotates on hover, subtle scale-down on press, and a brief spinner while signing out (visual only — same sign-out call).
-- **Unit tile effects**: the property/unit line becomes a glass "unit chip" with an animated gradient border sheen, hover lift and a soft pulsing glow, matching the futuristic portal theme.
-- Keep the existing layout, cards, green/red rent + balance tinting exactly as they are.
+On the Tenants page, each active tenant card gets a risk badge instead of the plain Arrears/Clear chip:
 
-## Landlord dashboard (`/`)
+- **Clear** (green) — nothing owed.
+- **Due soon** (amber) — owes money but only for the current month, due date not yet passed.
+- **Overdue** (red, with a warning triangle icon) — owes money past the due date, labelled with how late they are, e.g. "Overdue 12 days".
+- **High risk** (red, pulsing) — unpaid balance covering two or more past months.
 
-Restyle the four KPI tabs (Total Units, Occupancy Rate, Collected, Arrears) so they read as premium stat tiles:
+Cards with an overdue or high-risk badge also get a subtle red left border and are sorted to the top of the list, so problem accounts appear first.
 
-- Each card gets its own tinted glass surface with a soft coloured outer glow: Occupancy Rate glows bluish, Total Units a neutral/indigo tint, Collected a green tint, Arrears a red tint.
-- Icon sits in a rounded glowing badge instead of plain text colour.
-- Hover: gentle lift + brighter glow + cursor pointer (they are already clickable drill-downs — behaviour unchanged).
-- Numbers get larger, tighter typography with a subtle gradient text fill.
-- Cards fade/scale in on mount in a short stagger.
+A small summary line above the list shows how many tenants are overdue and the total amount at risk.
+
+## How "overdue" is decided
+
+Uses invoice data already loaded on the page:
+
+- Group unpaid invoice balances per tenant by `month_year`.
+- Oldest unpaid month + the tenant's `rent_due_day` (fallback: move-in day, then day 1) gives the due date.
+- Days late = today minus that due date. Two or more unpaid months = high risk.
 
 ## Technical notes
 
-- New keyframes/utilities (`kpi-glow`, `unit-sheen`, stagger fade) added to `src/styles.css`; all colours via existing semantic tokens plus a new bluish glow token so light/dark both work.
-- Files touched: `src/styles.css`, `src/routes/_tenantauth/tenant.dashboard.tsx`, `src/routes/_authenticated/index.tsx`.
-- No database, RLS or query changes.
+- `src/routes/_authenticated/tenants.tsx` only: extend the `tenant-balances` query to also select `month_year`, and build a per-tenant `{ total, oldestUnpaidMonth, monthsUnpaid, daysLate }` map.
+- Add a small local `RiskBadge` component in the same file; colours via existing semantic/destructive tokens.
+- Date math is done in a `useMemo` after mount to avoid SSR/client date mismatches.
+- No database, RLS or query-permission changes.
