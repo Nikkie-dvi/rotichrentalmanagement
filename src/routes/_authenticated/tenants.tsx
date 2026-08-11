@@ -106,8 +106,58 @@ function TenantsPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const active = (tenants ?? []).filter((t: any) => t.active);
+  // Compute after mount so server/client date math can't mismatch.
+  const [today, setToday] = useState<Date | null>(null);
+  useEffect(() => setToday(new Date()), []);
+
+  const risks = useMemo(() => {
+    const map = new Map<string, Risk>();
+    if (!today) return map;
+    const currentMonth = today.toISOString().slice(0, 7);
+    const byTenant = new Map<string, string[]>();
+    for (const inv of unpaidInvoices ?? []) {
+      if (Number(inv.balance_remaining) <= 0) continue;
+      const list = byTenant.get(inv.tenant_id) ?? [];
+      list.push(inv.month_year);
+      byTenant.set(inv.tenant_id, list);
+    }
+    for (const t of tenants ?? []) {
+      const months = (byTenant.get((t as any).id) ?? []).sort();
+      const total = balances.get((t as any).id) ?? 0;
+      if (!months.length || total <= 0) {
+        map.set((t as any).id, { level: "clear", total, monthsUnpaid: 0, daysLate: 0 });
+        continue;
+      }
+      const oldest = months[0];
+      const pastMonths = months.filter((m) => m < currentMonth).length;
+      const dueDay =
+        Number((t as any).rent_due_day) ||
+        ((t as any).move_in_date ? new Date((t as any).move_in_date).getUTCDate() : 0) ||
+        1;
+      const [y, m] = oldest.split("-").map(Number);
+      const due = new Date(Date.UTC(y, m - 1, Math.min(dueDay, 28)));
+      const daysLate = Math.floor((today.getTime() - due.getTime()) / 86400000);
+      const level: Risk["level"] =
+        pastMonths >= 2 ? "high" : daysLate > 0 ? "overdue" : "soon";
+      map.set((t as any).id, { level, total, monthsUnpaid: months.length, daysLate });
+    }
+    return map;
+  }, [tenants, unpaidInvoices, balances, today]);
+
+  const rank = { high: 0, overdue: 1, soon: 2, clear: 3 } as const;
+  const active = (tenants ?? [])
+    .filter((t: any) => t.active)
+    .sort(
+      (a: any, b: any) =>
+        rank[risks.get(a.id)?.level ?? "clear"] - rank[risks.get(b.id)?.level ?? "clear"],
+    );
   const inactive = (tenants ?? []).filter((t: any) => !t.active);
+
+  const flagged = active.filter((t: any) => {
+    const l = risks.get(t.id)?.level;
+    return l === "overdue" || l === "high";
+  });
+  const atRisk = flagged.reduce((s: number, t: any) => s + (balances.get(t.id) ?? 0), 0);
 
   return (
     <div className="space-y-6">
