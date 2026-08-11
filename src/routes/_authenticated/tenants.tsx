@@ -26,6 +26,35 @@ export const Route = createFileRoute("/_authenticated/tenants")({
   component: TenantsPage,
 });
 
+type RiskLevel = "clear" | "soon" | "overdue" | "high";
+type Risk = { level: RiskLevel; total: number; monthsUnpaid: number; daysLate: number };
+
+function RiskBadge({ risk }: { risk: Risk }) {
+  if (risk.level === "high")
+    return (
+      <Badge variant="destructive" className="animate-pulse gap-1">
+        <AlertTriangle className="h-3.5 w-3.5" /> High risk · {risk.monthsUnpaid} mo
+      </Badge>
+    );
+  if (risk.level === "overdue")
+    return (
+      <Badge variant="destructive" className="gap-1">
+        <AlertTriangle className="h-3.5 w-3.5" /> Overdue {risk.daysLate}d
+      </Badge>
+    );
+  if (risk.level === "soon")
+    return (
+      <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-300">
+        <Clock className="h-3.5 w-3.5" /> Due soon
+      </Badge>
+    );
+  return (
+    <Badge className="gap-1 bg-primary text-primary-foreground">
+      <CheckCircle2 className="h-3.5 w-3.5" /> Clear
+    </Badge>
+  );
+}
+
 function TenantsPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
