@@ -173,7 +173,7 @@ function TenantsPage() {
     return map;
   }, [tenants, unpaidInvoices, balances, today]);
 
-  const rank = { high: 0, overdue: 1, soon: 2, clear: 3 } as const;
+  const rank: Record<RiskLevel, number> = { high: 0, overdue: 1, soon: 2, clear: 3 };
   const active = (tenants ?? [])
     .filter((t: any) => t.active)
     .sort(
