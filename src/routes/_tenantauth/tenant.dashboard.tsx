@@ -195,14 +195,14 @@ function DashboardPage() {
   if (!t) {
     return (
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-4 p-6">
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle>Finish setting up</CardTitle>
             <CardDescription>We couldn't find a tenant profile for this account.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <Button asChild><Link to="/tenant/register">Register as tenant</Link></Button>
-            <Button variant="outline" onClick={signOut}><LogOut className="mr-2 h-4 w-4" /> Sign out</Button>
+            <Button asChild className="glass-btn glow-blue"><Link to="/tenant/register">Register as tenant</Link></Button>
+            <Button variant="outline" onClick={signOut} className="glass-btn glow-red"><LogOut className="mr-2 h-4 w-4" /> Sign out</Button>
           </CardContent>
         </Card>
       </div>
@@ -213,7 +213,7 @@ function DashboardPage() {
   if (movedOut) {
     return (
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-4 p-6">
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle>Your tenancy has ended</CardTitle>
             <CardDescription>
@@ -222,7 +222,7 @@ function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <Button variant="outline" onClick={signOut}>
+            <Button variant="outline" onClick={signOut} className="glass-btn glow-red">
               <LogOut className="mr-2 h-4 w-4" /> Sign out
             </Button>
           </CardContent>
