@@ -267,7 +267,7 @@ function DashboardPage() {
       />
 
       {/* Same layout, glass-styled cards */}
-      <div className="mx-auto w-full max-w-3xl p-4 md:p-6 [&_.rounded-xl]:border-border/50 [&_.rounded-xl]:bg-card/55 [&_.rounded-xl]:shadow-lg [&_.rounded-xl]:backdrop-blur-xl">
+      <div className="mx-auto w-full max-w-3xl p-4 md:p-6">
       <TenantBackBar title="Tenant dashboard" />
 
       {/* Header */}
