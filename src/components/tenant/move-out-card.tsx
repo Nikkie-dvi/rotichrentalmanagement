@@ -68,7 +68,7 @@ export function MoveOutCard({ tenantId, ownerId }: Props) {
   const hasPending = (requests.data ?? []).some((r: any) => r.status === "pending");
 
   return (
-    <Card className="mb-4">
+    <Card className="mb-4 glass-card">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <DoorOpen className="h-4 w-4" /> Move out
@@ -96,7 +96,7 @@ export function MoveOutCard({ tenantId, ownerId }: Props) {
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="w-full" disabled={hasPending}>
+            <Button variant="outline" className="w-full glass-btn glow-amber" disabled={hasPending}>
               {hasPending ? "Move-out request pending review" : "Request to move out"}
             </Button>
           </DialogTrigger>

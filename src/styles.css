@@ -218,6 +218,59 @@
   background-size: 48px 48px;
 }
 
+/* ---- Glass card & KPI glow utilities ---- */
+@utility glass-card {
+  background: color-mix(in oklab, var(--card) 50%, transparent);
+  backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+  box-shadow: 0 8px 32px -12px color-mix(in oklab, var(--card-foreground) 10%, transparent);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px -12px color-mix(in oklab, var(--card-foreground) 14%, transparent);
+}
+
+@utility glow-blue {
+  box-shadow: 0 0 24px -6px color-mix(in oklab, var(--primary) 35%, transparent);
+}
+.glow-blue:hover {
+  box-shadow: 0 0 32px -4px color-mix(in oklab, var(--primary) 45%, transparent);
+}
+
+@utility glow-green {
+  box-shadow: 0 0 24px -6px color-mix(in oklab, var(--success) 35%, transparent);
+}
+.glow-green:hover {
+  box-shadow: 0 0 32px -4px color-mix(in oklab, var(--success) 45%, transparent);
+}
+
+@utility glow-red {
+  box-shadow: 0 0 24px -6px color-mix(in oklab, var(--destructive) 35%, transparent);
+}
+.glow-red:hover {
+  box-shadow: 0 0 32px -4px color-mix(in oklab, var(--destructive) 45%, transparent);
+}
+
+@utility glow-amber {
+  box-shadow: 0 0 24px -6px color-mix(in oklab, var(--warning) 35%, transparent);
+}
+.glow-amber:hover {
+  box-shadow: 0 0 32px -4px color-mix(in oklab, var(--warning) 45%, transparent);
+}
+
+@utility glass-btn {
+  background: color-mix(in oklab, var(--card) 50%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  transition: all 0.2s ease;
+}
+.glass-btn:hover {
+  background: color-mix(in oklab, var(--accent) 20%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 50%, transparent);
+  box-shadow: 0 0 20px -4px color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
 /* Repeating "ROTICH / RENTALS" square watermark — adapts to light & dark mode */
 @utility tenant-watermark {
   position: absolute;
@@ -231,3 +284,4 @@
 .dark .tenant-watermark {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ctext x='150' y='140' font-family='system-ui,sans-serif' font-size='58' font-weight='800' letter-spacing='2' text-anchor='middle' fill='%23e5e7eb' opacity='0.05'%3EROTICH%3C/text%3E%3Ctext x='150' y='175' font-family='system-ui,sans-serif' font-size='22' font-weight='600' letter-spacing='8' text-anchor='middle' fill='%23e5e7eb' opacity='0.06'%3ERENTALS%3C/text%3E%3C/svg%3E");
 }
+

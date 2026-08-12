@@ -195,14 +195,14 @@ function DashboardPage() {
   if (!t) {
     return (
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-4 p-6">
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle>Finish setting up</CardTitle>
             <CardDescription>We couldn't find a tenant profile for this account.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <Button asChild><Link to="/tenant/register">Register as tenant</Link></Button>
-            <Button variant="outline" onClick={signOut}><LogOut className="mr-2 h-4 w-4" /> Sign out</Button>
+            <Button asChild className="glass-btn glow-blue"><Link to="/tenant/register">Register as tenant</Link></Button>
+            <Button variant="outline" onClick={signOut} className="glass-btn glow-red"><LogOut className="mr-2 h-4 w-4" /> Sign out</Button>
           </CardContent>
         </Card>
       </div>
@@ -213,7 +213,7 @@ function DashboardPage() {
   if (movedOut) {
     return (
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-4 p-6">
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle>Your tenancy has ended</CardTitle>
             <CardDescription>
@@ -222,7 +222,7 @@ function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <Button variant="outline" onClick={signOut}>
+            <Button variant="outline" onClick={signOut} className="glass-btn glow-red">
               <LogOut className="mr-2 h-4 w-4" /> Sign out
             </Button>
           </CardContent>
@@ -267,11 +267,11 @@ function DashboardPage() {
       />
 
       {/* Same layout, glass-styled cards */}
-      <div className="mx-auto w-full max-w-3xl p-4 md:p-6 [&_.rounded-xl]:border-border/50 [&_.rounded-xl]:bg-card/55 [&_.rounded-xl]:shadow-lg [&_.rounded-xl]:backdrop-blur-xl">
+      <div className="mx-auto w-full max-w-3xl p-4 md:p-6">
       <TenantBackBar title="Tenant dashboard" />
 
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex items-center justify-between gap-3 rounded-xl glass-card px-4 py-3">
         <div>
           <div className="text-xs uppercase tracking-wide text-muted-foreground">Tenant</div>
           <h1 className="text-xl font-bold leading-tight">{t.full_name}</h1>
@@ -281,13 +281,13 @@ function DashboardPage() {
             <Badge variant="outline" className={leaseClass}>{leaseStatus}</Badge>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={signOut}>
+        <Button variant="outline" size="sm" onClick={signOut} className="glass-btn glow-red">
           <LogOut className="mr-1 h-4 w-4" /> Sign out
         </Button>
       </div>
 
       {status === "pending" && (
-        <Card className="mb-4 border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
+        <Card className="mb-4 glass-card glow-amber border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
           <CardContent className="flex items-start gap-3 p-4 text-sm">
             <AlertCircle className="mt-0.5 h-4 w-4 text-amber-600" />
             <div>
@@ -298,7 +298,7 @@ function DashboardPage() {
       )}
 
       {status === "declined" && (
-        <Card className="mb-4 border-red-300 bg-red-50/50 dark:bg-red-950/20">
+        <Card className="mb-4 glass-card glow-red border-red-300 bg-red-50/50 dark:bg-red-950/20">
           <CardContent className="flex items-start gap-3 p-4 text-sm">
             <AlertCircle className="mt-0.5 h-4 w-4 text-red-600" />
             <div>
@@ -310,10 +310,10 @@ function DashboardPage() {
 
       {/* Rent due summary */}
       <Card
-        className={`mb-4 backdrop-blur-xl ${
+        className={`mb-4 glass-card backdrop-blur-xl ${
           rentSettled
-            ? "!border-emerald-500/40 !bg-emerald-500/10"
-            : "!border-red-500/40 !bg-red-500/10"
+            ? "glow-green !border-emerald-500/40 !bg-emerald-500/10"
+            : "glow-red !border-red-500/40 !bg-red-500/10"
         }`}
       >
         <CardHeader className="pb-2">
@@ -344,10 +344,10 @@ function DashboardPage() {
 
       {/* Account balance */}
       <Card
-        className={`mb-4 backdrop-blur-xl ${
+        className={`mb-4 glass-card backdrop-blur-xl ${
           net < 0
-            ? "!border-red-500/40 !bg-red-500/10"
-            : "!border-emerald-500/40 !bg-emerald-500/10"
+            ? "glow-red !border-red-500/40 !bg-red-500/10"
+            : "glow-green !border-emerald-500/40 !bg-emerald-500/10"
         }`}
       >
         <CardHeader className="pb-2">
@@ -429,7 +429,7 @@ function DashboardPage() {
       </Card>
 
       {/* Lease agreement */}
-      <Card className="mb-4">
+      <Card className="mb-4 glass-card">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base"><FileSignature className="h-4 w-4" /> My lease agreement</CardTitle>
           <CardDescription>
@@ -439,7 +439,7 @@ function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" size="sm" onClick={() => setLeaseOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => setLeaseOpen(true)} className="glass-btn glow-blue">
             View full lease &amp; signature
           </Button>
         </CardContent>
@@ -477,7 +477,7 @@ function DashboardPage() {
 
 
       {/* Tickets */}
-      <Card>
+      <Card className="glass-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">My maintenance tickets</CardTitle>
           <CardDescription>Track open and resolved requests</CardDescription>
