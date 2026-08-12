@@ -151,15 +151,15 @@ function Dashboard() {
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDrill(k.key); } }}
             className={`glass-card ${k.glow} cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring`}
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{k.label}</CardTitle>
-              <div className={`flex h-8 w-8 items-center justify-center rounded-md ${k.tone} ring-1 ring-inset ring-white/10`}>
+            <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 space-y-0 p-3 pb-1 sm:p-6 sm:pb-2">
+              <CardTitle className="min-w-0 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">{k.label}</CardTitle>
+              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md sm:h-8 sm:w-8 ${k.tone} ring-1 ring-inset ring-white/10`}>
                 <k.icon className="h-4 w-4" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold tracking-tight">{k.value}</div>
-              {k.sub && <p className="text-xs text-muted-foreground mt-1">{k.sub}</p>}
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="truncate text-lg font-bold tracking-tight sm:text-2xl">{k.value}</div>
+              {k.sub && <p className="mt-1 truncate text-[11px] text-muted-foreground sm:text-xs">{k.sub}</p>}
             </CardContent>
           </Card>
         ))}
