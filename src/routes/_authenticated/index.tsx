@@ -149,11 +149,11 @@ function Dashboard() {
             tabIndex={0}
             onClick={() => setDrill(k.key)}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDrill(k.key); } }}
-            className="cursor-pointer transition-colors hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+            className={`glass-card ${k.glow} cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring`}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">{k.label}</CardTitle>
-              <div className={`flex h-8 w-8 items-center justify-center rounded-md ${k.tone}`}>
+              <div className={`flex h-8 w-8 items-center justify-center rounded-md ${k.tone} ring-1 ring-inset ring-white/10`}>
                 <k.icon className="h-4 w-4" />
               </div>
             </CardHeader>
@@ -272,24 +272,24 @@ function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <CardTitle className="text-base">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <Button asChild>
+          <Button asChild className="glass-btn glow-green">
             <Link to="/payments"><Plus className="h-4 w-4" />Log Payment</Link>
           </Button>
-          <Button asChild variant="secondary">
+          <Button asChild variant="outline" className="glass-btn glow-blue">
             <Link to="/meters"><Gauge className="h-4 w-4" />Add Meter Reading</Link>
           </Button>
-          <Button asChild variant="secondary">
+          <Button asChild variant="outline" className="glass-btn glow-amber">
             <Link to="/billing"><FileText className="h-4 w-4" />Generate Monthly Bills</Link>
           </Button>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <CardTitle className="text-base">Recent Transactions</CardTitle>
         </CardHeader>
@@ -322,7 +322,7 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <CardTitle className="text-base">Tenants & Tenancy Duration</CardTitle>
         </CardHeader>
