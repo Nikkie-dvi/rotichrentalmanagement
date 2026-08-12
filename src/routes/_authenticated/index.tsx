@@ -273,10 +273,10 @@ function Dashboard() {
       </Dialog>
 
       <Card className="glass-card">
-        <CardHeader>
+        <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
           <CardTitle className="text-base">Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
+        <CardContent className="flex flex-wrap gap-2 p-4 pt-0 sm:p-6 sm:pt-0">
           <Button asChild className="glass-btn glow-green">
             <Link to="/payments"><Plus className="h-4 w-4" />Log Payment</Link>
           </Button>
@@ -290,10 +290,10 @@ function Dashboard() {
       </Card>
 
       <Card className="glass-card">
-        <CardHeader>
+        <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
           <CardTitle className="text-base">Recent Transactions</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-6 sm:pt-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -323,10 +323,10 @@ function Dashboard() {
       </Card>
 
       <Card className="glass-card">
-        <CardHeader>
+        <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
           <CardTitle className="text-base">Tenants & Tenancy Duration</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-6 sm:pt-0">
           <Table>
             <TableHeader>
               <TableRow>
