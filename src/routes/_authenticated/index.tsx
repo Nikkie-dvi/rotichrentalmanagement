@@ -140,8 +140,8 @@ function Dashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {kpis.map((k) => (
           <Card
             key={k.label}
@@ -151,15 +151,15 @@ function Dashboard() {
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDrill(k.key); } }}
             className={`glass-card ${k.glow} cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring`}
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{k.label}</CardTitle>
-              <div className={`flex h-8 w-8 items-center justify-center rounded-md ${k.tone} ring-1 ring-inset ring-white/10`}>
+            <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 space-y-0 p-3 pb-1 sm:p-6 sm:pb-2">
+              <CardTitle className="min-w-0 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">{k.label}</CardTitle>
+              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md sm:h-8 sm:w-8 ${k.tone} ring-1 ring-inset ring-white/10`}>
                 <k.icon className="h-4 w-4" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold tracking-tight">{k.value}</div>
-              {k.sub && <p className="text-xs text-muted-foreground mt-1">{k.sub}</p>}
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="truncate text-lg font-bold tracking-tight sm:text-2xl">{k.value}</div>
+              {k.sub && <p className="mt-1 truncate text-[11px] text-muted-foreground sm:text-xs">{k.sub}</p>}
             </CardContent>
           </Card>
         ))}
@@ -273,10 +273,10 @@ function Dashboard() {
       </Dialog>
 
       <Card className="glass-card">
-        <CardHeader>
+        <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
           <CardTitle className="text-base">Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
+        <CardContent className="flex flex-wrap gap-2 p-4 pt-0 sm:p-6 sm:pt-0">
           <Button asChild className="glass-btn glow-green">
             <Link to="/payments"><Plus className="h-4 w-4" />Log Payment</Link>
           </Button>
@@ -290,10 +290,10 @@ function Dashboard() {
       </Card>
 
       <Card className="glass-card">
-        <CardHeader>
+        <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
           <CardTitle className="text-base">Recent Transactions</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-6 sm:pt-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -323,10 +323,10 @@ function Dashboard() {
       </Card>
 
       <Card className="glass-card">
-        <CardHeader>
+        <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
           <CardTitle className="text-base">Tenants & Tenancy Duration</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-6 sm:pt-0">
           <Table>
             <TableHeader>
               <TableRow>
