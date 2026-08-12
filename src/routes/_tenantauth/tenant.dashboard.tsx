@@ -344,10 +344,10 @@ function DashboardPage() {
 
       {/* Account balance */}
       <Card
-        className={`mb-4 backdrop-blur-xl ${
+        className={`mb-4 glass-card backdrop-blur-xl ${
           net < 0
-            ? "!border-red-500/40 !bg-red-500/10"
-            : "!border-emerald-500/40 !bg-emerald-500/10"
+            ? "glow-red !border-red-500/40 !bg-red-500/10"
+            : "glow-green !border-emerald-500/40 !bg-emerald-500/10"
         }`}
       >
         <CardHeader className="pb-2">
@@ -429,7 +429,7 @@ function DashboardPage() {
       </Card>
 
       {/* Lease agreement */}
-      <Card className="mb-4">
+      <Card className="mb-4 glass-card">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base"><FileSignature className="h-4 w-4" /> My lease agreement</CardTitle>
           <CardDescription>
@@ -439,7 +439,7 @@ function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" size="sm" onClick={() => setLeaseOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => setLeaseOpen(true)} className="glass-btn glow-blue">
             View full lease &amp; signature
           </Button>
         </CardContent>
@@ -477,7 +477,7 @@ function DashboardPage() {
 
 
       {/* Tickets */}
-      <Card>
+      <Card className="glass-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">My maintenance tickets</CardTitle>
           <CardDescription>Track open and resolved requests</CardDescription>
