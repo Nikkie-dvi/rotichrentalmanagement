@@ -271,7 +271,7 @@ function DashboardPage() {
       <TenantBackBar title="Tenant dashboard" />
 
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex items-center justify-between gap-3 rounded-xl glass-card px-4 py-3">
         <div>
           <div className="text-xs uppercase tracking-wide text-muted-foreground">Tenant</div>
           <h1 className="text-xl font-bold leading-tight">{t.full_name}</h1>
@@ -281,13 +281,13 @@ function DashboardPage() {
             <Badge variant="outline" className={leaseClass}>{leaseStatus}</Badge>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={signOut}>
+        <Button variant="outline" size="sm" onClick={signOut} className="glass-btn glow-red">
           <LogOut className="mr-1 h-4 w-4" /> Sign out
         </Button>
       </div>
 
       {status === "pending" && (
-        <Card className="mb-4 border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
+        <Card className="mb-4 glass-card glow-amber border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
           <CardContent className="flex items-start gap-3 p-4 text-sm">
             <AlertCircle className="mt-0.5 h-4 w-4 text-amber-600" />
             <div>
@@ -298,7 +298,7 @@ function DashboardPage() {
       )}
 
       {status === "declined" && (
-        <Card className="mb-4 border-red-300 bg-red-50/50 dark:bg-red-950/20">
+        <Card className="mb-4 glass-card glow-red border-red-300 bg-red-50/50 dark:bg-red-950/20">
           <CardContent className="flex items-start gap-3 p-4 text-sm">
             <AlertCircle className="mt-0.5 h-4 w-4 text-red-600" />
             <div>
@@ -310,10 +310,10 @@ function DashboardPage() {
 
       {/* Rent due summary */}
       <Card
-        className={`mb-4 backdrop-blur-xl ${
+        className={`mb-4 glass-card backdrop-blur-xl ${
           rentSettled
-            ? "!border-emerald-500/40 !bg-emerald-500/10"
-            : "!border-red-500/40 !bg-red-500/10"
+            ? "glow-green !border-emerald-500/40 !bg-emerald-500/10"
+            : "glow-red !border-red-500/40 !bg-red-500/10"
         }`}
       >
         <CardHeader className="pb-2">
