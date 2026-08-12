@@ -79,7 +79,7 @@ export function TicketModal({ tenantId, ownerId }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="w-full">
+        <Button size="lg" className="w-full glass-btn glow-blue">
           <Wrench className="mr-2 h-4 w-4" /> Raise an issue / maintenance request
         </Button>
       </DialogTrigger>
