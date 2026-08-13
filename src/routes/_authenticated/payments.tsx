@@ -128,8 +128,13 @@ function PaymentsPage() {
         <p className="text-sm text-muted-foreground">Log payments; balances auto-adjust across invoices.</p>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Log New Payment</CardTitle></CardHeader>
+      <Card className="glass-card glow-green">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Log New Payment</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Step 1: pick the tenant · Step 2: enter the amount they paid · Step 3: tap Log Payment to save and print a receipt.
+          </p>
+        </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-6">
             <div className="md:col-span-2">
@@ -142,6 +147,9 @@ function PaymentsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              {!tenantId && (
+                <p className="text-xs text-muted-foreground mt-1">Start here — choose who paid.</p>
+              )}
               {tenantId && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Outstanding: <span className="font-semibold">{money(dueForTenant)}</span>
@@ -164,8 +172,13 @@ function PaymentsPage() {
             <div><Label>Reference</Label><Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="e.g. QGH123" /></div>
           </div>
           <div className="mt-4 flex justify-end">
-            <Button onClick={() => log.mutate()} disabled={log.isPending}>
-              <Plus className="h-4 w-4" />Log Payment
+            <Button
+              onClick={() => log.mutate()}
+              disabled={log.isPending || !tenantId || !(Number(amount) > 0)}
+              className="w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4" />
+              {log.isPending ? "Saving…" : !tenantId ? "Select a tenant first" : !(Number(amount) > 0) ? "Enter an amount" : "Log Payment"}
             </Button>
           </div>
         </CardContent>
