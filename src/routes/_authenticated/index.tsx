@@ -145,6 +145,23 @@ function Dashboard() {
     },
   });
 
+  const qc = useQueryClient();
+  const deleteInvoice = useMutation({
+    mutationFn: async (invoiceId: string) => {
+      // Keep payment history, just unlink it from the invoice being removed.
+      await supabase.from("payments").update({ invoice_id: null }).eq("invoice_id", invoiceId);
+      await supabase.from("mpesa_transactions").update({ invoice_id: null }).eq("invoice_id", invoiceId);
+      const { error } = await supabase.from("invoices").delete().eq("id", invoiceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries();
+      toast.success("Invoice removed — arrears rolled back");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+
   const drillTitle: Record<Exclude<DrillKey, null>, string> = {
     units: "All Units",
     occupancy: "Occupied Units",
