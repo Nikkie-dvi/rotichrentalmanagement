@@ -247,6 +247,7 @@ function Dashboard() {
                   <TableHead>Area / Unit</TableHead>
                   <TableHead>Month</TableHead>
                   <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Remove</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -260,15 +261,42 @@ function Dashboard() {
                       <TableCell className="text-muted-foreground">{area}{unit ? ` · ${unit}` : ""}</TableCell>
                       <TableCell>{i.month_year}</TableCell>
                       <TableCell className="text-right font-semibold text-destructive">{money(Number(i.balance_remaining))}</TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" aria-label="Delete invoice">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="w-[calc(100vw-1.5rem)] max-w-md">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove this invoice?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Deletes the {i.month_year} invoice for {i.tenants?.full_name ?? "this tenant"} ({money(Number(i.total_due))}) and rolls the arrears back to what they were before it. Recorded payments are kept but unlinked.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteInvoice.mutate(i.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remove invoice
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
                 {arrearsList && arrearsList.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No outstanding arrears.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No outstanding arrears.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
           )}
+
         </DialogContent>
       </Dialog>
 
