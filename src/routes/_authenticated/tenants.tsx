@@ -215,7 +215,9 @@ function TenantsPage() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <p className="text-xs text-muted-foreground sm:hidden">Tip: swipe a card left to reveal actions.</p>
+
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
           const balance = balances?.get(t.id) ?? 0;
           const risk: Risk = risks.get(t.id) ?? {
@@ -224,40 +226,14 @@ function TenantsPage() {
             monthsUnpaid: 0,
             daysLate: 0,
           };
-          const flaggedCard = risk.level === "overdue" || risk.level === "high";
           return (
-            <Card key={t.id} className={flaggedCard ? "border-l-4 border-l-destructive" : undefined}>
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <CardTitle className="text-base">{t.full_name}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-1">{t.phone_number ?? "No phone"}</p>
-                  </div>
-                  <RiskBadge risk={risk} />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <Row label="Property" value={t.units?.properties?.name ?? "—"} />
-                <Row label="Unit" value={t.units?.unit_number ?? "—"} />
-                <Row label="Rent Due" value={money(Number(t.units?.rent_amount ?? 0))} />
-                <Row label="Deposit" value={money(Number(t.deposit_paid))} />
-                <Row label="Move-in" value={t.move_in_date ?? "—"} />
-                <Row label="Due Day" value={t.rent_due_day ? `${t.rent_due_day} of month` : "—"} />
-                <Row label="Balance" value={<span className={balance > 0 ? "text-destructive font-semibold" : "text-primary font-semibold"}>{money(balance)}</span>} />
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <MpesaStkButton
-                    tenantId={t.id}
-                    defaultPhone={t.phone_number}
-                    defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
-                    label="STK Push"
-                    className="w-full"
-                  />
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => moveOut.mutate(t)}>
-                    <LogOut className="h-4 w-4" />Move Out
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <TenantCard
+              key={t.id}
+              tenant={t}
+              balance={balance}
+              risk={risk}
+              onMoveOut={() => moveOut.mutate(t)}
+            />
           );
         })}
         {active.length === 0 && (
@@ -266,6 +242,7 @@ function TenantsPage() {
           </Card>
         )}
       </div>
+
 
       {inactive.length > 0 && (
         <Card>
