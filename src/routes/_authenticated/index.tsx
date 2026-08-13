@@ -37,6 +37,17 @@ export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
 });
 
+// An invoice only counts as arrears once its due date has actually passed.
+function isDue(monthYear: string, dueDay: number | null | undefined, moveIn?: string | null) {
+  if (!monthYear) return true;
+  const [y, m] = monthYear.split("-").map(Number);
+  if (!y || !m) return true;
+  const day = Number(dueDay) || (moveIn ? new Date(moveIn).getUTCDate() : 0) || 1;
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const due = new Date(Date.UTC(y, m - 1, Math.min(day, lastDay), 23, 59, 59));
+  return Date.now() >= due.getTime();
+}
+
 function Dashboard() {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
@@ -44,7 +55,7 @@ function Dashboard() {
       const monthKey = new Date().toISOString().slice(0, 7);
       const [{ data: units }, { data: invoices }, { data: payments }] = await Promise.all([
         supabase.from("units").select("id,status"),
-        supabase.from("invoices").select("balance_remaining,total_due"),
+        supabase.from("invoices").select("balance_remaining,total_due,month_year,tenants(rent_due_day,move_in_date)"),
         supabase.from("payments").select("amount_paid,payment_date"),
       ]);
       const totalUnits = units?.length ?? 0;
@@ -52,10 +63,14 @@ function Dashboard() {
       const occupancy = totalUnits ? Math.round((occupied / totalUnits) * 100) : 0;
       const collected =
         payments?.filter((p: any) => (p.payment_date ?? "").startsWith(monthKey)).reduce((s: number, p: any) => s + Number(p.amount_paid), 0) ?? 0;
-      const arrears = invoices?.reduce((s: number, i: any) => s + Number(i.balance_remaining), 0) ?? 0;
+      const arrears =
+        invoices
+          ?.filter((i: any) => isDue(i.month_year, i.tenants?.rent_due_day, i.tenants?.move_in_date))
+          .reduce((s: number, i: any) => s + Number(i.balance_remaining), 0) ?? 0;
       return { totalUnits, occupied, occupancy, collected, arrears };
     },
   });
+
 
   const { data: recent } = useQuery({
     queryKey: ["recent-payments"],
@@ -138,12 +153,14 @@ function Dashboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("invoices")
-        .select("id,month_year,balance_remaining,total_due,status,tenants(full_name,units(unit_number,properties(name,location)))")
+        .select("id,month_year,balance_remaining,total_due,status,tenants(full_name,rent_due_day,move_in_date,units(unit_number,properties(name,location)))")
         .gt("balance_remaining", 0)
         .order("month_year", { ascending: false });
-      return data ?? [];
+      // Hide invoices whose due date hasn't been reached yet — they aren't arrears.
+      return (data ?? []).filter((i: any) => isDue(i.month_year, i.tenants?.rent_due_day, i.tenants?.move_in_date));
     },
   });
+
 
   const qc = useQueryClient();
   const deleteInvoice = useMutation({
