@@ -1,14 +1,27 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Building2, Users, DollarSign, AlertCircle, Plus, Gauge, FileText } from "lucide-react";
+import { toast } from "sonner";
+import { Building2, Users, DollarSign, AlertCircle, Plus, Gauge, FileText, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+
 
 type DrillKey = "units" | "occupancy" | "collected" | "arrears" | null;
 
@@ -132,6 +145,23 @@ function Dashboard() {
     },
   });
 
+  const qc = useQueryClient();
+  const deleteInvoice = useMutation({
+    mutationFn: async (invoiceId: string) => {
+      // Keep payment history, just unlink it from the invoice being removed.
+      await supabase.from("payments").update({ invoice_id: null }).eq("invoice_id", invoiceId);
+      await supabase.from("mpesa_transactions").update({ invoice_id: null }).eq("invoice_id", invoiceId);
+      const { error } = await supabase.from("invoices").delete().eq("id", invoiceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries();
+      toast.success("Invoice removed — arrears rolled back");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+
   const drillTitle: Record<Exclude<DrillKey, null>, string> = {
     units: "All Units",
     occupancy: "Occupied Units",
@@ -247,6 +277,7 @@ function Dashboard() {
                   <TableHead>Area / Unit</TableHead>
                   <TableHead>Month</TableHead>
                   <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Remove</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -260,15 +291,42 @@ function Dashboard() {
                       <TableCell className="text-muted-foreground">{area}{unit ? ` · ${unit}` : ""}</TableCell>
                       <TableCell>{i.month_year}</TableCell>
                       <TableCell className="text-right font-semibold text-destructive">{money(Number(i.balance_remaining))}</TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" aria-label="Delete invoice">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="w-[calc(100vw-1.5rem)] max-w-md">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove this invoice?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Deletes the {i.month_year} invoice for {i.tenants?.full_name ?? "this tenant"} ({money(Number(i.total_due))}) and rolls the arrears back to what they were before it. Recorded payments are kept but unlinked.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteInvoice.mutate(i.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remove invoice
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
                 {arrearsList && arrearsList.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No outstanding arrears.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No outstanding arrears.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
           )}
+
         </DialogContent>
       </Dialog>
 

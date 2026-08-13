@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -215,7 +215,9 @@ function TenantsPage() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <p className="text-xs text-muted-foreground sm:hidden">Tip: swipe a card left to reveal actions.</p>
+
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
           const balance = balances?.get(t.id) ?? 0;
           const risk: Risk = risks.get(t.id) ?? {
@@ -224,40 +226,14 @@ function TenantsPage() {
             monthsUnpaid: 0,
             daysLate: 0,
           };
-          const flaggedCard = risk.level === "overdue" || risk.level === "high";
           return (
-            <Card key={t.id} className={flaggedCard ? "border-l-4 border-l-destructive" : undefined}>
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <CardTitle className="text-base">{t.full_name}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-1">{t.phone_number ?? "No phone"}</p>
-                  </div>
-                  <RiskBadge risk={risk} />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <Row label="Property" value={t.units?.properties?.name ?? "—"} />
-                <Row label="Unit" value={t.units?.unit_number ?? "—"} />
-                <Row label="Rent Due" value={money(Number(t.units?.rent_amount ?? 0))} />
-                <Row label="Deposit" value={money(Number(t.deposit_paid))} />
-                <Row label="Move-in" value={t.move_in_date ?? "—"} />
-                <Row label="Due Day" value={t.rent_due_day ? `${t.rent_due_day} of month` : "—"} />
-                <Row label="Balance" value={<span className={balance > 0 ? "text-destructive font-semibold" : "text-primary font-semibold"}>{money(balance)}</span>} />
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <MpesaStkButton
-                    tenantId={t.id}
-                    defaultPhone={t.phone_number}
-                    defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
-                    label="STK Push"
-                    className="w-full"
-                  />
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => moveOut.mutate(t)}>
-                    <LogOut className="h-4 w-4" />Move Out
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <TenantCard
+              key={t.id}
+              tenant={t}
+              balance={balance}
+              risk={risk}
+              onMoveOut={() => moveOut.mutate(t)}
+            />
           );
         })}
         {active.length === 0 && (
@@ -266,6 +242,7 @@ function TenantsPage() {
           </Card>
         )}
       </div>
+
 
       {inactive.length > 0 && (
         <Card>
@@ -283,6 +260,103 @@ function TenantsPage() {
     </div>
   );
 }
+
+function TenantCard({
+  tenant: t,
+  balance,
+  risk,
+  onMoveOut,
+}: {
+  tenant: any;
+  balance: number;
+  risk: Risk;
+  onMoveOut: () => void;
+}) {
+  const flagged = risk.level === "overdue" || risk.level === "high";
+  const [dx, setDx] = useState(0);
+  const [open, setOpen] = useState(false);
+  const startX = useRef<number | null>(null);
+  const REVEAL = 132;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (startX.current === null) return;
+    const delta = e.touches[0].clientX - startX.current + (open ? -REVEAL : 0);
+    setDx(Math.max(-REVEAL, Math.min(0, delta)));
+  };
+  const onTouchEnd = () => {
+    startX.current = null;
+    const shouldOpen = dx < -REVEAL / 2;
+    setOpen(shouldOpen);
+    setDx(0);
+  };
+
+  const translate = dx !== 0 ? dx : open ? -REVEAL : 0;
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Swipe actions (mobile) */}
+      <div className="absolute inset-y-0 right-0 flex w-[132px] items-stretch gap-1 p-1 sm:hidden">
+        <MpesaStkButton
+          tenantId={t.id}
+          defaultPhone={t.phone_number}
+          defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
+          label="STK"
+          className="h-full w-1/2 rounded-lg"
+        />
+        <Button variant="destructive" className="h-full w-1/2 flex-col gap-1 rounded-lg px-0 text-xs" onClick={onMoveOut}>
+          <LogOut className="h-4 w-4" />
+          Move Out
+        </Button>
+      </div>
+
+      <Card
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={{ transform: `translateX(${translate}px)` }}
+        className={`glass-card relative touch-pan-y transition-transform duration-200 ${flagged ? "border-l-4 border-l-destructive" : ""}`}
+      >
+        <CardHeader className="p-4 pb-2">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+            <div className="min-w-0">
+              <CardTitle className="truncate text-base">{t.full_name}</CardTitle>
+              <p className="mt-1 truncate text-xs text-muted-foreground">{t.phone_number ?? "No phone"}</p>
+            </div>
+            <div className="shrink-0"><RiskBadge risk={risk} /></div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-2 p-4 pt-0 text-sm">
+          <Row label="Property" value={t.units?.properties?.name ?? "—"} />
+          <Row label="Unit" value={t.units?.unit_number ?? "—"} />
+          <Row label="Rent Due" value={money(Number(t.units?.rent_amount ?? 0))} />
+          <Row label="Deposit" value={money(Number(t.deposit_paid))} />
+          <Row label="Move-in" value={t.move_in_date ?? "—"} />
+          <Row label="Due Day" value={t.rent_due_day ? `${t.rent_due_day} of month` : "—"} />
+          <Row
+            label="Balance"
+            value={<span className={balance > 0 ? "font-semibold text-destructive" : "font-semibold text-primary"}>{money(balance)}</span>}
+          />
+          <div className="mt-2 hidden grid-cols-2 gap-2 sm:grid">
+            <MpesaStkButton
+              tenantId={t.id}
+              defaultPhone={t.phone_number}
+              defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
+              label="STK Push"
+              className="w-full"
+            />
+            <Button size="sm" variant="outline" className="w-full" onClick={onMoveOut}>
+              <LogOut className="h-4 w-4" />Move Out
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
