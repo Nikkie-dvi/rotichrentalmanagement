@@ -308,39 +308,40 @@ function DashboardPage() {
         </Card>
       )}
 
-      {/* Rent due summary */}
-      <Card
-        className={`mb-4 glass-card backdrop-blur-xl ${
-          rentSettled
-            ? "glow-green !border-emerald-500/40 !bg-emerald-500/10"
-            : "glow-red !border-red-500/40 !bg-red-500/10"
-        }`}
-      >
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base"><CalendarClock className="h-4 w-4" /> Next rent due</CardTitle>
-          <CardDescription className={rentSettled ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}>
-            {rentSettled ? "Rent is paid up — nothing due right now." : "Rent is due — please clear your balance."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-baseline justify-between gap-3">
-          <div>
-            <div className="text-2xl font-bold">{unit ? KES(Number(unit.rent_amount)) : "—"}</div>
-            <div className="text-sm text-muted-foreground">
-              {nextDue ? nextDue.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "—"}
+      {/* Rent due summary — floating, detached bar */}
+      <div className="relative z-10 mb-6 px-0.5">
+        <Card
+          className={`floating-panel glass-card border-0 !p-0 ${
+            rentSettled ? "!bg-emerald-500/12" : "!bg-red-500/12"
+          }`}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base"><CalendarClock className="h-4 w-4" /> Next rent due</CardTitle>
+            <CardDescription className={rentSettled ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}>
+              {rentSettled ? "Rent is paid up — nothing due right now." : "Rent is due — please clear your balance."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-baseline justify-between gap-3">
+            <div>
+              <div className="text-2xl font-bold">{unit ? KES(Number(unit.rent_amount)) : "—"}</div>
+              <div className="text-sm text-muted-foreground">
+                {nextDue ? nextDue.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "—"}
+              </div>
             </div>
-          </div>
-          <Badge
-            variant="outline"
-            className={`text-sm backdrop-blur ${
-              rentSettled
-                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                : "border-red-500/40 bg-red-500/15 text-red-700 dark:text-red-300"
-            }`}
-          >
-            <Wallet className="mr-1 h-3.5 w-3.5" /> {nextDue?.label ?? "—"}
-          </Badge>
-        </CardContent>
-      </Card>
+            <Badge
+              variant="outline"
+              className={`text-sm backdrop-blur ${
+                rentSettled
+                  ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                  : "border-red-500/40 bg-red-500/15 text-red-700 dark:text-red-300"
+              }`}
+            >
+              <Wallet className="mr-1 h-3.5 w-3.5" /> {nextDue?.label ?? "—"}
+            </Badge>
+          </CardContent>
+        </Card>
+      </div>
+
 
       {/* Account balance */}
       <Card
