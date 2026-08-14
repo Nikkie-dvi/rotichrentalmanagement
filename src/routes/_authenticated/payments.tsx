@@ -121,6 +121,34 @@ function PaymentsPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const errors = useMemo(() => {
+    const e: Record<string, string> = {};
+    if (!tenantId) e.tenant = "Choose the tenant who paid.";
+    if (!amount.trim()) e.amount = "Enter the amount received.";
+    else if (!(Number(amount) > 0)) e.amount = "Amount must be greater than 0.";
+    if (!date) e.date = "Pick the payment date.";
+    else if (date > new Date().toISOString().slice(0, 10)) e.date = "Date can't be in the future.";
+    if (method !== "cash" && !ref.trim()) e.ref = "Add the M-Pesa / bank reference.";
+    else if (ref.length > 40) e.ref = "Reference is too long (max 40).";
+    return e;
+  }, [tenantId, amount, date, method, ref]);
+
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const show = (k: string) => (submitted || touched[k]) && errors[k];
+  const invalidCls = (k: string) => (show(k) ? "border-destructive focus-visible:ring-destructive" : "");
+  const Err = ({ k }: { k: string }) =>
+    show(k) ? <p className="mt-1 flex items-center gap-1 text-xs text-destructive"><AlertCircle className="h-3 w-3" />{errors[k]}</p> : null;
+
+  const submit = () => {
+    setSubmitted(true);
+    if (Object.keys(errors).length) {
+      toast.error("Please fix the highlighted fields");
+      return;
+    }
+    log.mutate();
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -139,15 +167,22 @@ function PaymentsPage() {
           <div className="grid gap-3 md:grid-cols-6">
             <div className="md:col-span-2">
               <Label>Tenant</Label>
-              <Select value={tenantId} onValueChange={setTenantId}>
-                <SelectTrigger><SelectValue placeholder="Select tenant" /></SelectTrigger>
+              <Select
+                value={tenantId}
+                onValueChange={(v) => {
+                  setTenantId(v);
+                  setTouched((t) => ({ ...t, tenant: true }));
+                }}
+              >
+                <SelectTrigger className={invalidCls("tenant")}><SelectValue placeholder="Select tenant" /></SelectTrigger>
                 <SelectContent>
                   {(tenants ?? []).map((t: any) => (
                     <SelectItem key={t.id} value={t.id}>{t.full_name} — {t.units?.unit_number ?? "—"}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {!tenantId && (
+              <Err k="tenant" />
+              {!tenantId && !show("tenant") && (
                 <p className="text-xs text-muted-foreground mt-1">Start here — choose who paid.</p>
               )}
               {tenantId && (
@@ -156,8 +191,29 @@ function PaymentsPage() {
                 </p>
               )}
             </div>
-            <div><Label>Date</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-            <div><Label>Amount</Label><Input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
+            <div>
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                onBlur={() => setTouched((t) => ({ ...t, date: true }))}
+                className={invalidCls("date")}
+              />
+              <Err k="date" />
+            </div>
+            <div>
+              <Label>Amount</Label>
+              <Input
+                type="number"
+                min={0}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                onBlur={() => setTouched((t) => ({ ...t, amount: true }))}
+                className={invalidCls("amount")}
+              />
+              <Err k="amount" />
+            </div>
             <div>
               <Label>Method</Label>
               <Select value={method} onValueChange={setMethod}>
@@ -169,20 +225,34 @@ function PaymentsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>Reference</Label><Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="e.g. QGH123" /></div>
+            <div>
+              <Label>Reference{method === "cash" ? " (optional)" : ""}</Label>
+              <Input
+                value={ref}
+                onChange={(e) => setRef(e.target.value)}
+                onBlur={() => setTouched((t) => ({ ...t, ref: true }))}
+                placeholder="e.g. QGH123"
+                maxLength={40}
+                className={invalidCls("ref")}
+              />
+              <Err k="ref" />
+            </div>
           </div>
+          {submitted && Object.keys(errors).length > 0 && (
+            <div className="mt-3 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+              <AlertCircle className="mt-0.5 h-3.5 w-3.5" />
+              <span>{Object.keys(errors).length} field{Object.keys(errors).length > 1 ? "s" : ""} need attention before you can log this payment.</span>
+            </div>
+          )}
           <div className="mt-4 flex justify-end">
-            <Button
-              onClick={() => log.mutate()}
-              disabled={log.isPending || !tenantId || !(Number(amount) > 0)}
-              className="w-full sm:w-auto"
-            >
+            <Button onClick={submit} disabled={log.isPending} className="w-full sm:w-auto">
               <Plus className="h-4 w-4" />
-              {log.isPending ? "Saving…" : !tenantId ? "Select a tenant first" : !(Number(amount) > 0) ? "Enter an amount" : "Log Payment"}
+              {log.isPending ? "Saving…" : "Log Payment"}
             </Button>
           </div>
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader><CardTitle className="text-base">Payment Ledger</CardTitle></CardHeader>
