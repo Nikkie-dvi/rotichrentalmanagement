@@ -308,46 +308,47 @@ function DashboardPage() {
         </Card>
       )}
 
-      {/* Rent due summary */}
-      <Card
-        className={`mb-4 glass-card backdrop-blur-xl ${
-          rentSettled
-            ? "glow-green !border-emerald-500/40 !bg-emerald-500/10"
-            : "glow-red !border-red-500/40 !bg-red-500/10"
-        }`}
-      >
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base"><CalendarClock className="h-4 w-4" /> Next rent due</CardTitle>
-          <CardDescription className={rentSettled ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}>
-            {rentSettled ? "Rent is paid up — nothing due right now." : "Rent is due — please clear your balance."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-baseline justify-between gap-3">
-          <div>
-            <div className="text-2xl font-bold">{unit ? KES(Number(unit.rent_amount)) : "—"}</div>
-            <div className="text-sm text-muted-foreground">
-              {nextDue ? nextDue.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "—"}
+      {/* Rent due summary — floating, detached bar */}
+      <div className="relative z-10 mb-6 px-0.5">
+        <Card
+          className={`floating-panel glass-card border-0 !p-0 ${
+            rentSettled ? "!bg-emerald-500/12" : "!bg-red-500/12"
+          }`}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base"><CalendarClock className="h-4 w-4" /> Next rent due</CardTitle>
+            <CardDescription className={rentSettled ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}>
+              {rentSettled ? "Rent is paid up — nothing due right now." : "Rent is due — please clear your balance."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-baseline justify-between gap-3">
+            <div>
+              <div className="text-2xl font-bold">{unit ? KES(Number(unit.rent_amount)) : "—"}</div>
+              <div className="text-sm text-muted-foreground">
+                {nextDue ? nextDue.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "—"}
+              </div>
             </div>
-          </div>
-          <Badge
-            variant="outline"
-            className={`text-sm backdrop-blur ${
-              rentSettled
-                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                : "border-red-500/40 bg-red-500/15 text-red-700 dark:text-red-300"
-            }`}
-          >
-            <Wallet className="mr-1 h-3.5 w-3.5" /> {nextDue?.label ?? "—"}
-          </Badge>
-        </CardContent>
-      </Card>
+            <Badge
+              variant="outline"
+              className={`text-sm backdrop-blur ${
+                rentSettled
+                  ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                  : "border-red-500/40 bg-red-500/15 text-red-700 dark:text-red-300"
+              }`}
+            >
+              <Wallet className="mr-1 h-3.5 w-3.5" /> {nextDue?.label ?? "—"}
+            </Badge>
+          </CardContent>
+        </Card>
+      </div>
+
 
       {/* Account balance */}
       <Card
         className={`mb-4 glass-card backdrop-blur-xl ${
           net < 0
-            ? "glow-red !border-red-500/40 !bg-red-500/10"
-            : "glow-green !border-emerald-500/40 !bg-emerald-500/10"
+            ? "!border-red-500/30 !bg-red-500/5"
+            : "!border-emerald-500/30 !bg-emerald-500/5"
         }`}
       >
         <CardHeader className="pb-2">
@@ -365,28 +366,36 @@ function DashboardPage() {
           </div>
           <CardDescription>Rent is added automatically each month on your due date, and updates when payments are recorded.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3">
+        <CardContent className="grid gap-4">
           {accountQuery.isLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
           ) : (
             <>
-              <div className="flex items-baseline justify-between gap-3">
-                <div className={`text-2xl font-bold ${net < 0 ? "text-destructive" : net > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
-                  {net > 0 ? "+" : net < 0 ? "-" : ""}
-                  {KES(Math.abs(net))}
+              {/* Detached, floating balance panel — sits above the invoice list */}
+              <div
+                className={`floating-panel relative z-10 grid gap-2 p-4 ${
+                  net < 0 ? "bg-red-500/12" : "bg-emerald-500/12"
+                }`}
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className={`text-3xl font-bold tracking-tight ${net < 0 ? "text-destructive" : net > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                    {net > 0 ? "+" : net < 0 ? "-" : ""}
+                    {KES(Math.abs(net))}
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`backdrop-blur ${net < 0 ? "border-red-500/40 bg-red-500/15 text-red-700 dark:text-red-300" : "border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"}`}
+                  >
+                    {net < 0 ? "Balance due" : net > 0 ? "Credit" : "Cleared"}
+                  </Badge>
                 </div>
-                <Badge
-                  variant="outline"
-                  className={`backdrop-blur ${net < 0 ? "border-red-500/40 bg-red-500/15 text-red-700 dark:text-red-300" : "border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"}`}
-                >
-                  {net < 0 ? "Balance due" : net > 0 ? "Credit" : "Cleared"}
-                </Badge>
+                {net > 0 && (
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                    You've paid ahead. This credit of {KES(net)} is carried forward to next month's rent.
+                  </p>
+                )}
               </div>
-              {net > 0 && (
-                <p className="text-xs text-emerald-700 dark:text-emerald-400">
-                  You've paid ahead. This credit of {KES(net)} is carried forward to next month's rent.
-                </p>
-              )}
+
 
 
               {accountQuery.data?.invoices.length ? (

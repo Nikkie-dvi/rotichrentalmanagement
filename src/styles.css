@@ -259,7 +259,26 @@
   box-shadow: 0 0 32px -4px color-mix(in oklab, var(--warning) 45%, transparent);
 }
 
+/* Detached, hovering panel — reads as lifted off the page */
+@utility floating-panel {
+  border-radius: 1.25rem;
+  backdrop-filter: blur(22px) saturate(160%);
+  box-shadow:
+    0 22px 45px -18px color-mix(in oklab, var(--card-foreground) 45%, transparent),
+    0 6px 14px -8px color-mix(in oklab, var(--card-foreground) 30%, transparent),
+    inset 0 1px 0 color-mix(in oklab, white 14%, transparent);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+}
+.floating-panel:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 30px 60px -20px color-mix(in oklab, var(--card-foreground) 50%, transparent),
+    0 8px 18px -10px color-mix(in oklab, var(--card-foreground) 32%, transparent),
+    inset 0 1px 0 color-mix(in oklab, white 16%, transparent);
+}
+
 @utility glass-btn {
+
   background: color-mix(in oklab, var(--card) 50%, transparent);
   backdrop-filter: blur(12px);
   border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
