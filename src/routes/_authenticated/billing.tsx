@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
-import { MpesaStkButton } from "@/components/mpesa-stk-button";
+import { RecordPaymentButton } from "@/components/record-payment-button";
 
 export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({
@@ -288,10 +288,9 @@ function BillingPage() {
               </div>
               <p className="text-xs text-muted-foreground">Please pay via M-Pesa / Bank / Cash. Reference your unit number.</p>
               <div className="grid grid-cols-2 gap-2">
-                <MpesaStkButton
+                <RecordPaymentButton
                   tenantId={preview.tenant_id}
                   invoiceId={preview.id}
-                  defaultPhone={preview.tenants?.phone_number}
                   defaultAmount={Number(preview.balance_remaining) || Number(preview.total_due)}
                   label="Request via STK"
                   className="w-full"
