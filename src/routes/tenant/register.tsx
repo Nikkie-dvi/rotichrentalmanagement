@@ -191,18 +191,55 @@ function RegisterPage() {
       {step === 2 && (
         <Card>
           <CardHeader>
-            <CardTitle>Pick your unit</CardTitle>
-            <CardDescription>Step 2 of 3 — choose from available vacant units</CardDescription>
+            <CardTitle>Find your landlord</CardTitle>
+            <CardDescription>Step 2 of 3 — enter your landlord's 4-digit code, then pick a unit</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="landlord-code">Landlord code</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="landlord-code"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="e.g. 4821"
+                  value={codeInput}
+                  onChange={(e) => {
+                    setCodeInput(e.target.value.replace(/\D/g, "").slice(0, 4));
+                    setUnitId("");
+                  }}
+                  className="tracking-[0.4em] text-center font-semibold"
+                />
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (!/^\d{4}$/.test(codeInput)) return toast.error("Enter the 4-digit landlord code");
+                    setUnitId("");
+                    setSearchCode(codeInput);
+                  }}
+                >
+                  Search
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Ask your landlord for their code — only their units will show.</p>
+            </div>
+
+            {vacantQuery.data?.landlordName && (
+              <p className="text-sm font-medium">Showing units from {vacantQuery.data.landlordName}</p>
+            )}
             {vacantQuery.isLoading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading vacant units…</div>}
-            {vacantQuery.isError && <p className="text-sm text-destructive">Could not load units. Try again.</p>}
-            {vacantQuery.data && vacantQuery.data.length === 0 && (
-              <p className="text-sm text-muted-foreground">No vacant units available right now. Please check back later.</p>
+            {vacantQuery.isError && (
+              <p className="text-sm text-destructive">
+                {vacantQuery.error instanceof Error ? vacantQuery.error.message : "Could not load units. Try again."}
+              </p>
+            )}
+            {vacantQuery.data && units.length === 0 && (
+              <p className="text-sm text-muted-foreground">No vacant units available for this landlord right now.</p>
             )}
 
             <div className="grid gap-2">
-              {vacantQuery.data?.map((u) => {
+              {units.map((u) => {
+
                 const selected = u.id === unitId;
                 return (
                   <button
