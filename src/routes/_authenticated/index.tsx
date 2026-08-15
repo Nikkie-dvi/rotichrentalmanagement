@@ -188,7 +188,9 @@ function Dashboard() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <LandlordCodeCard />
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+
         {kpis.map((k) => (
           <Card
             key={k.label}
