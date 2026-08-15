@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+import { useLandlordAccount } from "@/hooks/use-landlord-account";
 
 
 type DrillKey = "units" | "occupancy" | "collected" | "arrears" | null;
