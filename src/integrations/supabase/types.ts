@@ -69,6 +69,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          landlord_code: string | null
           last_payment_amount: number | null
           last_payment_at: string | null
           last_payment_reference: string | null
@@ -87,6 +88,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          landlord_code?: string | null
           last_payment_amount?: number | null
           last_payment_at?: string | null
           last_payment_reference?: string | null
@@ -105,6 +107,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          landlord_code?: string | null
           last_payment_amount?: number | null
           last_payment_at?: string | null
           last_payment_reference?: string | null
@@ -609,7 +612,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_landlord_code: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
-import { MpesaStkButton } from "@/components/mpesa-stk-button";
+import { RecordPaymentButton } from "@/components/record-payment-button";
 
 export const Route = createFileRoute("/_authenticated/tenants")({
   head: () => ({
@@ -299,11 +299,10 @@ function TenantCard({
     <div className="relative overflow-hidden rounded-xl">
       {/* Swipe actions (mobile) */}
       <div className="absolute inset-y-0 right-0 flex w-[132px] items-stretch gap-1 p-1 sm:hidden">
-        <MpesaStkButton
+        <RecordPaymentButton
           tenantId={t.id}
-          defaultPhone={t.phone_number}
           defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
-          label="STK"
+          label="Pay"
           className="h-full w-1/2 rounded-lg"
         />
         <Button variant="destructive" className="h-full w-1/2 flex-col gap-1 rounded-lg px-0 text-xs" onClick={onMoveOut}>
@@ -340,11 +339,10 @@ function TenantCard({
             value={<span className={balance > 0 ? "font-semibold text-destructive" : "font-semibold text-primary"}>{money(balance)}</span>}
           />
           <div className="mt-2 hidden grid-cols-2 gap-2 sm:grid">
-            <MpesaStkButton
+            <RecordPaymentButton
               tenantId={t.id}
-              defaultPhone={t.phone_number}
               defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
-              label="STK Push"
+              label="Record Payment"
               className="w-full"
             />
             <Button size="sm" variant="outline" className="w-full" onClick={onMoveOut}>
