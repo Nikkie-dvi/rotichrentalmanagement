@@ -22,6 +22,7 @@ export type LandlordAccount = {
   last_payment_at: string | null;
   last_payment_amount: number | null;
   last_payment_reference: string | null;
+  landlord_code: string | null;
   created_at: string;
 };
 

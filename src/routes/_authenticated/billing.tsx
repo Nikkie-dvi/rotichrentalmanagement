@@ -292,7 +292,7 @@ function BillingPage() {
                   tenantId={preview.tenant_id}
                   invoiceId={preview.id}
                   defaultAmount={Number(preview.balance_remaining) || Number(preview.total_due)}
-                  label="Request via STK"
+                  label="Record Payment"
                   className="w-full"
                 />
                 <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4" />Print / PDF</Button>
