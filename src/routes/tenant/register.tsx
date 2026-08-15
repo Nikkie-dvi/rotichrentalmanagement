@@ -46,17 +46,23 @@ function RegisterPage() {
   const [signature, setSignature] = useState<SignatureValue | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [searchCode, setSearchCode] = useState("");
 
   const vacantQuery = useQuery({
-    queryKey: ["tenant", "vacant-units"],
-    queryFn: () => getVacantUnits(),
-    enabled: step === 2,
+    queryKey: ["tenant", "vacant-units", searchCode],
+    queryFn: () => getVacantUnits({ data: { code: searchCode } }),
+    enabled: step === 2 && /^\d{4}$/.test(searchCode),
+    retry: false,
   });
 
+  const units = vacantQuery.data?.units ?? [];
+
   const selectedUnit = useMemo(
-    () => vacantQuery.data?.find((u) => u.id === unitId) ?? null,
-    [vacantQuery.data, unitId],
+    () => units.find((u) => u.id === unitId) ?? null,
+    [units, unitId],
   );
+
 
   useEffect(() => {
     // Already-signed-in users skip straight to dashboard.
