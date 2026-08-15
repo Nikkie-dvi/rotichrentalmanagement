@@ -25,6 +25,39 @@ import { money } from "@/lib/types";
 
 type DrillKey = "units" | "occupancy" | "collected" | "arrears" | null;
 
+/** Shows the landlord's unique 4-digit code that tenants use to find their units. */
+function LandlordCodeCard() {
+  const { data: account } = useLandlordAccount();
+  if (!account?.landlord_code) return null;
+  return (
+    <Card className="glass-card glow-primary">
+      <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium">Your landlord code</p>
+          <p className="text-xs text-muted-foreground">
+            Share this with tenants — they enter it when registering to see only your vacant units.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-lg border bg-background/60 px-4 py-2 text-2xl font-bold tracking-[0.35em]">
+            {account.landlord_code}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              navigator.clipboard?.writeText(account.landlord_code ?? "");
+              toast.success("Code copied");
+            }}
+          >
+            Copy
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
