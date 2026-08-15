@@ -5,22 +5,41 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export const getVacantUnits = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("units")
-    .select("id, unit_number, rent_amount, property_id, properties(name, location)")
-    .eq("status", "vacant")
-    .order("unit_number", { ascending: true });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((u: any) => ({
-    id: u.id as string,
-    unit_number: u.unit_number as string,
-    rent_amount: Number(u.rent_amount) || 0,
-    property_name: (u.properties?.name as string) ?? null,
-    property_location: (u.properties?.location as string) ?? null,
-  }));
-});
+export const getVacantUnits = createServerFn({ method: "GET" })
+  .inputValidator((data: { code: string }) => {
+    const code = (data?.code ?? "").trim();
+    if (!/^\d{4}$/.test(code)) throw new Error("Enter the 4-digit landlord code");
+    return { code };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: landlord } = await supabaseAdmin
+      .from("landlord_accounts")
+      .select("user_id, full_name")
+      .eq("landlord_code", data.code)
+      .maybeSingle();
+    if (!landlord) throw new Error("No landlord found with that code");
+
+    const { data: units, error } = await supabaseAdmin
+      .from("units")
+      .select("id, unit_number, rent_amount, property_id, properties(name, location)")
+      .eq("status", "vacant")
+      .eq("owner_id", landlord.user_id)
+      .order("unit_number", { ascending: true });
+    if (error) throw new Error(error.message);
+    return {
+      landlordName: (landlord.full_name as string) ?? null,
+      units: (units ?? []).map((u: any) => ({
+        id: u.id as string,
+        unit_number: u.unit_number as string,
+        rent_amount: Number(u.rent_amount) || 0,
+        property_name: (u.properties?.name as string) ?? null,
+        property_location: (u.properties?.location as string) ?? null,
+      })),
+    };
+  });
+
 
 export const submitTenantApplication = createServerFn({ method: "POST" })
   .inputValidator((data: {
