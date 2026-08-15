@@ -177,7 +177,12 @@ function LandlordsPage() {
     <div className="rounded-lg border p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <div className="font-medium">{row.full_name ?? row.email ?? "Landlord"}</div>
+          <div className="flex flex-wrap items-center gap-2 font-medium">
+            {row.full_name ?? row.email ?? "Landlord"}
+            {row.landlord_code && (
+              <Badge variant="outline" className="font-mono tracking-widest">#{row.landlord_code}</Badge>
+            )}
+          </div>
           <div className="text-xs text-muted-foreground">{row.email}</div>
           <div className="text-xs text-muted-foreground">
             Registered {new Date(row.created_at).toLocaleDateString()} · Fee {money(Number(row.monthly_fee))}/month
