@@ -145,7 +145,7 @@ function RegisterPage() {
       <div className="tenant-watermark -z-10" />
       <div className="mx-auto min-h-screen w-full max-w-2xl p-4 md:p-6">
       <div className="mb-4 flex items-center justify-between">
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="outline" size="sm" className="border-primary/30 bg-card font-medium text-foreground shadow-sm">
           <Link to="/tenant"><ChevronLeft className="mr-1 h-4 w-4" /> Back</Link>
         </Button>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
