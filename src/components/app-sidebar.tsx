@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3 } from "lucide-react";
 import { useIsSuperAdmin } from "@/hooks/use-landlord-account";
 import {
   Sidebar,
