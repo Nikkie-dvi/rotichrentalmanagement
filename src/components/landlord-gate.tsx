@@ -14,6 +14,7 @@ import {
   subscriptionState,
   MONTHLY_FEE,
   PAYMENT_NUMBER,
+  paymentMethodLabel,
 } from "@/hooks/use-landlord-account";
 
 async function copyText(value: string) {
@@ -45,6 +46,9 @@ export function LandlordGate({ children }: { children: ReactNode }) {
 
   if (!account || isSuper) return <>{children}</>;
 
+  const payNumber = account.payment_number?.trim() || PAYMENT_NUMBER;
+  const payMethod = paymentMethodLabel(account.payment_method);
+
   if (account.status === "approved") {
     const sub = subscriptionState(account);
     return (
@@ -60,9 +64,9 @@ export function LandlordGate({ children }: { children: ReactNode }) {
             <CalendarClock className="h-4 w-4 shrink-0" />
             <span className="font-medium">Subscription: {sub.label}.</span>
             <span className="text-muted-foreground">
-              Send {money(Number(account.monthly_fee ?? MONTHLY_FEE))} to {PAYMENT_NUMBER} to stay active.
+              {payMethod}: send {money(Number(account.monthly_fee ?? MONTHLY_FEE))} to {payNumber} to stay active.
             </span>
-            <Button size="sm" variant="ghost" className="ml-auto" onClick={() => copyText(PAYMENT_NUMBER)}>
+            <Button size="sm" variant="ghost" className="ml-auto" onClick={() => copyText(payNumber)}>
               <Copy className="h-4 w-4" /> Copy number
             </Button>
           </div>
@@ -123,16 +127,16 @@ export function LandlordGate({ children }: { children: ReactNode }) {
               </div>
               <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
                 <li>
-                  Open M-Pesa on your phone and choose <strong>Send Money</strong>.
+                  Open M-Pesa on your phone and choose <strong>{payMethod}</strong>.
                 </li>
                 <li>
                   Enter the number{" "}
                   <button
                     type="button"
-                    onClick={() => copy(PAYMENT_NUMBER)}
+                    onClick={() => copy(payNumber)}
                     className="font-semibold text-foreground underline underline-offset-2"
                   >
-                    {PAYMENT_NUMBER}
+                    {payNumber}
                   </button>
                   .
                 </li>
@@ -144,10 +148,10 @@ export function LandlordGate({ children }: { children: ReactNode }) {
 
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <div className="rounded-md bg-muted/50 p-3">
-                  <div className="text-xs text-muted-foreground">Send money to</div>
+                  <div className="text-xs text-muted-foreground">{payMethod} — pay to</div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold">{PAYMENT_NUMBER}</span>
-                    <Button size="icon" variant="ghost" onClick={() => copy(PAYMENT_NUMBER)}>
+                    <span className="font-semibold">{payNumber}</span>
+                    <Button size="icon" variant="ghost" onClick={() => copy(payNumber)}>
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
