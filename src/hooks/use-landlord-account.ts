@@ -23,8 +23,23 @@ export type LandlordAccount = {
   last_payment_amount: number | null;
   last_payment_reference: string | null;
   landlord_code: string | null;
+  payment_number: string | null;
+  payment_method: string | null;
   created_at: string;
 };
+
+/** Human label for the M-Pesa payment method stored on a landlord account. */
+export const PAYMENT_METHODS = [
+  { value: "mpesa_send_money", label: "M-Pesa Send Money" },
+  { value: "mpesa_till", label: "M-Pesa Till (Buy Goods)" },
+  { value: "mpesa_paybill", label: "M-Pesa Paybill" },
+  { value: "bank", label: "Bank transfer" },
+  { value: "cash", label: "Cash" },
+] as const;
+
+export function paymentMethodLabel(value: string | null | undefined) {
+  return PAYMENT_METHODS.find((m) => m.value === value)?.label ?? "M-Pesa Send Money";
+}
 
 export type SubscriptionState = {
   label: string;
