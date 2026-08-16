@@ -361,6 +361,72 @@ function TenantCard({
 }
 
 
+/** Lets the landlord correct a tenant's joining (move-in) date and rent due day. */
+function EditTenantDatesDialog({ tenant: t }: { tenant: any }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [moveIn, setMoveIn] = useState<string>(t.move_in_date ?? "");
+  const [dueDay, setDueDay] = useState<string>(t.rent_due_day ? String(t.rent_due_day) : "");
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    const day = dueDay ? Number(dueDay) : null;
+    if (day !== null && (!Number.isFinite(day) || day < 1 || day > 31)) {
+      toast.error("Rent due day must be between 1 and 31");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase
+      .from("tenants")
+      .update({ move_in_date: moveIn || null, rent_due_day: day })
+      .eq("id", t.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Tenant dates updated");
+    setOpen(false);
+    qc.invalidateQueries();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="w-full">
+          <CalendarCog className="h-4 w-4" /> Edit dates
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit joining date — {t.full_name}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor={`mi-${t.id}`}>Joining / move-in date</Label>
+            <Input id={`mi-${t.id}`} type="date" value={moveIn} onChange={(e) => setMoveIn(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor={`dd-${t.id}`}>Rent due day (1–31)</Label>
+            <Input
+              id={`dd-${t.id}`}
+              type="number"
+              min={1}
+              max={31}
+              value={dueDay}
+              onChange={(e) => setDueDay(e.target.value)}
+              placeholder="Defaults to the move-in day"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between">
