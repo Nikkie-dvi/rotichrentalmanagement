@@ -338,16 +338,21 @@ function TenantCard({
             label="Balance"
             value={<span className={balance > 0 ? "font-semibold text-destructive" : "font-semibold text-primary"}>{money(balance)}</span>}
           />
-          <div className="mt-2 hidden grid-cols-2 gap-2 sm:grid">
-            <RecordPaymentButton
-              tenantId={t.id}
-              defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
-              label="Record Payment"
-              className="w-full"
-            />
-            <Button size="sm" variant="outline" className="w-full" onClick={onMoveOut}>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="hidden sm:block">
+              <RecordPaymentButton
+                tenantId={t.id}
+                defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
+                label="Record Payment"
+                className="w-full"
+              />
+            </div>
+            <Button size="sm" variant="outline" className="hidden w-full sm:inline-flex" onClick={onMoveOut}>
               <LogOut className="h-4 w-4" />Move Out
             </Button>
+            <div className="col-span-2">
+              <EditTenantDatesDialog tenant={t} />
+            </div>
           </div>
         </CardContent>
       </Card>
