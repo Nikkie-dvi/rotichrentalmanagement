@@ -75,6 +75,8 @@ export type Database = {
           last_payment_reference: string | null
           monthly_fee: number
           paid_until: string | null
+          payment_method: string
+          payment_number: string | null
           payment_reference: string | null
           phone: string | null
           status: string
@@ -94,6 +96,8 @@ export type Database = {
           last_payment_reference?: string | null
           monthly_fee?: number
           paid_until?: string | null
+          payment_method?: string
+          payment_number?: string | null
           payment_reference?: string | null
           phone?: string | null
           status?: string
@@ -113,6 +117,8 @@ export type Database = {
           last_payment_reference?: string | null
           monthly_fee?: number
           paid_until?: string | null
+          payment_method?: string
+          payment_number?: string | null
           payment_reference?: string | null
           phone?: string | null
           status?: string

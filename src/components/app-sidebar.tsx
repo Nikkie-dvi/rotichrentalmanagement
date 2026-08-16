@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3 } from "lucide-react";
 import { useIsSuperAdmin } from "@/hooks/use-landlord-account";
 import {
   Sidebar,
@@ -30,7 +30,11 @@ export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isSuper = useIsSuperAdmin();
   const menu = isSuper
-    ? [...items, { title: "Landlord accounts", url: "/landlords", icon: ShieldCheck }]
+    ? [
+        ...items,
+        { title: "Landlord accounts", url: "/landlords", icon: ShieldCheck },
+        { title: "CEO Analytics", url: "/analytics", icon: BarChart3 },
+      ]
     : items;
   return (
     <Sidebar collapsible="icon">
