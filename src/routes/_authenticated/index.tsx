@@ -388,7 +388,7 @@ function Dashboard() {
           <CardTitle className="text-base">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2 p-4 pt-0 sm:p-6 sm:pt-0">
-          <Button asChild className="glass-btn glow-green">
+          <Button asChild className="glow-green bg-primary text-primary-foreground shadow-md hover:bg-primary/90">
             <Link to="/payments"><Plus className="h-4 w-4" />Log Payment</Link>
           </Button>
           <Button asChild variant="outline" className="glass-btn glow-blue">
