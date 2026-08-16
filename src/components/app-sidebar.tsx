@@ -30,7 +30,11 @@ export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isSuper = useIsSuperAdmin();
   const menu = isSuper
-    ? [...items, { title: "Landlord accounts", url: "/landlords", icon: ShieldCheck }]
+    ? [
+        ...items,
+        { title: "Landlord accounts", url: "/landlords", icon: ShieldCheck },
+        { title: "CEO Analytics", url: "/analytics", icon: BarChart3 },
+      ]
     : items;
   return (
     <Sidebar collapsible="icon">
