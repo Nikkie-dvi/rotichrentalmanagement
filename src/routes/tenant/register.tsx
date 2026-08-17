@@ -224,18 +224,49 @@ function RegisterPage() {
               <p className="text-xs text-muted-foreground">Ask your landlord for their code — only their units will show.</p>
             </div>
 
-            {vacantQuery.data?.landlordName && (
+            {!searchCode && !vacantQuery.isLoading && (
+              <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+                <Search className="mx-auto mb-2 h-5 w-5" />
+                Enter your landlord's 4-digit code above and tap Search to see their available units.
+              </div>
+            )}
+            {vacantQuery.data?.landlordName && units.length > 0 && (
               <p className="text-sm font-medium">Showing units from {vacantQuery.data.landlordName}</p>
             )}
             {vacantQuery.isLoading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading vacant units…</div>}
             {vacantQuery.isError && (
-              <p className="text-sm text-destructive">
-                {vacantQuery.error instanceof Error ? vacantQuery.error.message : "Could not load units. Try again."}
-              </p>
+              <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
+                <div className="flex items-center gap-2 font-medium text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  {vacantQuery.error instanceof Error ? vacantQuery.error.message : "Could not load units."}
+                </div>
+                <p className="mt-1 text-muted-foreground">
+                  Double-check the code with your landlord — it is 4 digits, e.g. 1588.
+                </p>
+              </div>
             )}
             {vacantQuery.data && units.length === 0 && (
-              <p className="text-sm text-muted-foreground">No vacant units available for this landlord right now.</p>
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+                <div className="flex items-center gap-2 font-medium">
+                  <Home className="h-4 w-4" />
+                  No available units right now
+                </div>
+                <p className="mt-1 text-muted-foreground">
+                  {vacantQuery.data.landlordName ?? "This landlord"} has no vacant units at the moment — every unit is
+                  currently occupied. Ask them to free up or add a unit, then tap Search again.
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="mt-3"
+                  onClick={() => vacantQuery.refetch()}
+                >
+                  <RefreshCw className="h-4 w-4" /> Check again
+                </Button>
+              </div>
             )}
+
 
             <div className="grid gap-2">
               {units.map((u) => {
