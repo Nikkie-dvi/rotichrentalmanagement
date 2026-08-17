@@ -12,7 +12,6 @@ import {
   useLandlordAccount,
   useIsSuperAdmin,
   subscriptionState,
-  MONTHLY_FEE,
   PAYMENT_NUMBER,
   paymentMethodLabel,
   usePlatformPricing,
