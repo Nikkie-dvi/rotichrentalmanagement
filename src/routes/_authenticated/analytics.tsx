@@ -131,6 +131,10 @@ function AnalyticsPage() {
         </CardContent>
       </Card>
 
+      <SubscriptionPricingPanel />
+
+
+
       <Card className="glass-card">
         <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
           <CardTitle className="text-base">Landlord leaderboard</CardTitle>
