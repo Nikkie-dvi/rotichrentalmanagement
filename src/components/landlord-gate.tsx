@@ -15,6 +15,9 @@ import {
   MONTHLY_FEE,
   PAYMENT_NUMBER,
   paymentMethodLabel,
+  usePlatformPricing,
+  effectivePrice,
+  DEFAULT_PRICING,
 } from "@/hooks/use-landlord-account";
 
 async function copyText(value: string) {
@@ -33,6 +36,7 @@ async function copyText(value: string) {
 export function LandlordGate({ children }: { children: ReactNode }) {
   const { data: account, isLoading, refetch, isRefetching } = useLandlordAccount();
   const isSuper = useIsSuperAdmin();
+  const { data: pricing } = usePlatformPricing();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -48,6 +52,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
 
   const payNumber = account.payment_number?.trim() || PAYMENT_NUMBER;
   const payMethod = paymentMethodLabel(account.payment_method);
+  const price = effectivePrice(account, pricing ?? DEFAULT_PRICING);
 
   if (account.status === "approved") {
     const sub = subscriptionState(account);
@@ -64,7 +69,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
             <CalendarClock className="h-4 w-4 shrink-0" />
             <span className="font-medium">Subscription: {sub.label}.</span>
             <span className="text-muted-foreground">
-              {payMethod}: send {money(Number(account.monthly_fee ?? MONTHLY_FEE))} to {payNumber} to stay active.
+              {payMethod}: send {money(price.dueNow)} ({price.label}) to {payNumber} to stay active.
             </span>
             <Button size="sm" variant="ghost" className="ml-auto" onClick={() => copyText(payNumber)}>
               <Copy className="h-4 w-4" /> Copy number
@@ -141,7 +146,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
                   .
                 </li>
                 <li>
-                  Enter the amount <strong className="text-foreground">{money(MONTHLY_FEE)}</strong> and confirm.
+                  Enter the amount <strong className="text-foreground">{money(price.dueNow)}</strong> and confirm.
                 </li>
                 <li>Once paid, the main account confirms your access — you get in right away.</li>
               </ol>
@@ -157,8 +162,20 @@ export function LandlordGate({ children }: { children: ReactNode }) {
                   </div>
                 </div>
                 <div className="rounded-md bg-muted/50 p-3">
-                  <div className="text-xs text-muted-foreground">Monthly fee</div>
-                  <div className="font-semibold">{money(MONTHLY_FEE)}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {price.annual ? "Yearly fee" : "Monthly fee"}
+                  </div>
+                  <div className="font-semibold">{money(price.dueNow)}</div>
+                  {price.discount > 0 && (
+                    <div className="text-xs text-emerald-600 dark:text-emerald-400">
+                      {price.discount}% offer applied (was {money(price.base)})
+                    </div>
+                  )}
+                  {(account.offer_note ?? (pricing ?? DEFAULT_PRICING).offer_note) && (
+                    <div className="text-xs text-muted-foreground">
+                      {account.offer_note ?? (pricing ?? DEFAULT_PRICING).offer_note}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
