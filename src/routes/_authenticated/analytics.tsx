@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { money } from "@/lib/types";
 import { useIsSuperAdmin } from "@/hooks/use-landlord-account";
 import { getCeoAnalytics } from "@/lib/analytics.functions";
+import { SubscriptionPricingPanel } from "@/components/subscription-pricing-panel";
+
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
