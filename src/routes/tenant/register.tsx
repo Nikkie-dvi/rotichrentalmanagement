@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle2, ChevronLeft } from "lucide-react";
+import { Loader2, CheckCircle2, ChevronLeft, Search, AlertCircle, Home, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { SignaturePad, type SignatureValue } from "@/components/tenant/signature-pad";
 
