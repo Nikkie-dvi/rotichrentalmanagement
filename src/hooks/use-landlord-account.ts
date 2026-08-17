@@ -25,8 +25,73 @@ export type LandlordAccount = {
   landlord_code: string | null;
   payment_number: string | null;
   payment_method: string | null;
+  discount_percent: number | null;
+  billing_plan: string | null;
+  offer_note: string | null;
   created_at: string;
 };
+
+/** Platform-wide subscription pricing controlled by the main account. */
+export type PlatformPricing = {
+  id: string;
+  base_monthly: number;
+  loyalty_after_months: number;
+  loyalty_discount_percent: number;
+  annual_discount_percent: number;
+  offer_note: string | null;
+};
+
+export const DEFAULT_PRICING: PlatformPricing = {
+  id: "default",
+  base_monthly: 999,
+  loyalty_after_months: 3,
+  loyalty_discount_percent: 10,
+  annual_discount_percent: 20,
+  offer_note: null,
+};
+
+/** Loads the platform pricing settings (readable by any signed-in user). */
+export function usePlatformPricing() {
+  return useQuery({
+    queryKey: ["platform-pricing"],
+    queryFn: async (): Promise<PlatformPricing> => {
+      const { data } = await (supabase as any)
+        .from("platform_pricing")
+        .select("*")
+        .eq("id", "default")
+        .maybeSingle();
+      return (data as PlatformPricing) ?? DEFAULT_PRICING;
+    },
+    staleTime: 60_000,
+  });
+}
+
+/** What a landlord actually pays, after their discount and billing plan. */
+export function effectivePrice(
+  account: Pick<LandlordAccount, "monthly_fee" | "discount_percent" | "billing_plan">,
+  pricing: PlatformPricing,
+) {
+  const base = Number(account.monthly_fee ?? pricing.base_monthly) || 0;
+  const discount = Math.min(100, Math.max(0, Number(account.discount_percent ?? 0)));
+  const monthly = Math.round(base * (1 - discount / 100));
+  const yearly = Math.round(monthly * 12 * (1 - Number(pricing.annual_discount_percent || 0) / 100));
+  const annual = account.billing_plan === "annual";
+  return {
+    base,
+    discount,
+    monthly,
+    yearly,
+    annual,
+    dueNow: annual ? yearly : monthly,
+    label: annual ? "per year" : "per month",
+  };
+}
+
+/** Months a landlord has been on the platform (used for the loyalty offer). */
+export function monthsOnPlatform(createdAt: string) {
+  return Math.floor((Date.now() - new Date(createdAt).getTime()) / (30 * 86400000));
+}
+
 
 /** Human label for the M-Pesa payment method stored on a landlord account. */
 export const PAYMENT_METHODS = [

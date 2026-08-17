@@ -64,8 +64,10 @@ export type Database = {
       landlord_accounts: {
         Row: {
           approved_at: string | null
+          billing_plan: string
           created_at: string
           declined_reason: string | null
+          discount_percent: number
           email: string | null
           full_name: string | null
           id: string
@@ -74,6 +76,7 @@ export type Database = {
           last_payment_at: string | null
           last_payment_reference: string | null
           monthly_fee: number
+          offer_note: string | null
           paid_until: string | null
           payment_method: string
           payment_number: string | null
@@ -85,8 +88,10 @@ export type Database = {
         }
         Insert: {
           approved_at?: string | null
+          billing_plan?: string
           created_at?: string
           declined_reason?: string | null
+          discount_percent?: number
           email?: string | null
           full_name?: string | null
           id?: string
@@ -95,6 +100,7 @@ export type Database = {
           last_payment_at?: string | null
           last_payment_reference?: string | null
           monthly_fee?: number
+          offer_note?: string | null
           paid_until?: string | null
           payment_method?: string
           payment_number?: string | null
@@ -106,8 +112,10 @@ export type Database = {
         }
         Update: {
           approved_at?: string | null
+          billing_plan?: string
           created_at?: string
           declined_reason?: string | null
+          discount_percent?: number
           email?: string | null
           full_name?: string | null
           id?: string
@@ -116,6 +124,7 @@ export type Database = {
           last_payment_at?: string | null
           last_payment_reference?: string | null
           monthly_fee?: number
+          offer_note?: string | null
           paid_until?: string | null
           payment_method?: string
           payment_number?: string | null
@@ -390,6 +399,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_pricing: {
+        Row: {
+          annual_discount_percent: number
+          base_monthly: number
+          id: string
+          loyalty_after_months: number
+          loyalty_discount_percent: number
+          offer_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          annual_discount_percent?: number
+          base_monthly?: number
+          id?: string
+          loyalty_after_months?: number
+          loyalty_discount_percent?: number
+          offer_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          annual_discount_percent?: number
+          base_monthly?: number
+          id?: string
+          loyalty_after_months?: number
+          loyalty_discount_percent?: number
+          offer_note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       properties: {
         Row: {
