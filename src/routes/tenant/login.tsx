@@ -78,7 +78,10 @@ function TenantLoginPage() {
               Sign in
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          <p className="mt-4 text-center text-sm">
+            <Link to="/reset-password" className="font-medium text-primary underline">Forgot your password?</Link>
+          </p>
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             New here? <Link to="/tenant/register" className="font-medium text-primary underline">Register</Link>
           </p>
           <p className="mt-2 text-center text-xs text-muted-foreground">
