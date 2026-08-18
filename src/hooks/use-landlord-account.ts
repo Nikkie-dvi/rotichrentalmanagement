@@ -28,6 +28,9 @@ export type LandlordAccount = {
   discount_percent: number | null;
   billing_plan: string | null;
   offer_note: string | null;
+  rent_payment_number?: string | null;
+  rent_payment_method?: string | null;
+  rent_payment_note?: string | null;
   created_at: string;
 };
 
