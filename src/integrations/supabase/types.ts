@@ -82,6 +82,9 @@ export type Database = {
           payment_number: string | null
           payment_reference: string | null
           phone: string | null
+          rent_payment_method: string
+          rent_payment_note: string | null
+          rent_payment_number: string | null
           status: string
           updated_at: string
           user_id: string
@@ -106,6 +109,9 @@ export type Database = {
           payment_number?: string | null
           payment_reference?: string | null
           phone?: string | null
+          rent_payment_method?: string
+          rent_payment_note?: string | null
+          rent_payment_number?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -130,6 +136,9 @@ export type Database = {
           payment_number?: string | null
           payment_reference?: string | null
           phone?: string | null
+          rent_payment_method?: string
+          rent_payment_note?: string | null
+          rent_payment_number?: string | null
           status?: string
           updated_at?: string
           user_id?: string
