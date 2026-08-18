@@ -114,3 +114,31 @@ export const submitTenantApplication = createServerFn({ method: "POST" })
     return { tenantId: inserted.id as string, alreadyExists: false };
   });
 
+
+/** Payment instructions + notice the tenant's landlord set for them. */
+export const getMyLandlordInfo = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: tenant } = await supabase
+      .from("tenants")
+      .select("owner_id")
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+    if (!tenant?.owner_id) return null;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: landlord } = await supabaseAdmin
+      .from("landlord_accounts")
+      .select("full_name, phone, rent_payment_number, rent_payment_method, rent_payment_note")
+      .eq("user_id", tenant.owner_id)
+      .maybeSingle();
+    if (!landlord) return null;
+    return {
+      landlordName: (landlord.full_name as string) ?? null,
+      landlordPhone: (landlord.phone as string) ?? null,
+      paymentNumber: (landlord.rent_payment_number as string) ?? null,
+      paymentMethod: (landlord.rent_payment_method as string) ?? "mpesa_send_money",
+      note: (landlord.rent_payment_note as string) ?? null,
+    };
+  });
