@@ -10,6 +10,7 @@ import { TicketModal } from "@/components/tenant/ticket-modal";
 import { MoveOutCard } from "@/components/tenant/move-out-card";
 import { TenantBackBar } from "@/components/tenant/back-bar";
 import { RentRemindersCard } from "@/components/tenant/rent-reminders-card";
+import { LandlordPaymentCard } from "@/components/tenant/landlord-payment-card";
 import { LeaseDialog } from "@/components/lease-document";
 import { toast } from "sonner";
 
@@ -472,6 +473,8 @@ function DashboardPage() {
           property_location: property?.location ?? null,
         }}
       />
+
+      <LandlordPaymentCard />
 
       <RentRemindersCard />
 
