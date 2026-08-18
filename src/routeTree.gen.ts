@@ -31,6 +31,7 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as TenantauthTenantDashboardRouteImport } from './routes/_tenantauth/tenant.dashboard'
+import { Route as AuthenticatedSettingsPaymentsRouteImport } from './routes/_authenticated/settings.payments'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -152,6 +153,12 @@ const TenantauthTenantDashboardRoute =
     path: '/tenant/dashboard',
     getParentRoute: () => TenantauthRouteRoute,
   } as any)
+const AuthenticatedSettingsPaymentsRoute =
+  AuthenticatedSettingsPaymentsRouteImport.update({
+    id: '/settings/payments',
+    path: '/settings/payments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsNotificationsRoute =
   AuthenticatedSettingsNotificationsRouteImport.update({
     id: '/settings/notifications',
@@ -216,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
@@ -245,6 +253,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
@@ -277,6 +286,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/_authenticated/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/_tenantauth/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/settings/notifications'
+    | '/settings/payments'
     | '/tenant/dashboard'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
@@ -337,6 +348,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/settings/notifications'
+    | '/settings/payments'
     | '/tenant/dashboard'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
@@ -368,6 +380,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/settings/notifications'
+    | '/_authenticated/settings/payments'
     | '/_tenantauth/tenant/dashboard'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
@@ -550,6 +563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TenantauthTenantDashboardRouteImport
       parentRoute: typeof TenantauthRouteRoute
     }
+    '/_authenticated/settings/payments': {
+      id: '/_authenticated/settings/payments'
+      path: '/settings/payments'
+      fullPath: '/settings/payments'
+      preLoaderRoute: typeof AuthenticatedSettingsPaymentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/notifications': {
       id: '/_authenticated/settings/notifications'
       path: '/settings/notifications'
@@ -615,6 +635,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTenantsRoute: typeof AuthenticatedTenantsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
+  AuthenticatedSettingsPaymentsRoute: typeof AuthenticatedSettingsPaymentsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -631,6 +652,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedSettingsNotificationsRoute:
     AuthenticatedSettingsNotificationsRoute,
+  AuthenticatedSettingsPaymentsRoute: AuthenticatedSettingsPaymentsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
