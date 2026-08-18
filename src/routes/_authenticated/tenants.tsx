@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2, CalendarCog } from "lucide-react";
+import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2, CalendarCog, KeyRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
+import { resetTenantPassword } from "@/lib/account.functions";
 
 export const Route = createFileRoute("/_authenticated/tenants")({
   head: () => ({
@@ -353,6 +354,9 @@ function TenantCard({
             <div className="col-span-2">
               <EditTenantDatesDialog tenant={t} />
             </div>
+            <div className="col-span-2">
+              <ResetTenantPasswordDialog tenant={t} />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -360,6 +364,62 @@ function TenantCard({
   );
 }
 
+
+/** Lets the landlord (or main account) set a new portal password for a tenant. */
+function ResetTenantPasswordDialog({ tenant: t }: { tenant: any }) {
+  const [open, setOpen] = useState(false);
+  const [pwd, setPwd] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      await resetTenantPassword({ data: { tenantId: t.id, newPassword: pwd } });
+      toast.success("Password reset — share it with the tenant");
+      setPwd("");
+      setOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not reset password");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="w-full">
+          <KeyRound className="h-4 w-4" /> Reset password
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md">
+        <DialogHeader>
+          <DialogTitle>Reset portal password — {t.full_name}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <p className="text-sm text-muted-foreground">
+            Set a temporary password and give it to the tenant. They can change it later from the sign-in page using
+            "Forgot your password?".
+          </p>
+          <div className="grid gap-1.5">
+            <Label htmlFor={`pw-${t.id}`}>New password (min 8 characters)</Label>
+            <Input
+              id={`pw-${t.id}`}
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+              placeholder="e.g. Rent2026!"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={submit} disabled={busy || pwd.length < 8}>
+            {busy ? "Saving…" : "Set password"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 /** Lets the landlord correct a tenant's joining (move-in) date and rent due day. */
 function EditTenantDatesDialog({ tenant: t }: { tenant: any }) {
