@@ -134,12 +134,26 @@ export const getMyLandlordInfo = createServerFn({ method: "GET" })
     const { data: landlord } = await supabaseAdmin
       .from("landlord_accounts")
       .select(
-        "full_name, phone, rent_payment_number, rent_payment_method, rent_payment_note, lease_landlord_name, lease_intro, lease_clauses, lease_footer",
+        "full_name, phone, rent_payment_number, rent_payment_method, rent_payment_note, lease_landlord_name, lease_intro, lease_clauses, lease_footer, lease_document_path, lease_document_name, lease_document_uploaded_at",
       )
       .eq("user_id", tenant.owner_id)
       .maybeSingle();
     if (!landlord) return null;
+
+    // Signed link to the landlord's uploaded lease copy (private bucket).
+    let leaseDocumentUrl: string | null = null;
+    const path = (landlord as any).lease_document_path as string | null;
+    if (path) {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("lease-documents")
+        .createSignedUrl(path, 60 * 60);
+      leaseDocumentUrl = signed?.signedUrl ?? null;
+    }
+
     return {
+      leaseDocumentUrl,
+      leaseDocumentName: ((landlord as any).lease_document_name as string) ?? null,
+      leaseDocumentUploadedAt: ((landlord as any).lease_document_uploaded_at as string) ?? null,
       landlordName: (landlord.full_name as string) ?? null,
       landlordPhone: (landlord.phone as string) ?? null,
       paymentNumber: (landlord.rent_payment_number as string) ?? null,
