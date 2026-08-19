@@ -22,6 +22,7 @@ export function AppHeader() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
+  const counts = usePendingCounts();
 
   const signOut = async () => {
     await queryClient.cancelQueries();
