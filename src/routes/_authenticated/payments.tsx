@@ -2,7 +2,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AlertCircle, Plus, Printer, Receipt } from "lucide-react";
+import { AlertCircle, Plus, Printer, Receipt, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,6 +128,37 @@ function PaymentsPage() {
       setRef("");
       toast.success("Payment logged");
       setReceipt(p);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const removePayment = useMutation({
+    mutationFn: async (p: any) => {
+      const amount = Number(p.amount_paid);
+      if (p.invoice_id) {
+        const { data: inv } = await supabase
+          .from("invoices")
+          .select("id,total_due,balance_remaining")
+          .eq("id", p.invoice_id)
+          .maybeSingle();
+        if (inv) {
+          const restored = Math.min(Number(inv.total_due), Number(inv.balance_remaining) + amount);
+          const { error: uErr } = await supabase
+            .from("invoices")
+            .update({
+              balance_remaining: restored,
+              status: restored <= 0 ? "paid" : restored >= Number(inv.total_due) ? "unpaid" : "partial",
+            })
+            .eq("id", inv.id);
+          if (uErr) throw uErr;
+        }
+      }
+      const { error } = await supabase.from("payments").delete().eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries();
+      toast.success("Payment removed and the invoice balance restored");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -279,7 +321,34 @@ function PaymentsPage() {
                   <TableCell className="text-muted-foreground">{p.reference_no ?? "—"}</TableCell>
                   <TableCell className="text-right font-semibold text-primary">{money(Number(p.amount_paid))}</TableCell>
                   <TableCell>
-                    <Button size="sm" variant="ghost" onClick={() => setReceipt(p)}><Receipt className="h-4 w-4" /></Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button size="sm" variant="ghost" aria-label="View receipt" onClick={() => setReceipt(p)}><Receipt className="h-4 w-4" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" aria-label="Remove payment" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-[calc(100vw-1.5rem)] max-w-sm">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove this payment?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {money(Number(p.amount_paid))} for {p.tenants?.full_name ?? "this tenant"} on {p.payment_date} will be
+                              deleted and the amount added back to the invoice balance. Use this only for payments logged by mistake.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => removePayment.mutate(p)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Remove payment
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
