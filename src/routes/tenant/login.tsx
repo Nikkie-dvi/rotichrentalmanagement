@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { tenantSignInWithPhone } from "@/lib/tenant-auth.functions";
+import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/tenant/login")({
   ssr: false,
@@ -28,6 +30,7 @@ export const Route = createFileRoute("/tenant/login")({
 function TenantLoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [google, setGoogle] = useState(false);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -41,8 +44,17 @@ function TenantLoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (error) throw error;
+      const identifier = email.trim();
+      if (identifier.includes("@")) {
+        const { error } = await supabase.auth.signInWithPassword({ email: identifier, password });
+        if (error) throw error;
+      } else {
+        // Phone number sign in: the server resolves the tenant's email, then we
+        // store the returned session in the browser.
+        const session = await tenantSignInWithPhone({ data: { phone: identifier, password } });
+        const { error } = await supabase.auth.setSession(session);
+        if (error) throw error;
+      }
       toast.success("Signed in");
       navigate({ to: "/tenant/dashboard" });
     } catch (err) {
@@ -66,8 +78,18 @@ function TenantLoginPage() {
         <CardContent>
           <form onSubmit={submit} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Label htmlFor="email">Phone number or email</Label>
+              <Input
+                id="email"
+                type="text"
+                inputMode="text"
+                autoComplete="username"
+                placeholder="07XX XXX XXX or you@gmail.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Use the phone number your landlord has on file, or your email.</p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
@@ -78,6 +100,28 @@ function TenantLoginPage() {
               Sign in
             </Button>
           </form>
+          <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="w-full"
+            disabled={google}
+            onClick={async () => {
+              setGoogle(true);
+              try {
+                await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Google sign in failed");
+                setGoogle(false);
+              }
+            }}
+          >
+            {google && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Continue with Gmail
+          </Button>
           <p className="mt-4 text-center text-sm">
             <Link to="/reset-password" className="font-medium text-primary underline">Forgot your password?</Link>
           </p>
