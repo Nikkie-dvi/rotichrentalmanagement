@@ -22,6 +22,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
+import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
 
 
 type DrillKey = "units" | "occupancy" | "collected" | "arrears" | null;
