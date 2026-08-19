@@ -365,6 +365,78 @@ function TenantCard({
 }
 
 
+/**
+ * Creates a portal login for a tenant who never signed up themselves. The
+ * landlord picks the email + password and hands them over.
+ */
+function CreateTenantLoginDialog({ tenant: t }: { tenant: any }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState(t.email ?? "");
+  const [pwd, setPwd] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      await createTenantLogin({ data: { tenantId: t.id, email: email.trim(), password: pwd } });
+      toast.success("Login created", { description: `Give ${email.trim()} and the password to ${t.full_name}.` });
+      setPwd("");
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["tenants"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not create login");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="w-full">
+          <KeyRound className="h-4 w-4" /> Create portal login
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md">
+        <DialogHeader>
+          <DialogTitle>Create portal login — {t.full_name}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <p className="text-sm text-muted-foreground">
+            This tenant has no portal account yet. Set their Gmail (or any email) and a starting password, then share
+            both — they can change the password later from the tenant portal.
+          </p>
+          <div className="grid gap-1.5">
+            <Label htmlFor={`em-${t.id}`}>Tenant email</Label>
+            <Input
+              id={`em-${t.id}`}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tenant@gmail.com"
+              aria-invalid={!validEmail}
+              className={!validEmail ? "border-destructive" : ""}
+            />
+            {!validEmail && <p className="text-xs text-destructive">Enter a valid email address</p>}
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor={`np-${t.id}`}>Starting password (min 8 characters)</Label>
+            <Input id={`np-${t.id}`} value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="e.g. Rent2026!" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={submit} disabled={busy || !validEmail || pwd.length < 8}>
+            {busy ? "Creating…" : "Create login"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /** Lets the landlord (or main account) set a new portal password for a tenant. */
 function ResetTenantPasswordDialog({ tenant: t }: { tenant: any }) {
   const [open, setOpen] = useState(false);
