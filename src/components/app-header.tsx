@@ -68,7 +68,11 @@ export function AppHeader() {
     perm === "granted" ? BellRing : perm === "denied" || perm === "unsupported" ? BellOff : Bell;
 
   return (
-    <header className={`sticky top-0 z-30 flex h-16 ${isManager ? "border-b-2 border-b-amber-500/70" : ""}`.replace("z-30 flex", "z-30 flex") + " " + " items-center gap-3 border-b bg-background/80 px-4 backdrop-blur">
+    <header
+      className={`sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur ${
+        isManager ? "border-b-2 border-b-amber-500/70" : ""
+      }`}
+    >
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-6" />
       <AppLogo className="h-8 w-8 shrink-0" />
