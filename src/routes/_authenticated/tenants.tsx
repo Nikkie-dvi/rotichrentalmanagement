@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2, KeyRound, ArrowLeft, Home, Pencil } from "lucide-react";
+import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2, KeyRound, ArrowLeft, Home, Pencil, Search, ChevronDown } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,7 @@ function TenantsPage() {
   const qc = useQueryClient();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
 
   const { data: tenants } = useQuery({
@@ -178,19 +179,27 @@ function TenantsPage() {
   }, [tenants, unpaidInvoices, balances, today]);
 
   const rank: Record<RiskLevel, number> = { high: 0, overdue: 1, soon: 2, clear: 3 };
+  const matches = (t: any) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return [t.full_name, t.phone_number, t.email, t.units?.unit_number, t.units?.properties?.name]
+      .filter(Boolean)
+      .some((v: string) => String(v).toLowerCase().includes(q));
+  };
   const active = (tenants ?? [])
-    .filter((t: any) => t.active)
+    .filter((t: any) => t.active && matches(t))
     .sort(
       (a: any, b: any) =>
         rank[risks.get(a.id)?.level ?? "clear"] - rank[risks.get(b.id)?.level ?? "clear"],
     );
-  const inactive = (tenants ?? []).filter((t: any) => !t.active);
+  const inactive = (tenants ?? []).filter((t: any) => !t.active && matches(t));
 
   const flagged = active.filter((t: any) => {
     const l = risks.get(t.id)?.level;
     return l === "overdue" || l === "high";
   });
   const atRisk = flagged.reduce((s: number, t: any) => s + (balances.get(t.id) ?? 0), 0);
+
 
   return (
     <div className="space-y-6">
@@ -239,7 +248,19 @@ function TenantsPage() {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground sm:hidden">Tip: swipe a card left to reveal actions.</p>
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search name, phone, unit or property"
+          aria-label="Search tenants"
+          className="pl-9"
+        />
+      </div>
+
+      <p className="text-xs text-muted-foreground">Tap a tenant to see details and actions.</p>
+
 
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
@@ -297,81 +318,50 @@ function TenantCard({
   onMoveOut: () => void;
 }) {
   const flagged = risk.level === "overdue" || risk.level === "high";
-  const [dx, setDx] = useState(0);
-  const [open, setOpen] = useState(false);
-  const startX = useRef<number | null>(null);
-  const REVEAL = 132;
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    startX.current = e.touches[0].clientX;
-  };
-  const onTouchMove = (e: React.TouchEvent) => {
-    if (startX.current === null) return;
-    const delta = e.touches[0].clientX - startX.current + (open ? -REVEAL : 0);
-    setDx(Math.max(-REVEAL, Math.min(0, delta)));
-  };
-  const onTouchEnd = () => {
-    startX.current = null;
-    const shouldOpen = dx < -REVEAL / 2;
-    setOpen(shouldOpen);
-    setDx(0);
-  };
-
-  const translate = dx !== 0 ? dx : open ? -REVEAL : 0;
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
-      {/* Swipe actions (mobile) */}
-      <div className="absolute inset-y-0 right-0 flex w-[132px] items-stretch gap-1 p-1 sm:hidden">
-        <RecordPaymentButton
-          tenantId={t.id}
-          defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
-          label="Pay"
-          className="h-full w-1/2 rounded-lg"
-        />
-        <Button variant="destructive" className="h-full w-1/2 flex-col gap-1 rounded-lg px-0 text-xs" onClick={onMoveOut}>
-          <LogOut className="h-4 w-4" />
-          Move Out
-        </Button>
-      </div>
-
-      <Card
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        style={{ transform: `translateX(${translate}px)` }}
-        className={`glass-card relative touch-pan-y transition-transform duration-200 ${flagged ? "border-l-4 border-l-destructive" : ""}`}
+    <Card className={`glass-card relative ${flagged ? "border-l-4 border-l-destructive" : ""}`}>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="w-full rounded-xl p-4 text-left"
       >
-        <CardHeader className="p-4 pb-2">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-            <div className="min-w-0">
-              <CardTitle className="truncate text-base">{t.full_name}</CardTitle>
-              <p className="mt-1 truncate text-xs text-muted-foreground">{t.phone_number ?? "No phone"}</p>
-            </div>
-            <div className="shrink-0"><RiskBadge risk={risk} /></div>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+          <div className="min-w-0">
+            <div className="truncate text-base font-semibold">{t.full_name}</div>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {t.phone_number ?? "No phone"} · {t.units?.unit_number ?? "No unit"}
+            </p>
           </div>
-        </CardHeader>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className={balance > 0 ? "text-sm font-semibold text-destructive" : "text-sm font-semibold text-primary"}>
+              {money(balance)}
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
+          </div>
+        </div>
+        {flagged && <div className="mt-2"><RiskBadge risk={risk} /></div>}
+      </button>
+
+      {expanded && (
         <CardContent className="space-y-2 p-4 pt-0 text-sm">
+          {!flagged && <div className="pb-1"><RiskBadge risk={risk} /></div>}
           <Row label="Property" value={t.units?.properties?.name ?? "—"} />
           <Row label="Unit" value={t.units?.unit_number ?? "—"} />
           <Row label="Rent Due" value={money(Number(t.units?.rent_amount ?? 0))} />
           <Row label="Deposit" value={money(Number(t.deposit_paid))} />
           <Row label="Move-in" value={t.move_in_date ?? "—"} />
           <Row label="Due Day" value={t.rent_due_day ? `${t.rent_due_day} of month` : "—"} />
-          <Row
-            label="Balance"
-            value={<span className={balance > 0 ? "font-semibold text-destructive" : "font-semibold text-primary"}>{money(balance)}</span>}
-          />
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="hidden sm:block">
-              <RecordPaymentButton
-                tenantId={t.id}
-                defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
-                label="Record Payment"
-                className="w-full"
-              />
-            </div>
-            <Button size="sm" variant="outline" className="hidden w-full sm:inline-flex" onClick={onMoveOut}>
+            <RecordPaymentButton
+              tenantId={t.id}
+              defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
+              label="Record Payment"
+              className="w-full"
+            />
+            <Button size="sm" variant="outline" className="w-full" onClick={onMoveOut}>
               <LogOut className="h-4 w-4" />Move Out
             </Button>
             <div className="col-span-2">
@@ -382,10 +372,11 @@ function TenantCard({
             </div>
           </div>
         </CardContent>
-      </Card>
-    </div>
+      )}
+    </Card>
   );
 }
+
 
 
 /**

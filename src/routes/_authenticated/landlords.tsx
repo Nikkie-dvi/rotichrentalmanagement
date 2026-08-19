@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, XCircle, ShieldAlert, Loader2, CalendarClock, Wallet } from "lucide-react";
+import { CheckCircle2, XCircle, ShieldAlert, Loader2, CalendarClock, Wallet, ChevronDown, Search } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,7 @@ function LandlordsPage() {
   const isSuper = useIsSuperAdmin();
   const qc = useQueryClient();
   const [reasons, setReasons] = useState<Record<string, string>>({});
+  const [query, setQuery] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   type PayDraft = { amount: string; date: string; months: string; reference: string };
   const [payDrafts, setPayDrafts] = useState<Record<string, PayDraft>>({});
@@ -92,9 +93,17 @@ function LandlordsPage() {
     );
   }
 
-  const pending = (accounts ?? []).filter((a) => a.status === "pending");
-  const approved = (accounts ?? []).filter((a) => a.status === "approved");
-  const declined = (accounts ?? []).filter((a) => a.status === "declined");
+  const q = query.trim().toLowerCase();
+  const visible = (accounts ?? []).filter((a) =>
+    !q
+      ? true
+      : [a.email, a.full_name, a.landlord_code, a.payment_number]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q)),
+  );
+  const pending = visible.filter((a) => a.status === "pending");
+  const approved = visible.filter((a) => a.status === "approved");
+  const declined = visible.filter((a) => a.status === "declined");
 
   const SubscriptionBlock = ({ row }: { row: LandlordAccount }) => {
     const sub = subscriptionState(row);
@@ -230,82 +239,92 @@ function LandlordsPage() {
 
 
 
-  const Row = ({ row }: { row: LandlordAccount }) => (
-    <div className="rounded-lg border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 font-medium">
-            {row.full_name ?? row.email ?? "Landlord"}
+  const Row = ({ row }: { row: LandlordAccount }) => {
+    const [expanded, setExpanded] = useState(false);
+    return (
+      <div className="rounded-lg border">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="flex w-full items-center gap-2 p-3 text-left"
+        >
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium">{row.email ?? row.full_name ?? "Landlord"}</div>
             {row.landlord_code && (
-              <Badge variant="outline" className="font-mono tracking-widest">#{row.landlord_code}</Badge>
+              <div className="text-xs font-mono tracking-widest text-muted-foreground">#{row.landlord_code}</div>
             )}
           </div>
-          <div className="text-xs text-muted-foreground">{row.email}</div>
-          <div className="text-xs text-muted-foreground">
-            Registered {new Date(row.created_at).toLocaleDateString()} · Fee {money(Number(row.monthly_fee))}/month
-          </div>
-        </div>
-        <Badge
-          variant={row.status === "approved" ? "default" : row.status === "declined" ? "destructive" : "secondary"}
-        >
-          {row.status}
-        </Badge>
-      </div>
+          <Badge
+            variant={row.status === "approved" ? "default" : row.status === "declined" ? "destructive" : "secondary"}
+          >
+            {row.status}
+          </Badge>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
+        </button>
 
-      {row.status === "declined" && row.declined_reason && (
-        <p className="mt-2 text-xs text-muted-foreground">Reason: {row.declined_reason}</p>
-      )}
-
-      <SubscriptionBlock row={row} />
-
-
-
-      <div className="mt-3 flex flex-wrap items-end gap-2">
-        {row.status !== "approved" && (
-          <Button size="sm" disabled={busy === row.id} onClick={() => setStatus(row, "approved")}>
-            {busy === row.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-            Approve
-          </Button>
-        )}
-        {row.status !== "declined" && (
-          <>
-            <div className="min-w-40 flex-1">
-              <Label className="text-xs">Decline reason (optional)</Label>
-              <Input
-                value={reasons[row.id] ?? ""}
-                onChange={(e) => setReasons((r) => ({ ...r, [row.id]: e.target.value }))}
-                placeholder="e.g. payment not received"
-              />
+        {expanded && (
+          <div className="border-t p-4 pt-3">
+            <div className="text-sm font-medium">{row.full_name ?? "—"}</div>
+            <div className="text-xs text-muted-foreground">
+              Registered {new Date(row.created_at).toLocaleDateString()} · Fee {money(Number(row.monthly_fee))}/month
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy === row.id}
-              onClick={() => setStatus(row, "declined")}
-            >
-              <XCircle className="h-4 w-4" /> Decline
-            </Button>
-          </>
-        )}
-        {row.status !== "pending" && (
-          <Button size="sm" variant="ghost" disabled={busy === row.id} onClick={() => setStatus(row, "pending")}>
-            Set pending
-          </Button>
+            {row.status === "declined" && row.declined_reason && (
+              <p className="mt-2 text-xs text-muted-foreground">Reason: {row.declined_reason}</p>
+            )}
+
+            <SubscriptionBlock row={row} />
+
+            <div className="mt-3 flex flex-wrap items-end gap-2">
+              {row.status !== "approved" && (
+                <Button size="sm" disabled={busy === row.id} onClick={() => setStatus(row, "approved")}>
+                  {busy === row.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                  Approve
+                </Button>
+              )}
+              {row.status !== "declined" && (
+                <>
+                  <div className="min-w-40 flex-1">
+                    <Label className="text-xs">Decline reason (optional)</Label>
+                    <Input
+                      value={reasons[row.id] ?? ""}
+                      onChange={(e) => setReasons((r) => ({ ...r, [row.id]: e.target.value }))}
+                      placeholder="e.g. payment not received"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy === row.id}
+                    onClick={() => setStatus(row, "declined")}
+                  >
+                    <XCircle className="h-4 w-4" /> Decline
+                  </Button>
+                </>
+              )}
+              {row.status !== "pending" && (
+                <Button size="sm" variant="ghost" disabled={busy === row.id} onClick={() => setStatus(row, "pending")}>
+                  Set pending
+                </Button>
+              )}
+            </div>
+          </div>
         )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const List = ({ rows }: { rows: LandlordAccount[] }) =>
     rows.length === 0 ? (
       <p className="p-4 text-sm text-muted-foreground">Nothing here yet.</p>
     ) : (
-      <div className="space-y-3">
+      <div className="space-y-2">
         {rows.map((r) => (
           <Row key={r.id} row={r} />
         ))}
       </div>
     );
+
 
   return (
     <div className="space-y-4">
@@ -322,7 +341,17 @@ function LandlordsPage() {
 
 
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="space-y-4 pt-6">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by email, name or code"
+              aria-label="Search landlord accounts"
+              className="pl-9"
+            />
+          </div>
           {isLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
