@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,22 +79,6 @@ function AuthPage() {
     }
   };
 
-  const handleGoogle = async () => {
-    setLoading(true);
-    try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: next ? window.location.origin + next : window.location.origin,
-      });
-      if (result.error) {
-        toast.error(result.error.message ?? "Google sign-in failed");
-      }
-    } catch (err: any) {
-      toast.error(err?.message ?? "Google sign-in failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const isSignup = mode === "signup";
 
   return (
@@ -162,19 +145,6 @@ function AuthPage() {
               </p>
             </div>
           )}
-
-          <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={loading}>
-            {isSignup ? "Sign up with Google" : "Continue with Google"}
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Or with email</span>
-            </div>
-          </div>
 
           <form onSubmit={handleEmail} className="space-y-3">
             <div className="space-y-2">
