@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { Moon, Sun, Bell, BellOff, BellRing, LogOut } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Moon, Sun, Bell, BellOff, BellRing, LogOut, ClipboardCheck, Wrench } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
+import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +22,7 @@ export function AppHeader() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
+  const counts = usePendingCounts();
 
   const signOut = async () => {
     await queryClient.cancelQueries();
@@ -65,11 +68,28 @@ export function AppHeader() {
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur">
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-6" />
-      <div>
-        <h1 className="text-base font-semibold leading-tight">Rental Dashboard</h1>
-        <p className="text-xs text-muted-foreground">Manage properties, tenants & payments</p>
+      <AppLogo className="h-8 w-8 shrink-0" />
+      <div className="min-w-0">
+        <h1 className="truncate text-base font-semibold leading-tight">Rental Dashboard</h1>
+        <p className="hidden truncate text-xs text-muted-foreground sm:block">Manage properties, tenants & payments</p>
       </div>
       <div className="ml-auto flex items-center gap-2 overflow-x-auto">
+        {counts.applications > 0 && (
+          <Link to="/applications">
+            <Badge className="bg-destructive text-destructive-foreground">
+              <ClipboardCheck className="mr-1 h-3.5 w-3.5" />
+              {counts.applications} new
+            </Badge>
+          </Link>
+        )}
+        {counts.issues > 0 && (
+          <Link to="/maintenance" className="hidden sm:block">
+            <Badge className="bg-warning text-warning-foreground">
+              <Wrench className="mr-1 h-3.5 w-3.5" />
+              {counts.issues} issues
+            </Badge>
+          </Link>
+        )}
         <Badge variant="secondary" className="hidden sm:inline-flex">
           Units: <span className="ml-1 font-semibold">{summary?.totalUnits ?? 0}</span>
         </Badge>

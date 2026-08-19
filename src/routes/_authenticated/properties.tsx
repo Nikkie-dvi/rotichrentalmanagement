@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+import { UNIT_TYPES, unitTypeLabel } from "@/lib/unit-types";
 
 export const Route = createFileRoute("/_authenticated/properties")({
   head: () => ({
@@ -220,6 +221,7 @@ function PropertiesPage() {
               <TableRow>
                 <TableHead>Unit #</TableHead>
                 <TableHead>Property</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead className="text-right">Monthly Rent</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-24"></TableHead>
@@ -230,6 +232,7 @@ function PropertiesPage() {
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">{u.unit_number}</TableCell>
                   <TableCell>{u.properties?.name ?? "—"}</TableCell>
+                  <TableCell><Badge variant="outline">{unitTypeLabel(u.unit_type)}</Badge></TableCell>
                   <TableCell className="text-right">{money(Number(u.rent_amount))}</TableCell>
                   <TableCell>
                     <Badge className={u.status === "occupied" ? "bg-primary text-primary-foreground" : ""} variant={u.status === "occupied" ? "default" : "secondary"}>
@@ -293,6 +296,7 @@ function UnitForm({
 }) {
   const [propertyId, setPropertyId] = useState<string>(initial?.property_id ?? properties[0]?.id ?? "");
   const [status, setStatus] = useState<string>(initial?.status ?? "vacant");
+  const [unitType, setUnitType] = useState<string>(initial?.unit_type ?? "bedsitter");
   return (
     <form
       onSubmit={(e) => {
@@ -303,6 +307,7 @@ function UnitForm({
           property_id: propertyId,
           unit_number: String(f.get("unit_number")),
           rent_amount: Number(f.get("rent_amount")),
+          unit_type: unitType,
           status,
         });
       }}
@@ -318,6 +323,15 @@ function UnitForm({
         </Select>
       </div>
       <div><Label>Unit Number</Label><Input name="unit_number" required defaultValue={initial?.unit_number} /></div>
+      <div>
+        <Label>Room type</Label>
+        <Select value={unitType} onValueChange={setUnitType}>
+          <SelectTrigger><SelectValue placeholder="Select room type" /></SelectTrigger>
+          <SelectContent>
+            {UNIT_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
       <div><Label>Monthly Rent (KES)</Label><Input type="number" min={0} step="1" name="rent_amount" required defaultValue={initial?.rent_amount ?? 0} /></div>
       <div>
         <Label>Status</Label>

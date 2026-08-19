@@ -1,6 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3, Wallet } from "lucide-react";
 import { useIsSuperAdmin } from "@/hooks/use-landlord-account";
+import { usePendingCounts } from "@/hooks/use-pending-counts";
+import { AppLogo } from "@/components/app-logo";
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +32,12 @@ const items = [
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isSuper = useIsSuperAdmin();
+  const counts = usePendingCounts();
+  const badgeFor = (url: string) =>
+    url === "/applications" ? counts.applications
+    : url === "/maintenance" ? counts.issues
+    : url === "/billing" ? counts.unpaidInvoices
+    : 0;
   const menu = isSuper
     ? [
         ...items,
@@ -41,12 +49,10 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold">
-            R
-          </div>
+          <AppLogo className="h-8 w-8 shrink-0" />
           <div className="group-data-[collapsible=icon]:hidden">
-            <div className="text-sm font-semibold text-sidebar-foreground">Rotich Management</div>
-            <div className="text-xs text-sidebar-foreground/60">Systems</div>
+            <div className="text-sm font-semibold text-sidebar-foreground">Rotich Rental</div>
+            <div className="text-xs text-sidebar-foreground/60">Management Systems</div>
           </div>
         </div>
       </SidebarHeader>
@@ -57,6 +63,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {menu.map((item) => {
                 const active = pathname === item.url;
+                const count = badgeFor(item.url);
                 return (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton
@@ -74,6 +81,14 @@ export function AppSidebar() {
                         >
                           {item.title}
                         </span>
+                        {count > 0 && (
+                          <span
+                            className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-bold leading-none text-destructive-foreground shadow-sm group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:right-1 group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:min-w-4 group-data-[collapsible=icon]:px-0"
+                            aria-label={`${count} pending`}
+                          >
+                            {count > 99 ? "99+" : count}
+                          </span>
+                        )}
                         {active && <span className="nav-active-bar" aria-hidden />}
                       </Link>
                     </SidebarMenuButton>
