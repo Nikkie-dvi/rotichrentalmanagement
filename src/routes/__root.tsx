@@ -114,7 +114,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
               "@type": "WebSite",
               name: "Rotich Rental Management",
               url: "https://homebasemanager.app",
-􀀀            },
+},
             {
               "@type": "Service",
               name: "Rental property management software",
