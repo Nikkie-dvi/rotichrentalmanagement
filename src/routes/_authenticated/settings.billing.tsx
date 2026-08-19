@@ -201,21 +201,8 @@ function BillingSettingsPage() {
             <Textarea rows={3} value={form.sms_template} onChange={(e) => set("sms_template", e.target.value)} />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <div className="font-medium text-sm">Send email</div>
-              <div className="text-xs text-muted-foreground">Needs a verified sending domain — logged as “skipped” until then.</div>
-            </div>
-            <Switch checked={!!form.email_enabled} onCheckedChange={(v) => set("email_enabled", v)} />
-          </div>
-          <div className="grid gap-1.5">
-            <Label>Email subject</Label>
-            <Input value={form.email_subject} onChange={(e) => set("email_subject", e.target.value)} />
-          </div>
-          <div className="grid gap-1.5">
-            <Label>Email message</Label>
-            <Textarea rows={4} value={form.email_template} onChange={(e) => set("email_template", e.target.value)} />
-          </div>
+
+
           <Button onClick={save} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save messages
           </Button>
