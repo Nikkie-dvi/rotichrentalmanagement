@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3, Wallet, UserCog, AlarmClock } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3, Wallet, UserCog, AlarmClock, Download } from "lucide-react";
 import { useIsSuperAdmin, useIsPropertyManager } from "@/hooks/use-landlord-account";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { AppLogo } from "@/components/app-logo";
@@ -25,6 +25,7 @@ const items = [
   { title: "Meter Readings", url: "/meters", icon: Gauge },
   { title: "Billing & Invoices", url: "/billing", icon: FileText },
   { title: "Payments & Receipts", url: "/payments", icon: Receipt },
+  { title: "Monthly Reports", url: "/reports", icon: Download },
   { title: "Rent Payment Details", url: "/settings/payments", icon: Wallet },
   { title: "Late Fees & Alerts", url: "/settings/billing", icon: AlarmClock },
   { title: "Lease Template", url: "/settings/lease", icon: FileSignature },
