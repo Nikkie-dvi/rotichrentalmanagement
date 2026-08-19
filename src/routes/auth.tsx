@@ -97,7 +97,7 @@ function AuthPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Rotich Rental Management</CardTitle>
-          <CardDescription>Landlord account</CardDescription>
+          <CardDescription>Landlords &amp; property managers</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Big, unmistakable choice: existing account vs brand new account. */}
@@ -141,6 +141,18 @@ function AuthPage() {
               </>
             )}
           </div>
+
+          {!isSignup && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                <Building2 className="h-4 w-4" /> Property manager?
+              </div>
+              <p className="mt-1">
+                Sign in right here with the email and password your landlord gave you (Settings → Property Managers).
+                There's no separate sign-up — only your landlord can create your login.
+              </p>
+            </div>
+          )}
 
           <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={loading}>
             {isSignup ? "Sign up with Google" : "Continue with Google"}
