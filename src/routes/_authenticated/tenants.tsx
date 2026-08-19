@@ -61,6 +61,7 @@ function TenantsPage() {
   const qc = useQueryClient();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
 
   const { data: tenants } = useQuery({
