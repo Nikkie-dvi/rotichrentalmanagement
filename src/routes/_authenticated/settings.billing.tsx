@@ -37,7 +37,7 @@ const DEFAULTS = {
   penalty_max: "",
   auto_penalties_enabled: true,
   sms_enabled: true,
-  email_enabled: true,
+  email_enabled: false,
   sms_template:
     "Hi {tenant_name}, a late fee of {penalty_amount} has been added to your rent. Your updated balance is {total_balance}, due by {due_date}.",
   email_subject: "Late payment fee added to your rent",
@@ -88,7 +88,7 @@ function BillingSettingsPage() {
       penalty_max: form.penalty_max === "" ? null : Number(form.penalty_max),
       auto_penalties_enabled: !!form.auto_penalties_enabled,
       sms_enabled: !!form.sms_enabled,
-      email_enabled: !!form.email_enabled,
+      email_enabled: false,
       sms_template: form.sms_template,
       email_subject: form.email_subject,
       email_template: form.email_template,
@@ -201,21 +201,8 @@ function BillingSettingsPage() {
             <Textarea rows={3} value={form.sms_template} onChange={(e) => set("sms_template", e.target.value)} />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <div className="font-medium text-sm">Send email</div>
-              <div className="text-xs text-muted-foreground">Needs a verified sending domain — logged as “skipped” until then.</div>
-            </div>
-            <Switch checked={!!form.email_enabled} onCheckedChange={(v) => set("email_enabled", v)} />
-          </div>
-          <div className="grid gap-1.5">
-            <Label>Email subject</Label>
-            <Input value={form.email_subject} onChange={(e) => set("email_subject", e.target.value)} />
-          </div>
-          <div className="grid gap-1.5">
-            <Label>Email message</Label>
-            <Textarea rows={4} value={form.email_template} onChange={(e) => set("email_template", e.target.value)} />
-          </div>
+
+
           <Button onClick={save} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save messages
           </Button>
@@ -225,7 +212,7 @@ function BillingSettingsPage() {
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="text-base">Recent alerts</CardTitle>
-          <CardDescription>Every SMS, email and phone alert sent to your tenants.</CardDescription>
+          <CardDescription>Every SMS and app alert sent to your tenants.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           {(logs ?? []).length === 0 && <p className="text-sm text-muted-foreground">No alerts sent yet.</p>}

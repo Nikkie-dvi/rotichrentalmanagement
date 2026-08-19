@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Wallet, Save, BellRing, Send } from "lucide-react";
+import { Loader2, Wallet, Save, BellRing, Send, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,40 @@ import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { SmsCreditCard } from "@/components/sms-credit-card";
 
+
+type Audience = "all" | "due" | "overdue";
+
+const SUGGESTIONS: { label: string; body: string; audience?: Audience }[] = [
+  {
+    label: "Rent due reminder",
+    body: "Friendly reminder: your rent is due. Please pay via {method} to {number}. Thank you.",
+    audience: "due",
+  },
+  {
+    label: "Overdue rent",
+    body: "Your rent is now overdue. Kindly clear the balance today via {method} to {number} to avoid a late fee.",
+    audience: "overdue",
+  },
+  {
+    label: "Payment received",
+    body: "We have received your payment. Thank you for paying on time.",
+  },
+  {
+    label: "Water shortage",
+    body: "Notice: water will be unavailable tomorrow from 8am to 2pm. Please store enough water.",
+    audience: "all",
+  },
+  {
+    label: "Inspection notice",
+    body: "Notice: a routine inspection of your unit will take place this week. Kindly be available.",
+    audience: "all",
+  },
+  {
+    label: "New payment number",
+    body: "Please note our rent payment details have changed. Pay via {method} to {number}.",
+    audience: "all",
+  },
+];
 
 export const Route = createFileRoute("/_authenticated/settings/payments")({
   head: () => ({
@@ -41,6 +75,20 @@ function RentPaymentSettingsPage() {
   const [sending, setSending] = useState(false);
   const [viaPush, setViaPush] = useState(true);
   const [viaSms, setViaSms] = useState(true);
+  const [audience, setAudience] = useState<Audience>("all");
+  const [picked, setPicked] = useState<string[]>([]);
+
+  const { data: tenants } = useQuery({
+    queryKey: ["tenants", "message-picker"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tenants")
+        .select("id, full_name, phone_number")
+        .eq("active", true)
+        .order("full_name");
+      return data ?? [];
+    },
+  });
 
   useEffect(() => {
     if (!account) return;
@@ -168,14 +216,66 @@ function RentPaymentSettingsPage() {
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <BellRing className="h-4 w-4" /> Message all tenants
+            <BellRing className="h-4 w-4" /> Message your tenants
           </CardTitle>
           <CardDescription>
-            One message, both channels — an in-app notification on their phone and an SMS to their number. Used for
-            payment changes, water shortages or inspections.
+            One message, both channels — an in-app notification and an SMS. Choose who gets it and pick a ready-made
+            message if you're in a hurry.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label>Who should get this?</Label>
+            <Select
+              value={picked.length ? "selected" : audience}
+              onValueChange={(v) => {
+                if (v === "selected") return;
+                setPicked([]);
+                setAudience(v as any);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All tenants</SelectItem>
+                <SelectItem value="due">Tenants with rent due (unpaid invoices)</SelectItem>
+                <SelectItem value="overdue">Tenants already overdue</SelectItem>
+                {picked.length > 0 && <SelectItem value="selected">{picked.length} selected tenant(s)</SelectItem>}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="rounded-lg border bg-muted/40 p-3">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+              <Users className="h-4 w-4" /> Or pick specific tenants
+            </div>
+            <div className="max-h-40 space-y-1.5 overflow-y-auto pr-1">
+              {(tenants ?? []).map((t: any) => (
+                <label key={t.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={picked.includes(t.id)}
+                    onCheckedChange={(v) =>
+                      setPicked((p: string[]) => (v === true ? [...p, t.id] : p.filter((id: string) => id !== t.id)))
+                    }
+                  />
+                  <span className="truncate">
+                    {t.full_name}
+                    {t.phone_number ? <span className="text-muted-foreground"> · {t.phone_number}</span> : null}
+                  </span>
+                </label>
+              ))}
+              {(tenants ?? []).length === 0 && (
+                <p className="text-xs text-muted-foreground">No active tenants yet.</p>
+              )}
+            </div>
+            {picked.length > 0 && (
+              <Button variant="ghost" size="sm" className="mt-2 h-7 px-2 text-xs" onClick={() => setPicked([])}>
+                Clear selection
+              </Button>
+            )}
+          </div>
+
           <div className="flex flex-wrap gap-4 rounded-lg border bg-muted/40 p-3">
             <label className="flex items-center gap-2 text-sm font-medium">
               <Checkbox checked={viaPush} onCheckedChange={(v) => setViaPush(v === true)} />
@@ -186,6 +286,34 @@ function RentPaymentSettingsPage() {
               SMS
             </label>
           </div>
+
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Quick messages</Label>
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTIONS.map((s) => (
+                <Button
+                  key={s.label}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    setUrgent(
+                      s.body.replace("{number}", number.trim() || "your payment number").replace(
+                        "{method}",
+                        paymentMethodLabel(method),
+                      ),
+                    );
+                    if (s.audience) setAudience(s.audience);
+                    if (s.audience) setPicked([]);
+                  }}
+                >
+                  {s.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           <Textarea
             rows={3}
             value={urgent}
@@ -204,12 +332,18 @@ function RentPaymentSettingsPage() {
                     body: urgent.trim(),
                     push: viaPush,
                     sms: viaSms,
+                    audience,
+                    tenantIds: picked,
                   },
                 });
-                toast.success(`Sent — ${describeResult(res)}`, {
-                  description: res.smsFailed > 0 ? `${res.smsFailed} SMS could not be delivered` : undefined,
-                });
-                setUrgent("");
+                if ((res as any).recipients === 0) {
+                  toast.info("No tenants matched that group — nothing was sent");
+                } else {
+                  toast.success(`Sent to ${(res as any).recipients} tenant(s) — ${describeResult(res)}`, {
+                    description: res.smsFailed > 0 ? `${res.smsFailed} SMS could not be delivered` : undefined,
+                  });
+                  setUrgent("");
+                }
               } catch (e: any) {
                 toast.error(e?.message ?? "Could not send");
               } finally {
@@ -221,10 +355,11 @@ function RentPaymentSettingsPage() {
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send now
           </Button>
           <p className="text-xs text-muted-foreground">
-            Saving your payment details above also sends an update using these same channels.
+            Saving your payment details above also sends an update to all tenants using these same channels.
           </p>
         </CardContent>
       </Card>
+
 
     </div>
   );
