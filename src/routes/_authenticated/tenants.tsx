@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2, CalendarCog, KeyRound } from "lucide-react";
+import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2, KeyRound, ArrowLeft, Home, Pencil } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +59,9 @@ function RiskBadge({ risk }: { risk: Risk }) {
 
 function TenantsPage() {
   const qc = useQueryClient();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+
 
   const { data: tenants } = useQuery({
     queryKey: ["tenants-full"],
@@ -191,11 +194,31 @@ function TenantsPage() {
 
   return (
     <div className="space-y-6">
+      <div className="sticky top-0 z-30 -mx-4 mb-2 flex items-center gap-2 border-b bg-background/95 px-4 py-2 backdrop-blur md:-mx-6 md:px-6">
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label="Go back"
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) router.history.back();
+            else router.navigate({ to: "/" });
+          }}
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </Button>
+        <span className="truncate text-sm font-medium">Tenants</span>
+        <Button asChild variant="outline" size="sm" className="ml-auto">
+          <Link to="/">
+            <Home className="h-4 w-4" /> Dashboard
+          </Link>
+        </Button>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Tenants</h2>
           <p className="text-sm text-muted-foreground">Assign, track and offboard tenants.</p>
         </div>
+
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><UserPlus className="h-4 w-4" />Assign Tenant</Button></DialogTrigger>
           <DialogContent>
@@ -493,16 +516,27 @@ function ResetTenantPasswordDialog({ tenant: t }: { tenant: any }) {
   );
 }
 
-/** Lets the landlord correct a tenant's joining (move-in) date and rent due day. */
+/** Lets the landlord correct a tenant's details: name, phone, deposit and dates. */
 function EditTenantDatesDialog({ tenant: t }: { tenant: any }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [fullName, setFullName] = useState<string>(t.full_name ?? "");
+  const [phone, setPhone] = useState<string>(t.phone_number ?? "");
+  const [deposit, setDeposit] = useState<string>(String(t.deposit_paid ?? 0));
   const [moveIn, setMoveIn] = useState<string>(t.move_in_date ?? "");
   const [dueDay, setDueDay] = useState<string>(t.rent_due_day ? String(t.rent_due_day) : "");
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
     const day = dueDay ? Number(dueDay) : null;
+    if (!fullName.trim() || fullName.trim().length < 2) {
+      toast.error("Enter the tenant's full name");
+      return;
+    }
+    if (phone.trim() && !/^\+?[0-9 ()-]{7,20}$/.test(phone.trim())) {
+      toast.error("Enter a valid phone number");
+      return;
+    }
     if (day !== null && (!Number.isFinite(day) || day < 1 || day > 31)) {
       toast.error("Rent due day must be between 1 and 31");
       return;
@@ -510,14 +544,20 @@ function EditTenantDatesDialog({ tenant: t }: { tenant: any }) {
     setSaving(true);
     const { error } = await supabase
       .from("tenants")
-      .update({ move_in_date: moveIn || null, rent_due_day: day })
+      .update({
+        full_name: fullName.trim(),
+        phone_number: phone.trim() || null,
+        deposit_paid: Number(deposit) || 0,
+        move_in_date: moveIn || null,
+        rent_due_day: day,
+      })
       .eq("id", t.id);
     setSaving(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Tenant dates updated");
+    toast.success("Tenant details updated");
     setOpen(false);
     qc.invalidateQueries();
   };
@@ -526,14 +566,26 @@ function EditTenantDatesDialog({ tenant: t }: { tenant: any }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline" className="w-full">
-          <CalendarCog className="h-4 w-4" /> Edit dates
+          <Pencil className="h-4 w-4" /> Edit tenant
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md">
+      <DialogContent className="max-h-[85vh] w-[calc(100vw-1.5rem)] max-w-md overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit joining date — {t.full_name}</DialogTitle>
+          <DialogTitle>Edit tenant — {t.full_name}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor={`fn-${t.id}`}>Full name</Label>
+            <Input id={`fn-${t.id}`} value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={100} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor={`ph-${t.id}`}>Phone number</Label>
+            <Input id={`ph-${t.id}`} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+2547XXXXXXXX" maxLength={32} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor={`dep-${t.id}`}>Deposit paid</Label>
+            <Input id={`dep-${t.id}`} type="number" min={0} value={deposit} onChange={(e) => setDeposit(e.target.value)} />
+          </div>
           <div className="grid gap-1.5">
             <Label htmlFor={`mi-${t.id}`}>Joining / move-in date</Label>
             <Input id={`mi-${t.id}`} type="date" value={moveIn} onChange={(e) => setMoveIn(e.target.value)} />
@@ -551,6 +603,7 @@ function EditTenantDatesDialog({ tenant: t }: { tenant: any }) {
             />
           </div>
         </div>
+
         <DialogFooter>
           <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
         </DialogFooter>
