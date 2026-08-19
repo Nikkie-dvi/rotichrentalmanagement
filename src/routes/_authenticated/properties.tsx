@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { UNIT_TYPES, unitTypeLabel } from "@/lib/unit-types";
+import { useIsPropertyManager } from "@/hooks/use-landlord-account";
 
 export const Route = createFileRoute("/_authenticated/properties")({
   head: () => ({
@@ -43,6 +44,8 @@ function PropertiesPage() {
   const [propOpen, setPropOpen] = useState(false);
   const [unitOpen, setUnitOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  // Property managers work read-only here: they cannot add, edit or delete stock.
+  const isManager = useIsPropertyManager();
 
   const { data: properties } = useQuery({
     queryKey: ["properties"],
@@ -122,6 +125,11 @@ function PropertiesPage() {
           <h2 className="text-2xl font-bold tracking-tight">Properties & Units</h2>
           <p className="text-sm text-muted-foreground">Buildings and their rentable units.</p>
         </div>
+        {isManager ? (
+          <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400">
+            View only — ask the landlord to add or remove units
+          </Badge>
+        ) : (
         <div className="flex gap-2">
           <Dialog open={propOpen} onOpenChange={setPropOpen}>
             <DialogTrigger asChild><Button variant="secondary"><Plus className="h-4 w-4" />Add Property</Button></DialogTrigger>
@@ -154,6 +162,7 @@ function PropertiesPage() {
             </DialogContent>
           </Dialog>
         </div>
+        )}
       </div>
 
       <Card>
@@ -165,7 +174,7 @@ function PropertiesPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead className="text-right">Units</TableHead>
-                <TableHead className="w-16"></TableHead>
+                <TableHead className="w-16" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -177,6 +186,7 @@ function PropertiesPage() {
                     <TableCell>{p.location ?? "—"}</TableCell>
                     <TableCell className="text-right">{unitCount}</TableCell>
                     <TableCell>
+                      {!isManager && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button size="icon" variant="ghost" aria-label={`Delete property ${p.name}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -202,6 +212,7 @@ function PropertiesPage() {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
@@ -242,6 +253,7 @@ function PropertiesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">
+                      {!isManager && (<>
                       <Button size="icon" variant="ghost" aria-label={`Edit unit ${u.unit_number}`} onClick={() => { setEditing(u); setUnitOpen(true); }}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -270,6 +282,7 @@ function PropertiesPage() {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+                      </>)}
                     </div>
                   </TableCell>
                 </TableRow>
