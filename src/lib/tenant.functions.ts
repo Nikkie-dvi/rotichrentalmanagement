@@ -23,7 +23,7 @@ export const getVacantUnits = createServerFn({ method: "GET" })
 
     const { data: units, error } = await supabaseAdmin
       .from("units")
-      .select("id, unit_number, rent_amount, property_id, properties(name, location)")
+      .select("id, unit_number, rent_amount, unit_type, property_id, properties(name, location)")
       .eq("status", "vacant")
       .eq("owner_id", landlord.user_id)
       .order("unit_number", { ascending: true });
@@ -34,6 +34,7 @@ export const getVacantUnits = createServerFn({ method: "GET" })
         id: u.id as string,
         unit_number: u.unit_number as string,
         rent_amount: Number(u.rent_amount) || 0,
+        unit_type: (u.unit_type as string) ?? "other",
         property_name: (u.properties?.name as string) ?? null,
         property_location: (u.properties?.location as string) ?? null,
       })),
