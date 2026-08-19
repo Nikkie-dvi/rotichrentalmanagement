@@ -13,7 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { sendPaymentReceiptSms } from "@/lib/receipts.functions";
 import { money } from "@/lib/types";
 import { notify } from "@/lib/notifications";
 
@@ -45,6 +47,7 @@ export function RecordPaymentButton({
   const [method, setMethod] = useState<string>("mpesa");
   const [ref, setRef] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [smsReceipt, setSmsReceipt] = useState(true);
 
   const save = async () => {
     const value = Number(amount);
@@ -91,6 +94,23 @@ export function RecordPaymentButton({
         payment_date: date,
       });
       if (error) throw error;
+
+      if (smsReceipt) {
+        try {
+          await sendPaymentReceiptSms({
+            data: {
+              tenantId,
+              amount: value,
+              paymentDate: date,
+              method: method === "mpesa" ? "M-Pesa" : method === "bank" ? "Bank" : "Cash",
+              reference: ref.trim() || null,
+            },
+          });
+          toast.success("Receipt SMS sent to the tenant");
+        } catch (e: any) {
+          toast.error(e?.message ?? "Payment saved, but the receipt SMS failed");
+        }
+      }
 
       qc.invalidateQueries();
       toast.success(`Payment of ${money(value)} recorded for ${date}`);
@@ -160,6 +180,13 @@ export function RecordPaymentButton({
             <Label>Reference (optional)</Label>
             <Input value={ref} maxLength={40} onChange={(e) => setRef(e.target.value)} placeholder="M-Pesa code / slip no." />
           </div>
+          <label className="flex items-start gap-2 rounded-lg border p-3 text-sm">
+            <Checkbox checked={smsReceipt} onCheckedChange={(v) => setSmsReceipt(v === true)} className="mt-0.5" />
+            <span>
+              Text a payment receipt to the tenant
+              <span className="block text-xs text-muted-foreground">Uses 1.2 KES of your SMS credit.</span>
+            </span>
+          </label>
           <Button className="w-full" onClick={save} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Save payment {amount && Number(amount) > 0 ? `of ${money(Number(amount))}` : ""}
