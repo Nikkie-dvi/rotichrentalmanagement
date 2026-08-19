@@ -51,6 +51,7 @@ type Row = {
 };
 
 function ApplicationsPage() {
+  const { data: landlordAccount } = useLandlordAccount();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"pending" | "approved" | "declined">("pending");
   const [preview, setPreview] = useState<Row | null>(null);
