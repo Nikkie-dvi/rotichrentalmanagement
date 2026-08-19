@@ -134,10 +134,12 @@ export function LeaseDocument({
 
 export function LeaseDialog({
   lease,
+  template,
   open,
   onOpenChange,
 }: {
   lease: LeaseData | null;
+  template?: LeaseTemplate | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
