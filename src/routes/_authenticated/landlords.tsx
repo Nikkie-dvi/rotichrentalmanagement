@@ -92,9 +92,17 @@ function LandlordsPage() {
     );
   }
 
-  const pending = (accounts ?? []).filter((a) => a.status === "pending");
-  const approved = (accounts ?? []).filter((a) => a.status === "approved");
-  const declined = (accounts ?? []).filter((a) => a.status === "declined");
+  const q = query.trim().toLowerCase();
+  const visible = (accounts ?? []).filter((a) =>
+    !q
+      ? true
+      : [a.email, a.full_name, a.landlord_code, a.payment_number]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q)),
+  );
+  const pending = visible.filter((a) => a.status === "pending");
+  const approved = visible.filter((a) => a.status === "approved");
+  const declined = visible.filter((a) => a.status === "declined");
 
   const SubscriptionBlock = ({ row }: { row: LandlordAccount }) => {
     const sub = subscriptionState(row);
