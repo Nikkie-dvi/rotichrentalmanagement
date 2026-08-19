@@ -230,82 +230,92 @@ function LandlordsPage() {
 
 
 
-  const Row = ({ row }: { row: LandlordAccount }) => (
-    <div className="rounded-lg border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 font-medium">
-            {row.full_name ?? row.email ?? "Landlord"}
+  const Row = ({ row }: { row: LandlordAccount }) => {
+    const [expanded, setExpanded] = useState(false);
+    return (
+      <div className="rounded-lg border">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="flex w-full items-center gap-2 p-3 text-left"
+        >
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium">{row.email ?? row.full_name ?? "Landlord"}</div>
             {row.landlord_code && (
-              <Badge variant="outline" className="font-mono tracking-widest">#{row.landlord_code}</Badge>
+              <div className="text-xs font-mono tracking-widest text-muted-foreground">#{row.landlord_code}</div>
             )}
           </div>
-          <div className="text-xs text-muted-foreground">{row.email}</div>
-          <div className="text-xs text-muted-foreground">
-            Registered {new Date(row.created_at).toLocaleDateString()} · Fee {money(Number(row.monthly_fee))}/month
-          </div>
-        </div>
-        <Badge
-          variant={row.status === "approved" ? "default" : row.status === "declined" ? "destructive" : "secondary"}
-        >
-          {row.status}
-        </Badge>
-      </div>
+          <Badge
+            variant={row.status === "approved" ? "default" : row.status === "declined" ? "destructive" : "secondary"}
+          >
+            {row.status}
+          </Badge>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
+        </button>
 
-      {row.status === "declined" && row.declined_reason && (
-        <p className="mt-2 text-xs text-muted-foreground">Reason: {row.declined_reason}</p>
-      )}
-
-      <SubscriptionBlock row={row} />
-
-
-
-      <div className="mt-3 flex flex-wrap items-end gap-2">
-        {row.status !== "approved" && (
-          <Button size="sm" disabled={busy === row.id} onClick={() => setStatus(row, "approved")}>
-            {busy === row.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-            Approve
-          </Button>
-        )}
-        {row.status !== "declined" && (
-          <>
-            <div className="min-w-40 flex-1">
-              <Label className="text-xs">Decline reason (optional)</Label>
-              <Input
-                value={reasons[row.id] ?? ""}
-                onChange={(e) => setReasons((r) => ({ ...r, [row.id]: e.target.value }))}
-                placeholder="e.g. payment not received"
-              />
+        {expanded && (
+          <div className="border-t p-4 pt-3">
+            <div className="text-sm font-medium">{row.full_name ?? "—"}</div>
+            <div className="text-xs text-muted-foreground">
+              Registered {new Date(row.created_at).toLocaleDateString()} · Fee {money(Number(row.monthly_fee))}/month
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy === row.id}
-              onClick={() => setStatus(row, "declined")}
-            >
-              <XCircle className="h-4 w-4" /> Decline
-            </Button>
-          </>
-        )}
-        {row.status !== "pending" && (
-          <Button size="sm" variant="ghost" disabled={busy === row.id} onClick={() => setStatus(row, "pending")}>
-            Set pending
-          </Button>
+            {row.status === "declined" && row.declined_reason && (
+              <p className="mt-2 text-xs text-muted-foreground">Reason: {row.declined_reason}</p>
+            )}
+
+            <SubscriptionBlock row={row} />
+
+            <div className="mt-3 flex flex-wrap items-end gap-2">
+              {row.status !== "approved" && (
+                <Button size="sm" disabled={busy === row.id} onClick={() => setStatus(row, "approved")}>
+                  {busy === row.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                  Approve
+                </Button>
+              )}
+              {row.status !== "declined" && (
+                <>
+                  <div className="min-w-40 flex-1">
+                    <Label className="text-xs">Decline reason (optional)</Label>
+                    <Input
+                      value={reasons[row.id] ?? ""}
+                      onChange={(e) => setReasons((r) => ({ ...r, [row.id]: e.target.value }))}
+                      placeholder="e.g. payment not received"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy === row.id}
+                    onClick={() => setStatus(row, "declined")}
+                  >
+                    <XCircle className="h-4 w-4" /> Decline
+                  </Button>
+                </>
+              )}
+              {row.status !== "pending" && (
+                <Button size="sm" variant="ghost" disabled={busy === row.id} onClick={() => setStatus(row, "pending")}>
+                  Set pending
+                </Button>
+              )}
+            </div>
+          </div>
         )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const List = ({ rows }: { rows: LandlordAccount[] }) =>
     rows.length === 0 ? (
       <p className="p-4 text-sm text-muted-foreground">Nothing here yet.</p>
     ) : (
-      <div className="space-y-3">
+      <div className="space-y-2">
         {rows.map((r) => (
           <Row key={r.id} row={r} />
         ))}
       </div>
     );
+
 
   return (
     <div className="space-y-4">
