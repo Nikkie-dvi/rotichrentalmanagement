@@ -97,7 +97,7 @@ function AuthPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Rotich Rental Management</CardTitle>
-          <CardDescription>Landlord account</CardDescription>
+          <CardDescription>Landlords &amp; property managers</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Big, unmistakable choice: existing account vs brand new account. */}
