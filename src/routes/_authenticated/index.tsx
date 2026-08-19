@@ -333,6 +333,7 @@ function Dashboard() {
                   <TableHead>Tenant</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Remove</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -342,10 +343,39 @@ function Dashboard() {
                     <TableCell className="font-medium">{p.tenants?.full_name ?? "—"}</TableCell>
                     <TableCell><Badge variant="outline" className="uppercase">{p.payment_method}</Badge></TableCell>
                     <TableCell className="text-right font-semibold text-primary">{money(Number(p.amount_paid))}</TableCell>
+                    <TableCell className="text-right">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" aria-label="Remove payment" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-[calc(100vw-1.5rem)] max-w-sm">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove this payment?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {money(Number(p.amount_paid))} for {p.tenants?.full_name ?? "this tenant"} on {p.payment_date} will be
+                              deleted from the collected total and added back to the invoice balance. Use this only for records
+                              entered by mistake.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={deletePayment.isPending}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deletePayment.mutate(p)}
+                              disabled={deletePayment.isPending}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {deletePayment.isPending ? "Removing..." : "Remove payment"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {collectedList && collectedList.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No payments this month.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No payments this month.</TableCell></TableRow>
                 )}
                 {collectedList && collectedList.length > 0 && (
                   <TableRow>
@@ -353,6 +383,7 @@ function Dashboard() {
                     <TableCell className="text-right font-bold text-primary">
                       {money(collectedList.reduce((s: number, p: any) => s + Number(p.amount_paid), 0))}
                     </TableCell>
+                    <TableCell />
                   </TableRow>
                 )}
               </TableBody>
