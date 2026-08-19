@@ -11,7 +11,7 @@ import { money } from "@/lib/types";
 import {
   useLandlordAccount,
   useIsSuperAdmin,
-  useIsPropertyManager,
+  useManagerStatus,
   subscriptionState,
   PAYMENT_NUMBER,
   paymentMethodLabel,
@@ -36,7 +36,7 @@ async function copyText(value: string) {
 export function LandlordGate({ children }: { children: ReactNode }) {
   const { data: account, isLoading, refetch, isRefetching } = useLandlordAccount();
   const isSuper = useIsSuperAdmin();
-  const isManager = useIsPropertyManager();
+  const { isManager, isDisabled: managerDisabled } = useManagerStatus();
   const { data: pricing } = usePlatformPricing();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -48,6 +48,8 @@ export function LandlordGate({ children }: { children: ReactNode }) {
       </div>
     );
   }
+
+  if (managerDisabled && !isSuper) return <ManagerAccessRevoked />;
 
   if (!account || isSuper || isManager) return <>{children}</>;
 
@@ -196,6 +198,38 @@ export function LandlordGate({ children }: { children: ReactNode }) {
               <LogOut className="h-4 w-4" /> Sign out
             </Button>
           </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/** Shown when a landlord has switched off a property manager's access. */
+function ManagerAccessRevoked() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const signOut = async () => {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
+  return (
+    <div className="flex min-h-[70vh] items-start justify-center px-1 py-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+            <XCircle className="h-6 w-6 text-destructive" />
+          </div>
+          <CardTitle>Access switched off</CardTitle>
+          <CardDescription>
+            Your landlord has deactivated this property manager login. Contact them if this is a mistake.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button className="w-full" variant="outline" onClick={signOut}>
+            <LogOut className="h-4 w-4" /> Sign out
+          </Button>
         </CardContent>
       </Card>
     </div>
