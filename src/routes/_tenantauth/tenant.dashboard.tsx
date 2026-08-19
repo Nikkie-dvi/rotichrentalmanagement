@@ -472,9 +472,26 @@ function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" size="sm" onClick={() => setLeaseOpen(true)} className="glass-btn glow-blue">
-            View full lease &amp; signature
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => setLeaseOpen(true)} className="glass-btn glow-blue">
+              View full lease &amp; signature
+            </Button>
+            {landlordInfoQuery.data?.leaseDocumentUrl && (
+              <Button asChild variant="outline" size="sm" className="glass-btn glow-amber">
+                <a href={landlordInfoQuery.data.leaseDocumentUrl} target="_blank" rel="noopener noreferrer">
+                  Open uploaded lease copy
+                </a>
+              </Button>
+            )}
+          </div>
+          {landlordInfoQuery.data?.leaseDocumentUrl && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {landlordInfoQuery.data.leaseDocumentName ?? "Lease document"}
+              {landlordInfoQuery.data.leaseDocumentUploadedAt
+                ? ` · uploaded ${new Date(landlordInfoQuery.data.leaseDocumentUploadedAt).toLocaleDateString()}`
+                : ""}
+            </p>
+          )}
         </CardContent>
       </Card>
 

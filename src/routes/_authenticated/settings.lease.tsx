@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, FileSignature, Save, RotateCcw } from "lucide-react";
+import { Loader2, FileSignature, Save, RotateCcw, Upload, FileText, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,76 @@ function LeaseTemplatePage() {
   const [clauses, setClauses] = useState("");
   const [footer, setFooter] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [docUrl, setDocUrl] = useState<string | null>(null);
+
+  const a = account as any;
+  const docPath: string | null = a?.lease_document_path ?? null;
+  const docName: string | null = a?.lease_document_name ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!docPath) {
+      setDocUrl(null);
+      return;
+    }
+    supabase.storage
+      .from("lease-documents")
+      .createSignedUrl(docPath, 3600)
+      .then(({ data }) => {
+        if (!cancelled) setDocUrl(data?.signedUrl ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [docPath]);
+
+  const uploadDoc = async (file: File) => {
+    if (!account) return;
+    if (file.size > 15 * 1024 * 1024) return toast.error("File must be under 15MB");
+    setUploading(true);
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth.user?.id;
+    if (!uid) {
+      setUploading(false);
+      return toast.error("Please sign in again");
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "pdf";
+    const path = `${uid}/lease-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("lease-documents")
+      .upload(path, file, { upsert: true, contentType: file.type || undefined });
+    if (upErr) {
+      setUploading(false);
+      return toast.error(upErr.message);
+    }
+    const { error } = await supabase
+      .from("landlord_accounts")
+      .update({
+        lease_document_path: path,
+        lease_document_name: file.name,
+        lease_document_uploaded_at: new Date().toISOString(),
+      } as any)
+      .eq("id", account.id);
+    setUploading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Lease copy uploaded — tenants can now open it");
+    qc.invalidateQueries({ queryKey: ["landlord-account"] });
+  };
+
+  const removeDoc = async () => {
+    if (!account || !docPath) return;
+    setUploading(true);
+    await supabase.storage.from("lease-documents").remove([docPath]);
+    const { error } = await supabase
+      .from("landlord_accounts")
+      .update({ lease_document_path: null, lease_document_name: null, lease_document_uploaded_at: null } as any)
+      .eq("id", account.id);
+    setUploading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Uploaded lease removed");
+    qc.invalidateQueries({ queryKey: ["landlord-account"] });
+  };
 
   useEffect(() => {
     if (!account) return;
@@ -144,6 +214,67 @@ function LeaseTemplatePage() {
             <Button variant="outline" onClick={resetDefaults} disabled={saving}>
               <RotateCcw className="h-4 w-4" /> Reset to default wording
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText className="h-4 w-4" /> Upload a signed lease copy
+          </CardTitle>
+          <CardDescription>
+            Upload a scan or PDF of the lease you already use. Existing tenants who signed on paper can open this
+            copy from their portal.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {docPath ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-medium">{docName ?? "Lease document"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {a?.lease_document_uploaded_at
+                    ? `Uploaded ${new Date(a.lease_document_uploaded_at).toLocaleString()}`
+                    : "Uploaded"}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {docUrl && (
+                  <Button asChild size="sm" variant="outline" className="glass-btn">
+                    <a href={docUrl} target="_blank" rel="noopener noreferrer">View</a>
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={removeDoc} disabled={uploading}>
+                  <Trash2 className="h-4 w-4" /> Remove
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No lease copy uploaded yet.</p>
+          )}
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="lease-file">{docPath ? "Replace file" : "Choose a file"} (PDF or image, max 15MB)</Label>
+            <Input
+              id="lease-file"
+              type="file"
+              accept="application/pdf,image/*"
+              disabled={uploading}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                if (f) void uploadDoc(f);
+              }}
+            />
+            {uploading && (
+              <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" /> Uploading…
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              <Upload className="mr-1 inline h-3 w-3" /> Only your tenants can open this file.
+            </p>
           </div>
         </CardContent>
       </Card>
