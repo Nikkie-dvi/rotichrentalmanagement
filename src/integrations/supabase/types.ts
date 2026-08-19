@@ -14,18 +14,112 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_settings: {
+        Row: {
+          auto_penalties_enabled: boolean
+          default_due_day: number
+          email_enabled: boolean
+          email_subject: string
+          email_template: string
+          grace_days: number
+          owner_id: string
+          penalty_max: number | null
+          penalty_type: string
+          penalty_value: number
+          sms_enabled: boolean
+          sms_template: string
+          updated_at: string
+        }
+        Insert: {
+          auto_penalties_enabled?: boolean
+          default_due_day?: number
+          email_enabled?: boolean
+          email_subject?: string
+          email_template?: string
+          grace_days?: number
+          owner_id?: string
+          penalty_max?: number | null
+          penalty_type?: string
+          penalty_value?: number
+          sms_enabled?: boolean
+          sms_template?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_penalties_enabled?: boolean
+          default_due_day?: number
+          email_enabled?: boolean
+          email_subject?: string
+          email_template?: string
+          grace_days?: number
+          owner_id?: string
+          penalty_max?: number | null
+          penalty_type?: string
+          penalty_value?: number
+          sms_enabled?: boolean
+          sms_template?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      invoice_line_items: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string
+          kind: string
+          owner_id: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id: string
+          kind?: string
+          owner_id?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string
+          kind?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           balance_remaining: number
           base_rent: number
           created_at: string
+          due_date: string | null
           electricity_amount: number
           garbage_amount: number
           id: string
+          late_penalty_amount: number
           month_year: string
           other_amount: number
           other_label: string | null
           owner_id: string
+          penalty_applied_at: string | null
+          penalty_waive_reason: string | null
+          penalty_waived: boolean
           status: string
           tenant_id: string
           total_due: number
@@ -36,13 +130,18 @@ export type Database = {
           balance_remaining?: number
           base_rent?: number
           created_at?: string
+          due_date?: string | null
           electricity_amount?: number
           garbage_amount?: number
           id?: string
+          late_penalty_amount?: number
           month_year: string
           other_amount?: number
           other_label?: string | null
           owner_id?: string
+          penalty_applied_at?: string | null
+          penalty_waive_reason?: string | null
+          penalty_waived?: boolean
           status?: string
           tenant_id: string
           total_due?: number
@@ -53,13 +152,18 @@ export type Database = {
           balance_remaining?: number
           base_rent?: number
           created_at?: string
+          due_date?: string | null
           electricity_amount?: number
           garbage_amount?: number
           id?: string
+          late_penalty_amount?: number
           month_year?: string
           other_amount?: number
           other_label?: string | null
           owner_id?: string
+          penalty_applied_at?: string | null
+          penalty_waive_reason?: string | null
+          penalty_waived?: boolean
           status?: string
           tenant_id?: string
           total_due?: number
@@ -381,6 +485,63 @@ export type Database = {
           },
           {
             foreignKeyName: "mpesa_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_logs: {
+        Row: {
+          channel: string
+          created_at: string
+          error: string | null
+          id: string
+          invoice_id: string | null
+          message: string
+          owner_id: string
+          recipient: string | null
+          status: string
+          subject: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          invoice_id?: string | null
+          message: string
+          owner_id: string
+          recipient?: string | null
+          status?: string
+          subject?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          invoice_id?: string | null
+          message?: string
+          owner_id?: string
+          recipient?: string | null
+          status?: string
+          subject?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
