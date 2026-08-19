@@ -248,7 +248,19 @@ function TenantsPage() {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground sm:hidden">Tip: swipe a card left to reveal actions.</p>
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search name, phone, unit or property"
+          aria-label="Search tenants"
+          className="pl-9"
+        />
+      </div>
+
+      <p className="text-xs text-muted-foreground">Tap a tenant to see details and actions.</p>
+
 
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
