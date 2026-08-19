@@ -64,6 +64,11 @@ function statusBadge(status: string) {
 function DashboardPage() {
   const navigate = useNavigate();
   const [leaseOpen, setLeaseOpen] = useState(false);
+  const landlordInfoQuery = useQuery({
+    queryKey: ["tenant", "landlord-info"],
+    queryFn: () => getMyLandlordInfo(),
+    staleTime: 60_000,
+  });
 
 
   // Fetch tenant profile + unit + property.
@@ -471,6 +476,7 @@ function DashboardPage() {
       </Card>
 
       <LeaseDialog
+        template={landlordInfoQuery.data?.leaseTemplate ?? null}
         open={leaseOpen}
         onOpenChange={setLeaseOpen}
         lease={{
