@@ -65,7 +65,7 @@ function BillingPage() {
     mutationFn: async () => {
       if (!singleTenant) throw new Error("Choose a tenant");
       const rent = Number(singleRent) || 0;
-      const util = Number(singleUtil) || 0;
+      const util = singleExtras;
       const total = rent + util;
       const { error } = await supabase.from("invoices").upsert(
         {
@@ -73,6 +73,11 @@ function BillingPage() {
           month_year: singleMonth,
           base_rent: rent,
           utility_amount: util,
+          water_amount: Number(singleWater) || 0,
+          electricity_amount: Number(singlePower) || 0,
+          garbage_amount: Number(singleGarbage) || 0,
+          other_amount: Number(singleOther) || 0,
+          other_label: singleOtherLabel.trim() || null,
           total_due: total,
           balance_remaining: total,
           status: total === 0 ? "paid" : "unpaid",
