@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Wallet, Save, BellRing, Send } from "lucide-react";
+import { Loader2, Wallet, Save, BellRing, Send, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,40 @@ import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { SmsCreditCard } from "@/components/sms-credit-card";
 
+
+type Audience = "all" | "due" | "overdue";
+
+const SUGGESTIONS: { label: string; body: string; audience?: Audience }[] = [
+  {
+    label: "Rent due reminder",
+    body: "Friendly reminder: your rent is due. Please pay via {method} to {number}. Thank you.",
+    audience: "due",
+  },
+  {
+    label: "Overdue rent",
+    body: "Your rent is now overdue. Kindly clear the balance today via {method} to {number} to avoid a late fee.",
+    audience: "overdue",
+  },
+  {
+    label: "Payment received",
+    body: "We have received your payment. Thank you for paying on time.",
+  },
+  {
+    label: "Water shortage",
+    body: "Notice: water will be unavailable tomorrow from 8am to 2pm. Please store enough water.",
+    audience: "all",
+  },
+  {
+    label: "Inspection notice",
+    body: "Notice: a routine inspection of your unit will take place this week. Kindly be available.",
+    audience: "all",
+  },
+  {
+    label: "New payment number",
+    body: "Please note our rent payment details have changed. Pay via {method} to {number}.",
+    audience: "all",
+  },
+];
 
 export const Route = createFileRoute("/_authenticated/settings/payments")({
   head: () => ({
@@ -41,6 +75,20 @@ function RentPaymentSettingsPage() {
   const [sending, setSending] = useState(false);
   const [viaPush, setViaPush] = useState(true);
   const [viaSms, setViaSms] = useState(true);
+  const [audience, setAudience] = useState<Audience>("all");
+  const [picked, setPicked] = useState<string[]>([]);
+
+  const { data: tenants } = useQuery({
+    queryKey: ["tenants", "message-picker"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tenants")
+        .select("id, full_name, phone_number")
+        .eq("active", true)
+        .order("full_name");
+      return data ?? [];
+    },
+  });
 
   useEffect(() => {
     if (!account) return;
@@ -208,7 +256,7 @@ function RentPaymentSettingsPage() {
                   <Checkbox
                     checked={picked.includes(t.id)}
                     onCheckedChange={(v) =>
-                      setPicked((p) => (v === true ? [...p, t.id] : p.filter((id) => id !== t.id)))
+                      setPicked((p: string[]) => (v === true ? [...p, t.id] : p.filter((id: string) => id !== t.id)))
                     }
                   />
                   <span className="truncate">
