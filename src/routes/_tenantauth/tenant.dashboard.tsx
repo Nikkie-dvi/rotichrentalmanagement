@@ -106,7 +106,7 @@ function DashboardPage() {
       const [inv, pay, allPay] = await Promise.all([
         supabase
           .from("invoices")
-          .select("id, month_year, total_due, balance_remaining, status, created_at")
+          .select("id, month_year, total_due, balance_remaining, status, created_at, base_rent, utility_amount, water_amount, electricity_amount, garbage_amount, other_amount, other_label")
           .eq("tenant_id", tenantId)
           .order("created_at", { ascending: false }),
         supabase
@@ -403,14 +403,24 @@ function DashboardPage() {
                 <div className="grid gap-1.5">
                   <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Invoices</div>
                   {accountQuery.data.invoices.slice(0, 6).map((i: any) => (
-                    <div key={i.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
-                      <div>
-                        <div className="font-medium">{i.month_year}</div>
-                        <div className="text-xs capitalize text-muted-foreground">{String(i.status).replace("_", " ")}</div>
+                    <div key={i.id} className="rounded-md border p-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{i.month_year}</div>
+                          <div className="text-xs capitalize text-muted-foreground">{String(i.status).replace("_", " ")}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">{KES(Number(i.balance_remaining))}</div>
+                          <div className="text-xs text-muted-foreground">of {KES(Number(i.total_due))}</div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold">{KES(Number(i.balance_remaining))}</div>
-                        <div className="text-xs text-muted-foreground">of {KES(Number(i.total_due))}</div>
+                      <div className="mt-2 border-t pt-2 text-xs">
+                        {invoiceLines(i).map((l) => (
+                          <div key={l.label} className="flex justify-between text-muted-foreground">
+                            <span>{l.label}</span>
+                            <span>{KES(l.amount)}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
