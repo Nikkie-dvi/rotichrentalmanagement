@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { money } from "@/lib/types";
+import { downloadCsv } from "@/lib/csv";
 import { useIsSuperAdmin } from "@/hooks/use-landlord-account";
 import { getCeoAnalytics } from "@/lib/analytics.functions";
 import { SubscriptionPricingPanel } from "@/components/subscription-pricing-panel";
@@ -107,19 +108,6 @@ function Kpi({
 }
 
 /** Downloads any row set as a CSV file the CEO can open in Excel/Sheets. */
-function downloadCsv(filename: string, rows: Record<string, string | number | null>[]) {
-  if (rows.length === 0) return;
-  const headers = Object.keys(rows[0]!);
-  const escape = (v: string | number | null) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => escape(r[h] ?? "")).join(","))].join("\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 function AnalyticsPage() {
   const isSuper = useIsSuperAdmin();
   const fetchAnalytics = useServerFn(getCeoAnalytics);

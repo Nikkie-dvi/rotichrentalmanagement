@@ -19,6 +19,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as TenantRegisterRouteImport } from './routes/tenant/register'
 import { Route as TenantLoginRouteImport } from './routes/tenant/login'
 import { Route as AuthenticatedTenantsRouteImport } from './routes/_authenticated/tenants'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPropertiesRouteImport } from './routes/_authenticated/properties'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedMetersRouteImport } from './routes/_authenticated/meters'
@@ -90,6 +91,11 @@ const TenantLoginRoute = TenantLoginRouteImport.update({
 const AuthenticatedTenantsRoute = AuthenticatedTenantsRouteImport.update({
   id: '/tenants',
   path: '/tenants',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPropertiesRoute = AuthenticatedPropertiesRouteImport.update({
@@ -244,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/meters': typeof AuthenticatedMetersRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/properties': typeof AuthenticatedPropertiesRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/tenants': typeof AuthenticatedTenantsRoute
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
@@ -278,6 +285,7 @@ export interface FileRoutesByTo {
   '/meters': typeof AuthenticatedMetersRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/properties': typeof AuthenticatedPropertiesRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/tenants': typeof AuthenticatedTenantsRoute
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/_authenticated/meters': typeof AuthenticatedMetersRoute
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/properties': typeof AuthenticatedPropertiesRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/tenants': typeof AuthenticatedTenantsRoute
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
@@ -351,6 +360,7 @@ export interface FileRouteTypes {
     | '/meters'
     | '/payments'
     | '/properties'
+    | '/reports'
     | '/tenants'
     | '/tenant/login'
     | '/tenant/register'
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/meters'
     | '/payments'
     | '/properties'
+    | '/reports'
     | '/tenants'
     | '/tenant/login'
     | '/tenant/register'
@@ -420,6 +431,7 @@ export interface FileRouteTypes {
     | '/_authenticated/meters'
     | '/_authenticated/payments'
     | '/_authenticated/properties'
+    | '/_authenticated/reports'
     | '/_authenticated/tenants'
     | '/tenant/login'
     | '/tenant/register'
@@ -530,6 +542,13 @@ declare module '@tanstack/react-router' {
       path: '/tenants'
       fullPath: '/tenants'
       preLoaderRoute: typeof AuthenticatedTenantsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/properties': {
@@ -713,6 +732,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMetersRoute: typeof AuthenticatedMetersRoute
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedPropertiesRoute: typeof AuthenticatedPropertiesRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedTenantsRoute: typeof AuthenticatedTenantsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedSettingsBillingRoute: typeof AuthenticatedSettingsBillingRoute
@@ -732,6 +752,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMetersRoute: AuthenticatedMetersRoute,
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedPropertiesRoute: AuthenticatedPropertiesRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedTenantsRoute: AuthenticatedTenantsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedSettingsBillingRoute: AuthenticatedSettingsBillingRoute,
