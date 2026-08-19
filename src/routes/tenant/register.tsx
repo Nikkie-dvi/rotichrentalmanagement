@@ -376,7 +376,35 @@ function RegisterPage() {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={askNotify}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Turn on rent reminders?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Get alerts on this phone 3 days before rent is due, on the due day, and for urgent notices from your
+              landlord. You can change this later in your dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={enabling}
+              onClick={() => {
+                setAskNotify(false);
+                navigate({ to: "/tenant/dashboard" });
+              }}
+            >
+              Not now
+            </AlertDialogCancel>
+            <AlertDialogAction disabled={enabling} onClick={(e) => { e.preventDefault(); acceptNotifications(); }}>
+              {enabling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Yes, notify me
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </div>
     </div>
+
   );
 }
