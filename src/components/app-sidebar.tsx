@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3, Wallet } from "lucide-react";
-import { useIsSuperAdmin } from "@/hooks/use-landlord-account";
+import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3, Wallet, UserCog } from "lucide-react";
+import { useIsSuperAdmin, useIsPropertyManager } from "@/hooks/use-landlord-account";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { AppLogo } from "@/components/app-logo";
 import {
@@ -27,25 +27,31 @@ const items = [
   { title: "Payments & Receipts", url: "/payments", icon: Receipt },
   { title: "Rent Payment Details", url: "/settings/payments", icon: Wallet },
   { title: "Lease Template", url: "/settings/lease", icon: FileSignature },
+  { title: "Property Managers", url: "/settings/managers", icon: UserCog },
   { title: "Notification Tones", url: "/settings/notifications", icon: Bell },
 ];
+
+/** Pages a property manager (not the landlord) should not see. */
+const LANDLORD_ONLY = ["/settings/payments", "/settings/lease", "/settings/managers"];
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isSuper = useIsSuperAdmin();
+  const isManager = useIsPropertyManager();
   const counts = usePendingCounts();
   const badgeFor = (url: string) =>
     url === "/applications" ? counts.applications
     : url === "/maintenance" ? counts.issues
     : url === "/billing" ? counts.unpaidInvoices
     : 0;
+  const base = isManager ? items.filter((i) => !LANDLORD_ONLY.includes(i.url)) : items;
   const menu = isSuper
     ? [
-        ...items,
+        ...base,
         { title: "Landlord accounts", url: "/landlords", icon: ShieldCheck },
         { title: "CEO Analytics", url: "/analytics", icon: BarChart3 },
       ]
-    : items;
+    : base;
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
