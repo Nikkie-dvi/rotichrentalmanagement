@@ -2,7 +2,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Printer, UserPlus, Coins, Zap } from "lucide-react";
+import { FileText, Printer, UserPlus, Coins, Zap, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +45,7 @@ function BillingPage() {
   const [month, setMonth] = useState<string>(new Date().toISOString().slice(0, 7));
   const [preview, setPreview] = useState<any>(null);
   const [extrasFor, setExtrasFor] = useState<any>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<any>(null);
   const [singleOpen, setSingleOpen] = useState(false);
   const [singleTenant, setSingleTenant] = useState<string>("");
   const [singleMonth, setSingleMonth] = useState<string>(new Date().toISOString().slice(0, 7));
@@ -175,6 +186,35 @@ function BillingPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const deleteInvoice = useMutation({
+    mutationFn: async (invoice: any) => {
+      // Keep genuine payment history, but remove its link to the mistaken invoice.
+      const { error: paymentError } = await supabase
+        .from("payments")
+        .update({ invoice_id: null })
+        .eq("invoice_id", invoice.id);
+      if (paymentError) throw paymentError;
+
+      const { error: itemsError } = await supabase
+        .from("invoice_line_items")
+        .delete()
+        .eq("invoice_id", invoice.id);
+      if (itemsError) throw itemsError;
+
+      const { error } = await supabase.from("invoices").delete().eq("id", invoice.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setInvoiceToDelete(null);
+      setPreview(null);
+      qc.invalidateQueries();
+      toast.success("Invoice removed", {
+        description: "Its incorrect balance no longer counts against the tenant. Payment records were kept.",
+      });
+    },
+    onError: (error: any) => toast.error(error?.message ?? "Could not remove invoice"),
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -287,7 +327,9 @@ function BillingPage() {
                   <TableCell className="text-right">{money(Number(i.utility_amount))}</TableCell>
                   <TableCell className="text-right text-destructive">{Number(i.late_penalty_amount ?? 0) > 0 ? money(Number(i.late_penalty_amount)) : "—"}</TableCell>
                   <TableCell className="text-right font-semibold">{money(Number(i.total_due))}</TableCell>
-                  <TableCell className="text-right">{money(Number(i.balance_remaining))}</TableCell>
+                  <TableCell className={`text-right font-medium ${Number(i.balance_remaining) < 0 ? "text-destructive" : ""}`}>
+                    {money(Number(i.balance_remaining))}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       className={
@@ -308,6 +350,15 @@ function BillingPage() {
                         <Coins className="h-4 w-4" />Extras
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setPreview(i)}>Preview</Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        aria-label={`Remove invoice for ${i.tenants?.full_name ?? "tenant"}`}
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setInvoiceToDelete(i)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -321,6 +372,31 @@ function BillingPage() {
       </Card>
 
       <InvoiceExtrasDialog invoice={extrasFor} onOpenChange={(o) => !o && setExtrasFor(null)} />
+
+      <AlertDialog open={Boolean(invoiceToDelete)} onOpenChange={(open) => !open && !deleteInvoice.isPending && setInvoiceToDelete(null)}>
+        <AlertDialogContent className="w-[calc(100vw-1.5rem)] max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this invoice?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The {invoiceToDelete?.month_year ?? "selected"} invoice for {invoiceToDelete?.tenants?.full_name ?? "this tenant"},
+              including its incorrect balance of {money(Number(invoiceToDelete?.balance_remaining ?? 0))}, will be permanently removed.
+              Existing payment records will not be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteInvoice.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteInvoice.isPending || !invoiceToDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (invoiceToDelete) deleteInvoice.mutate(invoiceToDelete);
+              }}
+            >
+              {deleteInvoice.isPending ? "Removing…" : "Remove invoice"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
         <DialogContent className="max-w-lg">
