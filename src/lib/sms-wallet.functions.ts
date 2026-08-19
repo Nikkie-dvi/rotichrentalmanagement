@@ -190,3 +190,51 @@ export const adjustSmsBalance = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, balance: Number(bal) };
   });
+
+/** Main account: top up every landlord's SMS wallet in one go. */
+export const creditAllSmsWallets = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { amount: number; note?: string; onlyEmpty?: boolean }) => {
+    const amount = Number(data?.amount);
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter an amount to credit");
+    return {
+      amount: Math.min(amount, 1_000_000),
+      note: (data.note ?? "").trim().slice(0, 300) || null,
+      onlyEmpty: !!data.onlyEmpty,
+    };
+  })
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: accounts, error } = await supabaseAdmin
+      .from("landlord_accounts")
+      .select("user_id, status");
+    if (error) throw new Error(error.message);
+
+    const { data: wallets } = await supabaseAdmin.from("sms_wallets").select("owner_id, balance, rate_per_sms");
+    const walletOf = new Map(((wallets ?? []) as any[]).map((w) => [w.owner_id as string, w]));
+
+    const targets = ((accounts ?? []) as any[])
+      .filter((a) => a.status === "approved")
+      .map((a) => a.user_id as string)
+      .filter((uid) => {
+        if (!data.onlyEmpty) return true;
+        const w = walletOf.get(uid);
+        const rate = Number(w?.rate_per_sms ?? SMS_RATE);
+        return Math.floor(Number(w?.balance ?? 0) / rate) < 1;
+      });
+
+    let credited = 0;
+    for (const uid of targets) {
+      const { error: err } = await supabaseAdmin.rpc("sms_credit" as never, {
+        _owner: uid,
+        _amount: data.amount,
+        _reason: "manual_credit",
+        _note: data.note ?? "Bulk recharge",
+        _by: context.userId,
+      } as never);
+      if (!err) credited++;
+    }
+    return { ok: true, credited, total: targets.length };
+  });
