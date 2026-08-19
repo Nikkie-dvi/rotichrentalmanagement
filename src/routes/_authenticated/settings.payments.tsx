@@ -159,6 +159,10 @@ function RentPaymentSettingsPage() {
         </CardContent>
       </Card>
 
+      <SmsCreditCard />
+
+
+
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
