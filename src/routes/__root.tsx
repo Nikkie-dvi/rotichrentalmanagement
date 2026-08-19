@@ -5,6 +5,7 @@ import {
   createRootRouteWithContext,
   useRouter,
   useRouterState,
+  useNavigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -23,6 +24,21 @@ import { PaymentReminderPopup } from "@/components/payment-reminder-popup";
 import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+
+  // Legacy/internal layout URLs like "/_authenticated/payments" or
+  // "/_tenantauth/tenant/dashboard" are not real paths — strip the prefix.
+  const cleaned = pathname.replace(/^\/_[^/]+/, "") || "/";
+
+  useEffect(() => {
+    if (cleaned !== pathname) {
+      navigate({ to: cleaned, replace: true });
+    }
+  }, [cleaned, pathname, navigate]);
+
+  if (cleaned !== pathname) return null;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
