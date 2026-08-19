@@ -8,7 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { listSmsRecharges, decideSmsRecharge, adjustSmsBalance } from "@/lib/sms-wallet.functions";
+import {
+  listSmsRecharges,
+  decideSmsRecharge,
+  adjustSmsBalance,
+  creditAllSmsWallets,
+} from "@/lib/sms-wallet.functions";
 
 const ksh = (n: number) => `KES ${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 
@@ -17,6 +22,26 @@ export function SmsRechargeAdmin() {
   const [busy, setBusy] = useState<string | null>(null);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [topups, setTopups] = useState<Record<string, string>>({});
+  const [bulkAmount, setBulkAmount] = useState("600");
+  const [bulkOnlyEmpty, setBulkOnlyEmpty] = useState(false);
+
+  const rechargeEveryone = async () => {
+    const amount = Number(bulkAmount);
+    if (!(amount > 0)) return;
+    setBusy("bulk");
+    try {
+      const res: any = await creditAllSmsWallets({
+        data: { amount, onlyEmpty: bulkOnlyEmpty, note: "Bulk recharge from main account" },
+      });
+      toast.success(`Credited ${res.credited} landlord${res.credited === 1 ? "" : "s"} with ${ksh(amount)}`);
+      refresh();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not recharge landlords");
+    } finally {
+      setBusy(null);
+    }
+  };
+
 
   const { data, isLoading } = useQuery({ queryKey: ["sms-recharges"], queryFn: () => listSmsRecharges() });
 
@@ -70,6 +95,36 @@ export function SmsRechargeAdmin() {
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         ) : (
           <>
+            <div className="rounded-lg border border-primary/40 bg-primary/5 p-3">
+              <div className="text-sm font-medium">Recharge every landlord</div>
+              <p className="text-xs text-muted-foreground">
+                Adds the same credit to all approved landlord wallets so they can keep texting until it runs out.
+              </p>
+              <div className="mt-2 flex flex-wrap items-end gap-2">
+                <div>
+                  <Label className="text-xs">Amount each (KES)</Label>
+                  <Input
+                    type="number"
+                    className="w-32"
+                    value={bulkAmount}
+                    onChange={(e) => setBulkAmount(e.target.value)}
+                  />
+                </div>
+                <Button size="sm" disabled={busy === "bulk"} onClick={rechargeEveryone}>
+                  {busy === "bulk" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                  Recharge all
+                </Button>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={bulkOnlyEmpty}
+                    onChange={(e) => setBulkOnlyEmpty(e.target.checked)}
+                  />
+                  Only landlords who have run out
+                </label>
+              </div>
+            </div>
+
             <div>
               <div className="mb-2 text-sm font-medium">Pending requests ({pending.length})</div>
               {pending.length === 0 ? (

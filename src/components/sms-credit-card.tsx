@@ -27,6 +27,7 @@ export function SmsCreditCard() {
 
   const pending = (data?.requests ?? []).find((r: any) => r.status === "pending");
   const low = (data?.messagesLeft ?? 0) < 10;
+  const empty = (data?.messagesLeft ?? 0) < 1;
 
   const submit = async () => {
     setBusy(true);
@@ -43,7 +44,7 @@ export function SmsCreditCard() {
   };
 
   return (
-    <Card className="glass-card">
+    <Card id="sms-credit" className={`glass-card ${empty ? "border-destructive/60 glow-red" : ""}`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <MessageSquare className="h-4 w-4" /> SMS credit
@@ -67,12 +68,35 @@ export function SmsCreditCard() {
               </Badge>
             </div>
 
+            {empty && (
+              <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm">
+                <p className="font-medium text-destructive">Your SMS credit has run out</p>
+                <p className="text-xs text-muted-foreground">
+                  Tenant texts are paused until you top up. SMS credit is bought separately and is not part of your
+                  monthly app subscription — pick an amount below and request it.
+                </p>
+              </div>
+            )}
+
             {pending ? (
               <p className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
                 Recharge of {ksh(pending.amount)} requested — waiting for approval.
               </p>
             ) : (
               <div className="grid gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {[300, 600, 1200, 3000].map((v) => (
+                    <Button
+                      key={v}
+                      type="button"
+                      size="sm"
+                      variant={String(v) === amount ? "default" : "outline"}
+                      onClick={() => setAmount(String(v))}
+                    >
+                      {ksh(v)} · {Math.floor(v / (data?.rate ?? 1.2))} SMS
+                    </Button>
+                  ))}
+                </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="sms-topup">Request a recharge (KES)</Label>
                   <Input
