@@ -329,9 +329,18 @@ function PaymentsPage() {
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
                       <Button size="sm" variant="ghost" aria-label="View receipt" onClick={() => setReceipt(p)}><Receipt className="h-4 w-4" /></Button>
-                      <AlertDialog>
+                      <AlertDialog
+                        open={deletingPayment?.id === p.id}
+                        onOpenChange={(open) => !open && setDeletingPayment(null)}
+                      >
                         <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost" aria-label="Remove payment" className="text-destructive hover:text-destructive">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            aria-label="Remove payment"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setDeletingPayment(p)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -344,12 +353,15 @@ function PaymentsPage() {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel disabled={removePayment.isPending} onClick={() => setDeletingPayment(null)}>
+                              Cancel
+                            </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => removePayment.mutate(p)}
+                              disabled={removePayment.isPending}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
-                              Remove payment
+                              {removePayment.isPending ? "Removing…" : "Remove payment"}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
