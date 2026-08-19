@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+import { UNIT_TYPES, unitTypeLabel } from "@/lib/unit-types";
 
 export const Route = createFileRoute("/_authenticated/properties")({
   head: () => ({
