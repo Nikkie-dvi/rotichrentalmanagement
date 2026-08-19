@@ -179,7 +179,8 @@ function PropertiesPage() {
                     <TableCell>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <Button size="icon" variant="ghost" aria-label={`Delete property ${p.name}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
@@ -241,12 +242,13 @@ function PropertiesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => { setEditing(u); setUnitOpen(true); }}>
+                      <Button size="icon" variant="ghost" aria-label={`Edit unit ${u.unit_number}`} onClick={() => { setEditing(u); setUnitOpen(true); }}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <Button size="icon" variant="ghost" aria-label={`Delete unit ${u.unit_number}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
