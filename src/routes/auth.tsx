@@ -30,25 +30,31 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const { next } = Route.useSearch();
-  const goNext = () => {
-    if (next) window.location.href = next;
-    else navigate({ to: "/" });
-  };
+  const redirected = useRef(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
 
   useEffect(() => {
+    // Only ever redirect once: repeated auth events (INITIAL_SESSION, token
+    // refresh) used to re-trigger a full page load and looked like a reload loop.
+    const go = () => {
+      if (redirected.current) return;
+      redirected.current = true;
+      const target = next && next !== "/auth" && !next.startsWith("/auth?") ? next : "/";
+      navigate({ to: target, replace: true });
+    };
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) goNext();
+      if (data.session) go();
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) goNext();
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) go();
     });
     return () => sub.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, next]);
+
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
