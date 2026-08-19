@@ -11,7 +11,9 @@ export function LandlordPaymentCard() {
   const { data } = useQuery({
     queryKey: ["tenant", "landlord-info"],
     queryFn: () => getMyLandlordInfo(),
-    staleTime: 60_000,
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
 
   if (!data?.paymentNumber) return null;
