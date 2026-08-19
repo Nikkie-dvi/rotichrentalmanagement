@@ -59,7 +59,9 @@ function RiskBadge({ risk }: { risk: Risk }) {
 
 function TenantsPage() {
   const qc = useQueryClient();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+
 
   const { data: tenants } = useQuery({
     queryKey: ["tenants-full"],
