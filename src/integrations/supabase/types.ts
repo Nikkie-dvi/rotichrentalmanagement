@@ -729,6 +729,108 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_ledger: {
+        Row: {
+          balance_after: number
+          created_at: string
+          created_by: string | null
+          delta: number
+          id: string
+          note: string | null
+          owner_id: string
+          reason: string
+          sms_count: number
+        }
+        Insert: {
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          delta: number
+          id?: string
+          note?: string | null
+          owner_id: string
+          reason: string
+          sms_count?: number
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          delta?: number
+          id?: string
+          note?: string | null
+          owner_id?: string
+          reason?: string
+          sms_count?: number
+        }
+        Relationships: []
+      }
+      sms_topup_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          approved_amount: number | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          note: string | null
+          owner_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          approved_amount?: number | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          note?: string | null
+          owner_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          approved_amount?: number | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          note?: string | null
+          owner_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sms_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          owner_id: string
+          rate_per_sms: number
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          owner_id: string
+          rate_per_sms?: number
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          owner_id?: string
+          rate_per_sms?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       super_admins: {
         Row: {
           created_at: string
@@ -904,6 +1006,25 @@ export type Database = {
     Functions: {
       generate_landlord_code: { Args: never; Returns: string }
       manages_owner: { Args: { _owner: string }; Returns: boolean }
+      sms_charge: {
+        Args: {
+          _count: number
+          _note?: string
+          _owner: string
+          _reason: string
+        }
+        Returns: number
+      }
+      sms_credit: {
+        Args: {
+          _amount: number
+          _by?: string
+          _note?: string
+          _owner: string
+          _reason: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
