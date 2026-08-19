@@ -157,6 +157,8 @@ function RegisterPage() {
         </div>
       </div>
 
+      <h1 className="mb-3 text-xl font-bold tracking-tight">Tenant Registration</h1>
+
       {step === 1 && (
         <Card>
           <CardHeader>

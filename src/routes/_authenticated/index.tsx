@@ -62,12 +62,16 @@ function LandlordCodeCard() {
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
-      { title: "Rotich rental management new" },
-      { name: "description", content: "Overview of your rental portfolio: units, occupancy, collections and arrears." },
-      { property: "og:title", content: "Rotich rental management new" },
-      { property: "og:description", content: "Overview of your rental portfolio: units, occupancy, collections and arrears." },
+      { title: "Landlord Dashboard — Rotich Rental Management" },
+      { name: "description", content: "Live view of your units, occupancy, rent collected this month and outstanding arrears." },
+      { property: "og:title", content: "Landlord Dashboard — Rotich Rental Management" },
+      { property: "og:description", content: "Live view of your units, occupancy, rent collected this month and outstanding arrears." },
+      { name: "twitter:title", content: "Landlord Dashboard — Rotich Rental Management" },
+      { name: "twitter:description", content: "Live view of your units, occupancy, rent collected this month and outstanding arrears." },
+      { name: "robots", content: "noindex" },
     ],
   }),
+
   component: Dashboard,
 });
 

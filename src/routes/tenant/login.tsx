@@ -60,7 +60,7 @@ function TenantLoginPage() {
       <TenantBackBar title="Tenant sign in" />
       <Card>
         <CardHeader>
-          <CardTitle>Tenant sign in</CardTitle>
+          <h1 className="text-lg font-semibold leading-none tracking-tight">Tenant Sign In</h1>
           <CardDescription>Use the email and password you registered with.</CardDescription>
         </CardHeader>
         <CardContent>
