@@ -15,6 +15,7 @@ import { LandlordPaymentCard } from "@/components/tenant/landlord-payment-card";
 import { LandlordMessageCard } from "@/components/tenant/landlord-message-card";
 import { getMyLandlordInfo } from "@/lib/tenant.functions";
 import { LeaseDialog } from "@/components/lease-document";
+import { LeaseCopyActions } from "@/components/tenant/lease-copy-actions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
@@ -477,11 +478,10 @@ function DashboardPage() {
               View full lease &amp; signature
             </Button>
             {landlordInfoQuery.data?.leaseDocumentUrl && (
-              <Button asChild variant="outline" size="sm" className="glass-btn glow-amber">
-                <a href={landlordInfoQuery.data.leaseDocumentUrl} target="_blank" rel="noopener noreferrer">
-                  Open uploaded lease copy
-                </a>
-              </Button>
+              <LeaseCopyActions
+                url={landlordInfoQuery.data.leaseDocumentUrl}
+                name={landlordInfoQuery.data.leaseDocumentName}
+              />
             )}
           </div>
           {landlordInfoQuery.data?.leaseDocumentUrl && (
