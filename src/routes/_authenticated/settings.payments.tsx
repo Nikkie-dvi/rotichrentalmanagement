@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
+import { SmsCreditCard } from "@/components/sms-credit-card";
+
 
 export const Route = createFileRoute("/_authenticated/settings/payments")({
   head: () => ({
