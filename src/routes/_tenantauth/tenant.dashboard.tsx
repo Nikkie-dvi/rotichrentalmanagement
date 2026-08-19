@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { invoiceLines } from "@/components/invoice-charges";
+import { InvoiceCharges } from "@/components/invoice-charges";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -115,7 +115,7 @@ function DashboardPage() {
       const [inv, pay, allPay] = await Promise.all([
         supabase
           .from("invoices")
-          .select("id, month_year, total_due, balance_remaining, status, created_at, base_rent, utility_amount, water_amount, electricity_amount, garbage_amount, other_amount, other_label")
+          .select("id, month_year, total_due, balance_remaining, status, created_at, base_rent, utility_amount, water_amount, electricity_amount, garbage_amount, other_amount, other_label, late_penalty_amount, due_date, penalty_waived")
           .eq("tenant_id", tenantId)
           .order("created_at", { ascending: false }),
         supabase
@@ -429,12 +429,7 @@ function DashboardPage() {
                         </div>
                       </div>
                       <div className="mt-2 border-t pt-2 text-xs">
-                        {invoiceLines(i).map((l) => (
-                          <div key={l.label} className="flex justify-between text-muted-foreground">
-                            <span>{l.label}</span>
-                            <span>{KES(l.amount)}</span>
-                          </div>
-                        ))}
+                        <InvoiceCharges invoice={i} />
                       </div>
                     </div>
                   ))}

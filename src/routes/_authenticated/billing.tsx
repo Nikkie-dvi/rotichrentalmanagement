@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Printer, UserPlus } from "lucide-react";
+import { FileText, Printer, UserPlus, Coins, Zap } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
 import { InvoiceCharges } from "@/components/invoice-charges";
+import { InvoiceExtrasDialog } from "@/components/invoice-extras-dialog";
+import { runLateFeesNow } from "@/lib/billing.functions";
 
 export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({
@@ -32,6 +34,7 @@ function BillingPage() {
   const qc = useQueryClient();
   const [month, setMonth] = useState<string>(new Date().toISOString().slice(0, 7));
   const [preview, setPreview] = useState<any>(null);
+  const [extrasFor, setExtrasFor] = useState<any>(null);
   const [singleOpen, setSingleOpen] = useState(false);
   const [singleTenant, setSingleTenant] = useState<string>("");
   const [singleMonth, setSingleMonth] = useState<string>(new Date().toISOString().slice(0, 7));
@@ -159,6 +162,19 @@ function BillingPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const lateFees = useMutation({
+    mutationFn: async () => (runLateFeesNow as any)(),
+    onSuccess: (r: any) => {
+      qc.invalidateQueries();
+      toast.success(
+        r.applied > 0
+          ? `Late fees added to ${r.applied} invoice(s); ${r.notified} tenant(s) alerted`
+          : "No invoices are past the grace period right now",
+      );
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -178,6 +194,9 @@ function BillingPage() {
           </Button>
           <Button variant="outline" onClick={() => setSingleOpen(true)}>
             <UserPlus className="h-4 w-4" />Invoice one tenant
+          </Button>
+          <Button variant="outline" onClick={() => lateFees.mutate()} disabled={lateFees.isPending}>
+            <Zap className="h-4 w-4" />Apply late fees now
           </Button>
         </CardContent>
       </Card>
@@ -252,6 +271,7 @@ function BillingPage() {
                 <TableHead>Unit</TableHead>
                 <TableHead className="text-right">Base Rent</TableHead>
                 <TableHead className="text-right">Utilities</TableHead>
+                <TableHead className="text-right">Late fees</TableHead>
                 <TableHead className="text-right">Total Due</TableHead>
                 <TableHead className="text-right">Balance</TableHead>
                 <TableHead>Status</TableHead>
@@ -265,6 +285,7 @@ function BillingPage() {
                   <TableCell>{i.tenants?.units?.unit_number ?? "—"}</TableCell>
                   <TableCell className="text-right">{money(Number(i.base_rent))}</TableCell>
                   <TableCell className="text-right">{money(Number(i.utility_amount))}</TableCell>
+                  <TableCell className="text-right text-destructive">{Number(i.late_penalty_amount ?? 0) > 0 ? money(Number(i.late_penalty_amount)) : "—"}</TableCell>
                   <TableCell className="text-right font-semibold">{money(Number(i.total_due))}</TableCell>
                   <TableCell className="text-right">{money(Number(i.balance_remaining))}</TableCell>
                   <TableCell>
@@ -282,17 +303,24 @@ function BillingPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button size="sm" variant="ghost" onClick={() => setPreview(i)}>Preview</Button>
+                    <div className="flex justify-end gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => setExtrasFor(i)}>
+                        <Coins className="h-4 w-4" />Extras
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setPreview(i)}>Preview</Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
               {(!invoices || invoices.length === 0) && (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">No invoices for this month. Click generate above.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-6">No invoices for this month. Click generate above.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      <InvoiceExtrasDialog invoice={extrasFor} onOpenChange={(o) => !o && setExtrasFor(null)} />
 
       <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
         <DialogContent className="max-w-lg">

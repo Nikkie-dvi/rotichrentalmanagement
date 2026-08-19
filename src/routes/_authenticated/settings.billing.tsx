@@ -101,7 +101,7 @@ function BillingSettingsPage() {
   };
 
   const runNow = useMutation({
-    mutationFn: async () => runLateFeesNow({ data: undefined as never }),
+    mutationFn: async () => (runLateFeesNow as any)(),
     onSuccess: (r: any) => {
       qc.invalidateQueries();
       toast.success(
