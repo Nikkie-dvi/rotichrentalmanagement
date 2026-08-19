@@ -293,6 +293,7 @@ function UnitForm({
 }) {
   const [propertyId, setPropertyId] = useState<string>(initial?.property_id ?? properties[0]?.id ?? "");
   const [status, setStatus] = useState<string>(initial?.status ?? "vacant");
+  const [unitType, setUnitType] = useState<string>(initial?.unit_type ?? "bedsitter");
   return (
     <form
       onSubmit={(e) => {
@@ -303,6 +304,7 @@ function UnitForm({
           property_id: propertyId,
           unit_number: String(f.get("unit_number")),
           rent_amount: Number(f.get("rent_amount")),
+          unit_type: unitType,
           status,
         });
       }}
