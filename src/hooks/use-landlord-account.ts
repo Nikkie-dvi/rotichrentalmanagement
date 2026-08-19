@@ -202,3 +202,23 @@ export function useLandlordAccount() {
     staleTime: 15_000,
   });
 }
+
+/** True when the signed-in user is a property manager working for a landlord. */
+export function useIsPropertyManager() {
+  const { data } = useQuery({
+    queryKey: ["is-property-manager"],
+    queryFn: async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return false;
+      const { data: row } = await (supabase as any)
+        .from("property_managers")
+        .select("id")
+        .eq("manager_user_id", auth.user.id)
+        .eq("active", true)
+        .maybeSingle();
+      return Boolean(row);
+    },
+    staleTime: 60_000,
+  });
+  return Boolean(data);
+}
