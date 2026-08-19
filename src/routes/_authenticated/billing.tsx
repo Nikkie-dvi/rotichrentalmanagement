@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
+import { InvoiceCharges } from "@/components/invoice-charges";
 
 export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({
@@ -309,8 +310,7 @@ function BillingPage() {
                 <div><b>Unit:</b> {preview.tenants?.units?.unit_number ?? "—"}</div>
               </div>
               <div className="border rounded-md p-3 space-y-1 text-sm">
-                <div className="flex justify-between"><span>Base Rent</span><span>{money(Number(preview.base_rent))}</span></div>
-                <div className="flex justify-between"><span>Utility Charges</span><span>{money(Number(preview.utility_amount))}</span></div>
+                <InvoiceCharges invoice={preview} />
                 <div className="flex justify-between font-semibold border-t pt-1"><span>Total Due</span><span>{money(Number(preview.total_due))}</span></div>
                 <div className="flex justify-between text-destructive"><span>Balance Remaining</span><span>{money(Number(preview.balance_remaining))}</span></div>
               </div>
