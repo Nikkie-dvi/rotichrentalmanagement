@@ -91,6 +91,9 @@ export type Database = {
           last_payment_at: string | null
           last_payment_reference: string | null
           lease_clauses: string | null
+          lease_document_name: string | null
+          lease_document_path: string | null
+          lease_document_uploaded_at: string | null
           lease_footer: string | null
           lease_intro: string | null
           lease_landlord_name: string | null
@@ -122,6 +125,9 @@ export type Database = {
           last_payment_at?: string | null
           last_payment_reference?: string | null
           lease_clauses?: string | null
+          lease_document_name?: string | null
+          lease_document_path?: string | null
+          lease_document_uploaded_at?: string | null
           lease_footer?: string | null
           lease_intro?: string | null
           lease_landlord_name?: string | null
@@ -153,6 +159,9 @@ export type Database = {
           last_payment_at?: string | null
           last_payment_reference?: string | null
           lease_clauses?: string | null
+          lease_document_name?: string | null
+          lease_document_path?: string | null
+          lease_document_uploaded_at?: string | null
           lease_footer?: string | null
           lease_intro?: string | null
           lease_landlord_name?: string | null
