@@ -315,6 +315,10 @@ function LandlordsPage() {
         </p>
       </div>
 
+      <SmsRechargeAdmin />
+
+
+
       <Card>
         <CardContent className="pt-6">
           {isLoading ? (
