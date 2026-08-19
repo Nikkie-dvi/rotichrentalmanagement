@@ -125,6 +125,7 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
 
     if (logs.length) await supabaseAdmin.from("notification_logs").insert(logs as never);
 
-    return { ok: true, sent, devices, smsSent, smsFailed };
+    return { ok: true, sent, devices, smsSent, smsFailed, smsSkippedNoCredit, smsCost: smsCost * 1.2 };
   });
+
 
