@@ -128,6 +128,12 @@ function RegisterPage() {
       });
 
       toast.success("Application submitted! Awaiting landlord approval.");
+      // Offer notifications right away so tenants never have to hunt for the
+      // setting. Only possible when sign-up returned a live session.
+      if (signUp.session && pushSupported()) {
+        setAskNotify(true);
+        return;
+      }
       if (!signUp.session) {
         navigate({ to: "/tenant/login" });
         return;
@@ -139,6 +145,22 @@ function RegisterPage() {
       setSubmitting(false);
     }
   };
+
+  const acceptNotifications = async () => {
+    setEnabling(true);
+    try {
+      const res = await enablePush();
+      if (res.ok) toast.success("Notifications on — we'll remind you before rent is due");
+      else if (res.reason === "denied") toast.error("Notifications are blocked in your browser settings");
+    } catch {
+      /* best effort — never block the tenant from continuing */
+    } finally {
+      setEnabling(false);
+      setAskNotify(false);
+      navigate({ to: "/tenant/dashboard" });
+    }
+  };
+
 
 
   return (
