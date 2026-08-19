@@ -159,14 +159,24 @@ function RentPaymentSettingsPage() {
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <BellRing className="h-4 w-4" /> Send an urgent alert
+            <BellRing className="h-4 w-4" /> Message all tenants
           </CardTitle>
           <CardDescription>
-            Goes straight to your tenants' phones as a notification — use it for water shortages, inspections or
-            payment changes.
+            One message, both channels — an in-app notification on their phone and an SMS to their number. Used for
+            payment changes, water shortages or inspections.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
+          <div className="flex flex-wrap gap-4 rounded-lg border bg-muted/40 p-3">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <Checkbox checked={viaPush} onCheckedChange={(v) => setViaPush(v === true)} />
+              App notification
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <Checkbox checked={viaSms} onCheckedChange={(v) => setViaSms(v === true)} />
+              SMS
+            </label>
+          </div>
           <Textarea
             rows={3}
             value={urgent}
@@ -175,18 +185,21 @@ function RentPaymentSettingsPage() {
           />
           <Button
             variant="secondary"
-            disabled={sending || urgent.trim().length < 3}
+            disabled={sending || urgent.trim().length < 3 || (!viaPush && !viaSms)}
             onClick={async () => {
               setSending(true);
               try {
                 const res = await notifyMyTenants({
-                  data: { title: "Urgent notice from your landlord", body: urgent.trim() },
+                  data: {
+                    title: "Notice from your landlord",
+                    body: urgent.trim(),
+                    push: viaPush,
+                    sms: viaSms,
+                  },
                 });
-                toast.success(
-                  res.sent > 0
-                    ? `Sent to ${res.sent} device${res.sent === 1 ? "" : "s"}`
-                    : "No tenant devices have notifications switched on yet",
-                );
+                toast.success(`Sent — ${describeResult(res)}`, {
+                  description: res.smsFailed > 0 ? `${res.smsFailed} SMS could not be delivered` : undefined,
+                });
                 setUrgent("");
               } catch (e: any) {
                 toast.error(e?.message ?? "Could not send");
@@ -198,8 +211,12 @@ function RentPaymentSettingsPage() {
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send now
           </Button>
+          <p className="text-xs text-muted-foreground">
+            Saving your payment details above also sends an update using these same channels.
+          </p>
         </CardContent>
       </Card>
+
     </div>
   );
 }
