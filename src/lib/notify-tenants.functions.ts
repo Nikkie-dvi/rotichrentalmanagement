@@ -73,13 +73,40 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
 
     let smsSent = 0;
     let smsFailed = 0;
+    let smsSkippedNoCredit = 0;
+    let smsCost = 0;
 
     if (data.sms) {
-      const { sendSms } = await import("@/lib/sms.server");
       const message = `${data.title}: ${data.body}`.slice(0, 400);
-      for (const t of rows) {
-        if (!t.phone_number) continue;
-        const res = await sendSms(t.phone_number, message);
+      const withPhones = rows.filter((t) => !!t.phone_number);
+
+      // Charge the SMS wallet up front — flat rate per recipient, regardless of length.
+      const byOwner = new Map<string, typeof withPhones>();
+      for (const t of withPhones) {
+        const list = byOwner.get(t.owner_id) ?? [];
+        list.push(t);
+        byOwner.set(t.owner_id, list);
+      }
+      const funded = new Set<string>();
+      for (const [ownerId, list] of byOwner) {
+        const { data: balance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
+          _owner: ownerId,
+          _count: list.length,
+          _reason: "broadcast",
+          _note: data.title,
+        } as never);
+        if (chargeErr || balance === null) {
+          smsSkippedNoCredit += list.length;
+          continue;
+        }
+        funded.add(ownerId);
+        smsCost += list.length;
+      }
+
+      const { sendSms } = await import("@/lib/sms.server");
+      for (const t of withPhones) {
+        if (!funded.has(t.owner_id)) continue;
+        const res = await sendSms(t.phone_number!, message);
         if (res.ok) smsSent++;
         else smsFailed++;
         logs.push({
@@ -94,6 +121,7 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
         });
       }
     }
+
 
     if (logs.length) await supabaseAdmin.from("notification_logs").insert(logs as never);
 
