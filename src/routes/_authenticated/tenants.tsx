@@ -178,19 +178,27 @@ function TenantsPage() {
   }, [tenants, unpaidInvoices, balances, today]);
 
   const rank: Record<RiskLevel, number> = { high: 0, overdue: 1, soon: 2, clear: 3 };
+  const matches = (t: any) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return [t.full_name, t.phone_number, t.email, t.units?.unit_number, t.units?.properties?.name]
+      .filter(Boolean)
+      .some((v: string) => String(v).toLowerCase().includes(q));
+  };
   const active = (tenants ?? [])
-    .filter((t: any) => t.active)
+    .filter((t: any) => t.active && matches(t))
     .sort(
       (a: any, b: any) =>
         rank[risks.get(a.id)?.level ?? "clear"] - rank[risks.get(b.id)?.level ?? "clear"],
     );
-  const inactive = (tenants ?? []).filter((t: any) => !t.active);
+  const inactive = (tenants ?? []).filter((t: any) => !t.active && matches(t));
 
   const flagged = active.filter((t: any) => {
     const l = risks.get(t.id)?.level;
     return l === "overdue" || l === "high";
   });
   const atRisk = flagged.reduce((s: number, t: any) => s + (balances.get(t.id) ?? 0), 0);
+
 
   return (
     <div className="space-y-6">
