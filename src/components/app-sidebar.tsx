@@ -63,6 +63,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {menu.map((item) => {
                 const active = pathname === item.url;
+                const count = badgeFor(item.url);
                 return (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton
@@ -80,6 +81,14 @@ export function AppSidebar() {
                         >
                           {item.title}
                         </span>
+                        {count > 0 && (
+                          <span
+                            className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-bold leading-none text-destructive-foreground shadow-sm group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:right-1 group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:min-w-4 group-data-[collapsible=icon]:px-0"
+                            aria-label={`${count} pending`}
+                          >
+                            {count > 99 ? "99+" : count}
+                          </span>
+                        )}
                         {active && <span className="nav-active-bar" aria-hidden />}
                       </Link>
                     </SidebarMenuButton>
