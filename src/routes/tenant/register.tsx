@@ -52,6 +52,8 @@ function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [codeInput, setCodeInput] = useState("");
   const [searchCode, setSearchCode] = useState("");
+  const [askNotify, setAskNotify] = useState(false);
+  const [enabling, setEnabling] = useState(false);
 
   const vacantQuery = useQuery({
     queryKey: ["tenant", "vacant-units", searchCode],
