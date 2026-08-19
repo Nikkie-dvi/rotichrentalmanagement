@@ -37,7 +37,7 @@ const DEFAULTS = {
   penalty_max: "",
   auto_penalties_enabled: true,
   sms_enabled: true,
-  email_enabled: true,
+  email_enabled: false,
   sms_template:
     "Hi {tenant_name}, a late fee of {penalty_amount} has been added to your rent. Your updated balance is {total_balance}, due by {due_date}.",
   email_subject: "Late payment fee added to your rent",
@@ -88,7 +88,7 @@ function BillingSettingsPage() {
       penalty_max: form.penalty_max === "" ? null : Number(form.penalty_max),
       auto_penalties_enabled: !!form.auto_penalties_enabled,
       sms_enabled: !!form.sms_enabled,
-      email_enabled: !!form.email_enabled,
+      email_enabled: false,
       sms_template: form.sms_template,
       email_subject: form.email_subject,
       email_template: form.email_template,
@@ -212,7 +212,7 @@ function BillingSettingsPage() {
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="text-base">Recent alerts</CardTitle>
-          <CardDescription>Every SMS, email and phone alert sent to your tenants.</CardDescription>
+          <CardDescription>Every SMS and app alert sent to your tenants.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           {(logs ?? []).length === 0 && <p className="text-sm text-muted-foreground">No alerts sent yet.</p>}
