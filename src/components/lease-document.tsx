@@ -153,7 +153,7 @@ export function LeaseDialog({
             {lease?.lease_signed_at ? ` · Signed ${new Date(lease.lease_signed_at).toLocaleString()}` : ""}
           </DialogDescription>
         </DialogHeader>
-        {lease ? <LeaseDocument lease={lease} /> : null}
+        {lease ? <LeaseDocument lease={lease} template={template} /> : null}
       </DialogContent>
     </Dialog>
   );
