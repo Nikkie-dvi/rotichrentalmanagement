@@ -12,6 +12,8 @@ import { MoveOutCard } from "@/components/tenant/move-out-card";
 import { TenantBackBar } from "@/components/tenant/back-bar";
 import { RentRemindersCard } from "@/components/tenant/rent-reminders-card";
 import { LandlordPaymentCard } from "@/components/tenant/landlord-payment-card";
+import { LandlordMessageCard } from "@/components/tenant/landlord-message-card";
+import { getMyLandlordInfo } from "@/lib/tenant.functions";
 import { LeaseDialog } from "@/components/lease-document";
 import { toast } from "sonner";
 
@@ -287,6 +289,8 @@ function DashboardPage() {
           <LogOut className="mr-1 h-4 w-4" /> Sign out
         </Button>
       </div>
+
+      <LandlordMessageCard />
 
       {status === "pending" && (
         <Card className="mb-4 glass-card glow-amber border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
