@@ -407,6 +407,9 @@ function Dashboard() {
         </CardContent>
       </Card>
 
+      <SuggestedShortcuts />
+
+
       <Card className="glass-card">
         <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
           <CardTitle className="text-base">Recent Transactions</CardTitle>
