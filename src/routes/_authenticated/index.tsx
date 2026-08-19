@@ -218,6 +218,38 @@ function Dashboard() {
   });
 
 
+
+  const deletePayment = useMutation({
+    mutationFn: async (p: any) => {
+      const amount = Number(p.amount_paid);
+      if (p.invoice_id) {
+        const { data: inv } = await supabase
+          .from("invoices")
+          .select("id,total_due,balance_remaining")
+          .eq("id", p.invoice_id)
+          .maybeSingle();
+        if (inv) {
+          const restored = Math.min(Number(inv.total_due), Number(inv.balance_remaining) + amount);
+          const { error: uErr } = await supabase
+            .from("invoices")
+            .update({
+              balance_remaining: restored,
+              status: restored <= 0 ? "paid" : restored >= Number(inv.total_due) ? "unpaid" : "partial",
+            })
+            .eq("id", inv.id);
+          if (uErr) throw uErr;
+        }
+      }
+      const { error } = await supabase.from("payments").delete().eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries();
+      toast.success("Payment removed - collected total updated");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const drillTitle: Record<Exclude<DrillKey, null>, string> = {
     units: "All Units",
     occupancy: "Occupied Units",
