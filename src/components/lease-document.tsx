@@ -77,10 +77,7 @@ export function LeaseDocument({
     <div className="grid gap-3">
       <div ref={ref} className="max-h-[60vh] overflow-y-auto rounded-md border bg-muted/20 p-4 text-sm leading-relaxed">
         <h1 className="text-center font-semibold uppercase tracking-wide">Residential Lease Agreement</h1>
-        <p className="mt-3">
-          This lease is entered into between <b>Rotich Management Systems</b> (the "Landlord") and{" "}
-          <b>{lease.full_name}</b> (the "Tenant").
-        </p>
+        <p className="mt-3 whitespace-pre-wrap">{introText}</p>
 
         <p className="mt-3 font-semibold">Tenant details</p>
         <ul className="mt-1 list-disc space-y-0.5 pl-5">
