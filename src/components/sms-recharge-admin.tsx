@@ -95,6 +95,36 @@ export function SmsRechargeAdmin() {
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         ) : (
           <>
+            <div className="rounded-lg border border-primary/40 bg-primary/5 p-3">
+              <div className="text-sm font-medium">Recharge every landlord</div>
+              <p className="text-xs text-muted-foreground">
+                Adds the same credit to all approved landlord wallets so they can keep texting until it runs out.
+              </p>
+              <div className="mt-2 flex flex-wrap items-end gap-2">
+                <div>
+                  <Label className="text-xs">Amount each (KES)</Label>
+                  <Input
+                    type="number"
+                    className="w-32"
+                    value={bulkAmount}
+                    onChange={(e) => setBulkAmount(e.target.value)}
+                  />
+                </div>
+                <Button size="sm" disabled={busy === "bulk"} onClick={rechargeEveryone}>
+                  {busy === "bulk" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                  Recharge all
+                </Button>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={bulkOnlyEmpty}
+                    onChange={(e) => setBulkOnlyEmpty(e.target.checked)}
+                  />
+                  Only landlords who have run out
+                </label>
+              </div>
+            </div>
+
             <div>
               <div className="mb-2 text-sm font-medium">Pending requests ({pending.length})</div>
               {pending.length === 0 ? (
