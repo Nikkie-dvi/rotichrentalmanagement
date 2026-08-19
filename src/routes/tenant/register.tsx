@@ -14,6 +14,7 @@ import { Loader2, CheckCircle2, ChevronLeft, Search, AlertCircle, Home, RefreshC
 import { toast } from "sonner";
 import { SignaturePad, type SignatureValue } from "@/components/tenant/signature-pad";
 import { unitTypeLabel } from "@/lib/unit-types";
+import { LeaseDocument } from "@/components/lease-document";
 
 export const Route = createFileRoute("/tenant/register")({
   ssr: false,
@@ -311,31 +312,21 @@ function RegisterPage() {
             <CardDescription>Step 3 of 3 — review and sign</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <div className="max-h-72 overflow-y-auto rounded-md border bg-muted/30 p-4 text-sm leading-relaxed">
-              <p className="font-semibold">RESIDENTIAL LEASE AGREEMENT</p>
-              <p className="mt-2">
-                This lease is entered into between <b>Rotich Management Systems</b> (the "Landlord") and{" "}
-                <b>{fullName || "the Tenant"}</b> (phone <b>{phone || "—"}</b>), the "Tenant".
-              </p>
-              <p className="mt-2">
-                The Tenant agrees to rent <b>Unit {selectedUnit?.unit_number ?? "—"}</b>
-                {selectedUnit?.property_name ? ` at ${selectedUnit.property_name}` : ""}
-                {selectedUnit?.property_location ? `, ${selectedUnit.property_location}` : ""} at a monthly rent of{" "}
-                <b>{selectedUnit ? KES(selectedUnit.rent_amount) : "—"}</b>, payable on or before the{" "}
-                <b>{new Date().getDate()}</b> of each calendar month.
-              </p>
-              <p className="mt-3 font-semibold">Standard Clauses</p>
-              <ol className="mt-1 list-decimal space-y-1 pl-5">
-                <li>Rent is due monthly on the day of month above; late payment may attract a penalty.</li>
-                <li>Utility charges (water, electricity where metered) are billed in addition to rent.</li>
-                <li>The Tenant shall keep the premises in clean and habitable condition and report damage promptly.</li>
-                <li>The Tenant may not sublet or transfer occupancy without written landlord consent.</li>
-                <li>Either party may terminate this lease with 30 days' written notice.</li>
-                <li>Structural, plumbing, electrical, and security repairs shall be reported through the tenant portal.</li>
-                <li>The Landlord retains right of reasonable inspection with prior notice.</li>
-              </ol>
-              <p className="mt-3">By signing below, the Tenant acknowledges reading, understanding, and agreeing to the terms above.</p>
-            </div>
+            <LeaseDocument
+              template={vacantQuery.data?.leaseTemplate ?? null}
+              lease={{
+                full_name: fullName || "the Tenant",
+                phone_number: phone,
+                email,
+                deposit_paid: 0,
+                move_in_date: new Date().toISOString().slice(0, 10),
+                rent_due_day: new Date().getDate(),
+                unit_number: selectedUnit?.unit_number ?? null,
+                rent_amount: selectedUnit?.rent_amount ?? 0,
+                property_name: selectedUnit?.property_name ?? null,
+                property_location: selectedUnit?.property_location ?? null,
+              }}
+            />
 
             <div>
               <Label className="mb-2 block">Signature</Label>
