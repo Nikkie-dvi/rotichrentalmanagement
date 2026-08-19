@@ -96,9 +96,12 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Rotich Rental Management</CardTitle>
+          <h1 className="text-2xl font-semibold leading-none tracking-tight">
+            Rotich Rental Management — landlord &amp; tenant portal
+          </h1>
           <CardDescription>Landlords &amp; property managers</CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
           {/* Big, unmistakable choice: existing account vs brand new account. */}
           <div className="grid grid-cols-2 gap-2">
