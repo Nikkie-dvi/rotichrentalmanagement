@@ -22,6 +22,26 @@ export function SmsRechargeAdmin() {
   const [busy, setBusy] = useState<string | null>(null);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [topups, setTopups] = useState<Record<string, string>>({});
+  const [bulkAmount, setBulkAmount] = useState("600");
+  const [bulkOnlyEmpty, setBulkOnlyEmpty] = useState(false);
+
+  const rechargeEveryone = async () => {
+    const amount = Number(bulkAmount);
+    if (!(amount > 0)) return;
+    setBusy("bulk");
+    try {
+      const res: any = await creditAllSmsWallets({
+        data: { amount, onlyEmpty: bulkOnlyEmpty, note: "Bulk recharge from main account" },
+      });
+      toast.success(`Credited ${res.credited} landlord${res.credited === 1 ? "" : "s"} with ${ksh(amount)}`);
+      refresh();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not recharge landlords");
+    } finally {
+      setBusy(null);
+    }
+  };
+
 
   const { data, isLoading } = useQuery({ queryKey: ["sms-recharges"], queryFn: () => listSmsRecharges() });
 
