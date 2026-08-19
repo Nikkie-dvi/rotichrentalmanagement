@@ -89,7 +89,7 @@ export function AppHeader() {
       {isManager && (
         <Badge className="shrink-0 gap-1 bg-amber-500 text-amber-950 hover:bg-amber-500">
           <UserCog className="h-3.5 w-3.5" />
-          <span className="hidden xs:inline">Property </span>Manager
+          Manager
         </Badge>
       )}
       <div className="ml-auto flex items-center gap-2 overflow-x-auto">
