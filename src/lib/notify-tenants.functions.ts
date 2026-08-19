@@ -5,7 +5,16 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const notifyMyTenants = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { title: string; body: string; url?: string; tag?: string; sms?: boolean; push?: boolean }) => {
+  .inputValidator((data: {
+    title: string;
+    body: string;
+    url?: string;
+    tag?: string;
+    sms?: boolean;
+    push?: boolean;
+    audience?: "all" | "due" | "overdue";
+    tenantIds?: string[];
+  }) => {
     const title = (data?.title ?? "").trim();
     const body = (data?.body ?? "").trim();
     if (!title || !body) throw new Error("A title and a message are required");
@@ -16,6 +25,8 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
       tag: data.tag ?? `landlord-notice-${Date.now()}`,
       sms: data.sms ?? false,
       push: data.push ?? true,
+      audience: data.audience ?? "all",
+      tenantIds: Array.isArray(data.tenantIds) ? data.tenantIds.filter(Boolean) : [],
     };
   })
   .handler(async ({ data, context }) => {
@@ -26,12 +37,32 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
       .eq("active", true);
     if (error) throw new Error(error.message);
 
-    const rows = (tenants ?? []) as {
+    let rows = (tenants ?? []) as {
       id: string;
       owner_id: string;
       phone_number: string | null;
       auth_user_id: string | null;
     }[];
+
+    // Narrow the audience: hand-picked tenants, tenants with rent due, or those overdue.
+    if (data.tenantIds.length > 0) {
+      const picked = new Set(data.tenantIds);
+      rows = rows.filter((t) => picked.has(t.id));
+    } else if (data.audience === "due" || data.audience === "overdue") {
+      const today = new Date().toISOString().slice(0, 10);
+      let q = context.supabase
+        .from("invoices")
+        .select("tenant_id, due_date, status")
+        .neq("status", "paid");
+      if (data.audience === "overdue") q = q.lt("due_date", today);
+      const { data: inv } = await q;
+      const owing = new Set(((inv ?? []) as { tenant_id: string | null }[]).map((i) => i.tenant_id).filter(Boolean) as string[]);
+      rows = rows.filter((t) => owing.has(t.id));
+    }
+
+    if (rows.length === 0) {
+      return { ok: true, sent: 0, devices: 0, smsSent: 0, smsFailed: 0, smsSkippedNoCredit: 0, smsCost: 0, recipients: 0 };
+    }
 
     const userIds = Array.from(new Set(rows.map((t) => t.auth_user_id).filter(Boolean))) as string[];
 
@@ -125,7 +156,7 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
 
     if (logs.length) await supabaseAdmin.from("notification_logs").insert(logs as never);
 
-    return { ok: true, sent, devices, smsSent, smsFailed, smsSkippedNoCredit, smsCost: smsCost * 1.2 };
+    return { ok: true, sent, devices, smsSent, smsFailed, smsSkippedNoCredit, smsCost: smsCost * 1.2, recipients: rows.length };
   });
 
 
