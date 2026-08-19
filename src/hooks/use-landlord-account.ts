@@ -182,11 +182,14 @@ export function useLandlordAccount() {
       // landlord's account (same landlord code, same payment details), no gate.
       const { data: managerRow } = await (supabase as any)
         .from("property_managers")
-        .select("id,landlord_user_id")
+        .select("id,landlord_user_id,active")
         .eq("manager_user_id", user.id)
-        .eq("active", true)
+        .order("active", { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (managerRow && !isSuper) {
+        // A switched-off manager keeps no access at all.
+        if (!(managerRow as any).active) return null;
         const { data: employer } = await supabase
           .from("landlord_accounts")
           .select("*")
@@ -194,6 +197,7 @@ export function useLandlordAccount() {
           .maybeSingle();
         return (employer as LandlordAccount) ?? null;
       }
+
 
       const { data: existing } = await supabase
         .from("landlord_accounts")
