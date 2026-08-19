@@ -132,6 +132,8 @@ function PaymentsPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const [deletingPayment, setDeletingPayment] = useState<any>(null);
+
   const removePayment = useMutation({
     mutationFn: async (p: any) => {
       const amount = Number(p.amount_paid);
@@ -157,10 +159,14 @@ function PaymentsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
+      setDeletingPayment(null);
       qc.invalidateQueries();
       toast.success("Payment removed and the invoice balance restored");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      setDeletingPayment(null);
+      toast.error(e.message);
+    },
   });
 
   const errors = useMemo(() => {
