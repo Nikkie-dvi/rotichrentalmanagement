@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle2, ChevronLeft, Search, AlertCircle, Home, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { SignaturePad, type SignatureValue } from "@/components/tenant/signature-pad";
+import { unitTypeLabel } from "@/lib/unit-types";
 
 export const Route = createFileRoute("/tenant/register")({
   ssr: false,
@@ -287,6 +288,7 @@ function RegisterPage() {
                       <div className="text-sm text-muted-foreground">
                         {u.property_name ?? "—"}{u.property_location ? ` · ${u.property_location}` : ""}
                       </div>
+                      <Badge variant="outline" className="mt-1">{unitTypeLabel(u.unit_type)}</Badge>
                     </div>
                     <Badge variant="secondary">{KES(u.rent_amount)}/mo</Badge>
                   </button>

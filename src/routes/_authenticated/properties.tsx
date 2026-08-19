@@ -273,7 +273,7 @@ function PropertiesPage() {
                 </TableRow>
               ))}
               {(!units || units.length === 0) && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No units yet. Add a property, then units.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">No units yet. Add a property, then units.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
+import { InvoiceCharges } from "@/components/invoice-charges";
 
 export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({
@@ -35,7 +36,13 @@ function BillingPage() {
   const [singleTenant, setSingleTenant] = useState<string>("");
   const [singleMonth, setSingleMonth] = useState<string>(new Date().toISOString().slice(0, 7));
   const [singleRent, setSingleRent] = useState<string>("");
-  const [singleUtil, setSingleUtil] = useState<string>("0");
+  const [singleWater, setSingleWater] = useState<string>("0");
+  const [singlePower, setSinglePower] = useState<string>("0");
+  const [singleGarbage, setSingleGarbage] = useState<string>("0");
+  const [singleOther, setSingleOther] = useState<string>("0");
+  const [singleOtherLabel, setSingleOtherLabel] = useState<string>("");
+  const singleExtras =
+    (Number(singleWater) || 0) + (Number(singlePower) || 0) + (Number(singleGarbage) || 0) + (Number(singleOther) || 0);
 
   const { data: activeTenants } = useQuery({
     queryKey: ["billing-tenants"],
@@ -59,7 +66,7 @@ function BillingPage() {
     mutationFn: async () => {
       if (!singleTenant) throw new Error("Choose a tenant");
       const rent = Number(singleRent) || 0;
-      const util = Number(singleUtil) || 0;
+      const util = singleExtras;
       const total = rent + util;
       const { error } = await supabase.from("invoices").upsert(
         {
@@ -67,6 +74,11 @@ function BillingPage() {
           month_year: singleMonth,
           base_rent: rent,
           utility_amount: util,
+          water_amount: Number(singleWater) || 0,
+          electricity_amount: Number(singlePower) || 0,
+          garbage_amount: Number(singleGarbage) || 0,
+          other_amount: Number(singleOther) || 0,
+          other_label: singleOtherLabel.trim() || null,
           total_due: total,
           balance_remaining: total,
           status: total === 0 ? "paid" : "unpaid",
@@ -197,13 +209,30 @@ function BillingPage() {
                 <Input type="number" min="0" value={singleRent} onChange={(e) => setSingleRent(e.target.value)} />
               </div>
               <div className="grid gap-1.5">
-                <Label>Utilities / extras</Label>
-                <Input type="number" min="0" value={singleUtil} onChange={(e) => setSingleUtil(e.target.value)} />
+                <Label>Water bill</Label>
+                <Input type="number" min="0" value={singleWater} onChange={(e) => setSingleWater(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Electricity</Label>
+                <Input type="number" min="0" value={singlePower} onChange={(e) => setSinglePower(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Garbage / service</Label>
+                <Input type="number" min="0" value={singleGarbage} onChange={(e) => setSingleGarbage(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Other charge</Label>
+                <Input type="number" min="0" value={singleOther} onChange={(e) => setSingleOther(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Other label</Label>
+                <Input placeholder="e.g. Security" value={singleOtherLabel} onChange={(e) => setSingleOtherLabel(e.target.value)} />
               </div>
             </div>
-            <div className="rounded-md bg-muted/50 p-3 text-sm flex justify-between">
-              <span>Total due</span>
-              <span className="font-semibold">{money((Number(singleRent) || 0) + (Number(singleUtil) || 0))}</span>
+            <div className="rounded-md bg-muted/50 p-3 text-sm space-y-1">
+              <div className="flex justify-between text-muted-foreground"><span>Rent</span><span>{money(Number(singleRent) || 0)}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span>Water + electricity + garbage + other</span><span>{money(singleExtras)}</span></div>
+              <div className="flex justify-between font-semibold border-t pt-1"><span>Total due</span><span>{money((Number(singleRent) || 0) + singleExtras)}</span></div>
             </div>
             <Button onClick={() => invoiceOne.mutate()} disabled={invoiceOne.isPending || !singleTenant}>
               Send invoice
@@ -281,8 +310,7 @@ function BillingPage() {
                 <div><b>Unit:</b> {preview.tenants?.units?.unit_number ?? "—"}</div>
               </div>
               <div className="border rounded-md p-3 space-y-1 text-sm">
-                <div className="flex justify-between"><span>Base Rent</span><span>{money(Number(preview.base_rent))}</span></div>
-                <div className="flex justify-between"><span>Utility Charges</span><span>{money(Number(preview.utility_amount))}</span></div>
+                <InvoiceCharges invoice={preview} />
                 <div className="flex justify-between font-semibold border-t pt-1"><span>Total Due</span><span>{money(Number(preview.total_due))}</span></div>
                 <div className="flex justify-between text-destructive"><span>Balance Remaining</span><span>{money(Number(preview.balance_remaining))}</span></div>
               </div>
