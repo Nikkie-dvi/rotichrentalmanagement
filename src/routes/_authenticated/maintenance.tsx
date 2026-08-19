@@ -239,6 +239,11 @@ function MaintenancePage() {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <DoorOpen className="h-4 w-4" /> Move-out requests
+            {openMoveOuts.length > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-bold leading-none text-destructive-foreground">
+                {openMoveOuts.length}
+              </span>
+            )}
           </CardTitle>
           <CardDescription>Approving marks the tenant inactive and frees the unit.</CardDescription>
         </CardHeader>
