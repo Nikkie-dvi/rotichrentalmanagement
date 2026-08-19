@@ -36,6 +36,8 @@ function RentPaymentSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [urgent, setUrgent] = useState("");
   const [sending, setSending] = useState(false);
+  const [viaPush, setViaPush] = useState(true);
+  const [viaSms, setViaSms] = useState(true);
 
   useEffect(() => {
     if (!account) return;
@@ -43,6 +45,13 @@ function RentPaymentSettingsPage() {
     setMethod((account as any).rent_payment_method ?? "mpesa_send_money");
     setNote((account as any).rent_payment_note ?? "");
   }, [account]);
+
+  const describeResult = (res: { sent: number; smsSent: number; smsFailed: number }) => {
+    const parts: string[] = [];
+    if (viaPush) parts.push(`${res.sent} app alert${res.sent === 1 ? "" : "s"}`);
+    if (viaSms) parts.push(`${res.smsSent} SMS`);
+    return parts.length ? parts.join(" + ") : "no channels selected";
+  };
 
   const save = async () => {
     if (!account) return;
@@ -62,7 +71,7 @@ function RentPaymentSettingsPage() {
     }
     qc.invalidateQueries({ queryKey: ["landlord-account"] });
 
-    // Push the change to every tenant device right away.
+    // Push + SMS the change to every tenant right away.
     try {
       const res = await notifyMyTenants({
         data: {
@@ -71,13 +80,11 @@ function RentPaymentSettingsPage() {
             ? note.trim()
             : `Pay rent via ${paymentMethodLabel(method)}${number.trim() ? ` to ${number.trim()}` : ""}.`,
           tag: `pay-details-${Date.now()}`,
+          push: viaPush,
+          sms: viaSms,
         },
       });
-      toast.success(
-        res.sent > 0
-          ? `Saved — notified ${res.sent} tenant device${res.sent === 1 ? "" : "s"}`
-          : "Saved — your tenants will see this in their app",
-      );
+      toast.success(`Saved — sent ${describeResult(res)}`);
     } catch {
       toast.success("Saved — your tenants will see this in their app");
     }
@@ -90,6 +97,7 @@ function RentPaymentSettingsPage() {
       </div>
     );
   }
+
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
