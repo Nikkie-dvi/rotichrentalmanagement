@@ -98,18 +98,20 @@ export function LeaseDocument({
 
         <p className="mt-3 font-semibold">Standard clauses</p>
         <ol className="mt-1 list-decimal space-y-1 pl-5">
-          <li>Rent is due monthly on the day of month above; late payment may attract a penalty.</li>
-          <li>Utility charges (water, electricity where metered) are billed in addition to rent.</li>
-          <li>The Tenant shall keep the premises in clean and habitable condition and report damage promptly.</li>
-          <li>The Tenant may not sublet or transfer occupancy without written landlord consent.</li>
-          <li>Either party may terminate this lease with 30 days' written notice.</li>
-          <li>Structural, plumbing, electrical, and security repairs shall be reported through the tenant portal.</li>
-          <li>The Landlord retains right of reasonable inspection with prior notice.</li>
+          {tpl.clauses.map((c, i) => (
+            <li key={i}>
+              {fillLeaseText(c, {
+                landlord: tpl.landlordName,
+                tenant: lease.full_name,
+                unit: lease.unit_number ?? "—",
+                property: lease.property_name ?? "—",
+                rent: KES(lease.rent_amount),
+              })}
+            </li>
+          ))}
         </ol>
 
-        <p className="mt-3">
-          By signing below, the Tenant acknowledges reading, understanding, and agreeing to the terms above.
-        </p>
+        <p className="mt-3 whitespace-pre-wrap">{tpl.footer}</p>
 
         <p className="mt-4 font-semibold">Signed by the Tenant</p>
         <div className="mt-1">
