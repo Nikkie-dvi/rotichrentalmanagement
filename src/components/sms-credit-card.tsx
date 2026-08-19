@@ -44,7 +44,7 @@ export function SmsCreditCard() {
   };
 
   return (
-    <Card className="glass-card">
+    <Card id="sms-credit" className={`glass-card ${empty ? "border-destructive/60 glow-red" : ""}`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <MessageSquare className="h-4 w-4" /> SMS credit
