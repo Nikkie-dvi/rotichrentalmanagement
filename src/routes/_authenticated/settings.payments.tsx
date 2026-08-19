@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Wallet, Save } from "lucide-react";
+import { Loader2, Wallet, Save, BellRing, Send } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { PAYMENT_METHODS, useLandlordAccount } from "@/hooks/use-landlord-account";
+import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
+import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/payments")({
   head: () => ({
@@ -33,6 +34,8 @@ function RentPaymentSettingsPage() {
   const [method, setMethod] = useState("mpesa_send_money");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [urgent, setUrgent] = useState("");
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!account) return;
@@ -57,8 +60,27 @@ function RentPaymentSettingsPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Saved — your tenants will see this in their app");
     qc.invalidateQueries({ queryKey: ["landlord-account"] });
+
+    // Push the change to every tenant device right away.
+    try {
+      const res = await notifyMyTenants({
+        data: {
+          title: "Payment details updated",
+          body: note.trim()
+            ? note.trim()
+            : `Pay rent via ${paymentMethodLabel(method)}${number.trim() ? ` to ${number.trim()}` : ""}.`,
+          tag: `pay-details-${Date.now()}`,
+        },
+      });
+      toast.success(
+        res.sent > 0
+          ? `Saved — notified ${res.sent} tenant device${res.sent === 1 ? "" : "s"}`
+          : "Saved — your tenants will see this in their app",
+      );
+    } catch {
+      toast.success("Saved — your tenants will see this in their app");
+    }
   };
 
   if (isLoading) {
@@ -122,6 +144,51 @@ function RentPaymentSettingsPage() {
           </div>
           <Button onClick={save} disabled={saving} className="w-full sm:w-auto">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save details
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BellRing className="h-4 w-4" /> Send an urgent alert
+          </CardTitle>
+          <CardDescription>
+            Goes straight to your tenants' phones as a notification — use it for water shortages, inspections or
+            payment changes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <Textarea
+            rows={3}
+            value={urgent}
+            onChange={(e) => setUrgent(e.target.value)}
+            placeholder="e.g. Water will be off tomorrow from 8am to 2pm."
+          />
+          <Button
+            variant="secondary"
+            disabled={sending || urgent.trim().length < 3}
+            onClick={async () => {
+              setSending(true);
+              try {
+                const res = await notifyMyTenants({
+                  data: { title: "Urgent notice from your landlord", body: urgent.trim() },
+                });
+                toast.success(
+                  res.sent > 0
+                    ? `Sent to ${res.sent} device${res.sent === 1 ? "" : "s"}`
+                    : "No tenant devices have notifications switched on yet",
+                );
+                setUrgent("");
+              } catch (e: any) {
+                toast.error(e?.message ?? "Could not send");
+              } finally {
+                setSending(false);
+              }
+            }}
+            className="w-full sm:w-auto"
+          >
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send now
           </Button>
         </CardContent>
       </Card>
