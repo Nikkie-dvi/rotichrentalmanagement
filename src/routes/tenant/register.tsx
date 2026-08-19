@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { SignaturePad, type SignatureValue } from "@/components/tenant/signature-pad";
 import { unitTypeLabel } from "@/lib/unit-types";
 import { LeaseDocument } from "@/components/lease-document";
+import { enablePush, pushSupported } from "@/lib/push";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/tenant/register")({
   ssr: false,
