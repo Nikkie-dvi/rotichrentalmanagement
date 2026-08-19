@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/leases")({
 });
 
 function LeasesPage() {
+  const { data: landlordAccount } = useLandlordAccount();
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<LeaseData | null>(null);
 
