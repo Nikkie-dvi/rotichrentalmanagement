@@ -19,37 +19,52 @@ export type Database = {
           balance_remaining: number
           base_rent: number
           created_at: string
+          electricity_amount: number
+          garbage_amount: number
           id: string
           month_year: string
+          other_amount: number
+          other_label: string | null
           owner_id: string
           status: string
           tenant_id: string
           total_due: number
           utility_amount: number
+          water_amount: number
         }
         Insert: {
           balance_remaining?: number
           base_rent?: number
           created_at?: string
+          electricity_amount?: number
+          garbage_amount?: number
           id?: string
           month_year: string
+          other_amount?: number
+          other_label?: string | null
           owner_id?: string
           status?: string
           tenant_id: string
           total_due?: number
           utility_amount?: number
+          water_amount?: number
         }
         Update: {
           balance_remaining?: number
           base_rent?: number
           created_at?: string
+          electricity_amount?: number
+          garbage_amount?: number
           id?: string
           month_year?: string
+          other_amount?: number
+          other_label?: string | null
           owner_id?: string
           status?: string
           tenant_id?: string
           total_due?: number
           utility_amount?: number
+          water_amount?: number
         }
         Relationships: [
           {
@@ -588,6 +603,7 @@ export type Database = {
           rent_amount: number
           status: string
           unit_number: string
+          unit_type: string
         }
         Insert: {
           created_at?: string
@@ -597,6 +613,7 @@ export type Database = {
           rent_amount?: number
           status?: string
           unit_number: string
+          unit_type?: string
         }
         Update: {
           created_at?: string
@@ -606,6 +623,7 @@ export type Database = {
           rent_amount?: number
           status?: string
           unit_number?: string
+          unit_type?: string
         }
         Relationships: [
           {
