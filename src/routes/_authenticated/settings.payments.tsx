@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
+import { SmsCreditCard } from "@/components/sms-credit-card";
+
 
 export const Route = createFileRoute("/_authenticated/settings/payments")({
   head: () => ({
@@ -47,12 +49,14 @@ function RentPaymentSettingsPage() {
     setNote((account as any).rent_payment_note ?? "");
   }, [account]);
 
-  const describeResult = (res: { sent: number; smsSent: number; smsFailed: number }) => {
+  const describeResult = (res: { sent: number; smsSent: number; smsFailed: number; smsSkippedNoCredit?: number }) => {
     const parts: string[] = [];
     if (viaPush) parts.push(`${res.sent} app alert${res.sent === 1 ? "" : "s"}`);
     if (viaSms) parts.push(`${res.smsSent} SMS`);
+    if (res.smsSkippedNoCredit) parts.push(`${res.smsSkippedNoCredit} skipped (no SMS credit)`);
     return parts.length ? parts.join(" + ") : "no channels selected";
   };
+
 
   const save = async () => {
     if (!account) return;
@@ -156,6 +160,10 @@ function RentPaymentSettingsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      <SmsCreditCard />
+
+
 
       <Card className="glass-card">
         <CardHeader>
