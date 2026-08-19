@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Printer } from "lucide-react";
+import { fillLeaseText, resolveLeaseTemplate, type LeaseTemplate } from "@/lib/lease-template";
 
 export type LeaseData = {
   full_name: string;
@@ -40,8 +41,22 @@ function SignatureView({ signature, name }: { signature?: string | null; name: s
 }
 
 /** Full, printable lease agreement with the tenant's details and signature. */
-export function LeaseDocument({ lease }: { lease: LeaseData }) {
+export function LeaseDocument({
+  lease,
+  template,
+}: {
+  lease: LeaseData;
+  template?: LeaseTemplate | null;
+}) {
   const ref = useRef<HTMLDivElement>(null);
+  const tpl = template ?? resolveLeaseTemplate(null);
+  const introText = fillLeaseText(tpl.intro, {
+    landlord: tpl.landlordName,
+    tenant: lease.full_name,
+    unit: lease.unit_number ?? "—",
+    property: lease.property_name ?? "—",
+    rent: KES(lease.rent_amount),
+  });
 
   const print = () => {
     const html = ref.current?.innerHTML;
