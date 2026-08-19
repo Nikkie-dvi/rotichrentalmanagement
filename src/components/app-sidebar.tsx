@@ -49,6 +49,11 @@ export function AppSidebar() {
     : url === "/reports" ? counts.overdueInvoices
     : url === "/tenants" ? counts.moveOuts
     : 0;
+  // Money in is good news — everything else is something to act on.
+  const toneFor = (url: string) =>
+    url === "/payments"
+      ? "bg-emerald-500 text-emerald-950"
+      : "bg-destructive text-destructive-foreground";
   const base = isManager ? items.filter((i) => !LANDLORD_ONLY.includes(i.url)) : items;
   const menu = isSuper
     ? [
@@ -76,6 +81,7 @@ export function AppSidebar() {
               {menu.map((item) => {
                 const active = pathname === item.url;
                 const count = badgeFor(item.url);
+                const tone = toneFor(item.url);
                 return (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton
@@ -95,7 +101,7 @@ export function AppSidebar() {
                         </span>
                         {count > 0 && (
                           <span
-                            className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-bold leading-none text-destructive-foreground shadow-sm group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:right-1 group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:min-w-4 group-data-[collapsible=icon]:px-0"
+                            className={`ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold leading-none shadow-sm ${tone}  group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:right-1 group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:min-w-4 group-data-[collapsible=icon]:px-0`}
                             aria-label={`${count} pending`}
                           >
                             {count > 99 ? "99+" : count}
