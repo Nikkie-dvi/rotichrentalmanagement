@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
-import { resetTenantPassword } from "@/lib/account.functions";
+import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
 
 export const Route = createFileRoute("/_authenticated/tenants")({
   head: () => ({
