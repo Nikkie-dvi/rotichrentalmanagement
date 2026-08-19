@@ -35,7 +35,13 @@ function BillingPage() {
   const [singleTenant, setSingleTenant] = useState<string>("");
   const [singleMonth, setSingleMonth] = useState<string>(new Date().toISOString().slice(0, 7));
   const [singleRent, setSingleRent] = useState<string>("");
-  const [singleUtil, setSingleUtil] = useState<string>("0");
+  const [singleWater, setSingleWater] = useState<string>("0");
+  const [singlePower, setSinglePower] = useState<string>("0");
+  const [singleGarbage, setSingleGarbage] = useState<string>("0");
+  const [singleOther, setSingleOther] = useState<string>("0");
+  const [singleOtherLabel, setSingleOtherLabel] = useState<string>("");
+  const singleExtras =
+    (Number(singleWater) || 0) + (Number(singlePower) || 0) + (Number(singleGarbage) || 0) + (Number(singleOther) || 0);
 
   const { data: activeTenants } = useQuery({
     queryKey: ["billing-tenants"],
