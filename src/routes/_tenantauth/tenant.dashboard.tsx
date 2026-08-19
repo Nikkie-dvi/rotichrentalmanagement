@@ -254,11 +254,14 @@ function DashboardPage() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Futuristic animated background */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-background to-muted/40" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-muted/60 via-background to-muted/70" />
+      {/* Darkening veil so the glass cards and content pop */}
+      <div className="absolute inset-0 -z-10 bg-slate-950/25 dark:bg-slate-950/55" />
       <div
         className="tenant-bg-grid absolute inset-0 -z-10 opacity-20"
         style={{ animation: "tenant-grid-fade 8s ease-in-out infinite" }}
       />
+
 
       {/* "ROTICH / RENTALS" square watermark */}
       <div className="tenant-watermark -z-10" />

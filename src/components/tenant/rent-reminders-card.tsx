@@ -57,12 +57,18 @@ export function RentRemindersCard() {
 
 
   return (
-    <Card className="mb-4 glass-card">
+    <Card className="mb-4 glass-card floating-panel glow-green border-2 border-emerald-500/60 bg-emerald-500/10">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <BellRing className="h-4 w-4" /> Rent reminders
+        <CardTitle className="flex items-center gap-2 text-base font-semibold text-emerald-700 dark:text-emerald-300">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-white">
+            <BellRing className="h-4 w-4" />
+          </span>
+          Rent reminders
+          <Badge className="ml-auto bg-emerald-600 text-white hover:bg-emerald-600">
+            {enabled ? "On" : "Off"}
+          </Badge>
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-foreground/80">
           Get a notification on this device 3 days before, on the due day, and when rent is overdue.
         </CardDescription>
       </CardHeader>
@@ -72,7 +78,11 @@ export function RentRemindersCard() {
             This browser can't show background notifications. Install the app to your home screen and try again.
           </p>
         ) : (
-          <Button variant={enabled ? "outline" : "default"} onClick={toggle} disabled={busy} className="w-full sm:w-auto glass-btn">
+          <Button
+            onClick={toggle}
+            disabled={busy}
+            className="w-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 sm:w-auto"
+          >
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : enabled ? <BellOff className="mr-2 h-4 w-4" /> : <BellRing className="mr-2 h-4 w-4" />}
             {enabled ? "Turn off reminders" : "Enable rent reminders"}
           </Button>
@@ -81,3 +91,4 @@ export function RentRemindersCard() {
     </Card>
   );
 }
+
