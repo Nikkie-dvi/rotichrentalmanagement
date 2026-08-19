@@ -224,22 +224,29 @@ export function useLandlordAccount() {
   });
 }
 
+/** Manager record state for the signed-in user: active, switched off, or none. */
+export function useManagerStatus() {
+  const { data } = useQuery({
+    queryKey: ["manager-status"],
+    queryFn: async (): Promise<{ isManager: boolean; isDisabled: boolean }> => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return { isManager: false, isDisabled: false };
+      const { data: rows } = await (supabase as any)
+        .from("property_managers")
+        .select("id,active")
+        .eq("manager_user_id", auth.user.id);
+      const list = (rows ?? []) as { active: boolean }[];
+      if (list.length === 0) return { isManager: false, isDisabled: false };
+      const active = list.some((r) => r.active);
+      return { isManager: active, isDisabled: !active };
+    },
+    staleTime: 30_000,
+  });
+  return data ?? { isManager: false, isDisabled: false };
+}
+
 /** True when the signed-in user is a property manager working for a landlord. */
 export function useIsPropertyManager() {
-  const { data } = useQuery({
-    queryKey: ["is-property-manager"],
-    queryFn: async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      if (!auth.user) return false;
-      const { data: row } = await (supabase as any)
-        .from("property_managers")
-        .select("id")
-        .eq("manager_user_id", auth.user.id)
-        .eq("active", true)
-        .maybeSingle();
-      return Boolean(row);
-    },
-    staleTime: 60_000,
-  });
-  return Boolean(data);
+  return useManagerStatus().isManager;
 }
+
