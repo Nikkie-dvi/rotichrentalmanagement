@@ -179,7 +179,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("payments")
-        .select("id,amount_paid,payment_method,reference_no,payment_date,tenants(full_name)")
+        .select("id,invoice_id,amount_paid,payment_method,reference_no,payment_date,tenants(full_name)")
         .gte("payment_date", `${monthKey}-01`)
         .order("payment_date", { ascending: false });
       return data ?? [];
@@ -217,6 +217,38 @@ function Dashboard() {
     onError: (e: any) => toast.error(e.message),
   });
 
+
+
+  const deletePayment = useMutation({
+    mutationFn: async (p: any) => {
+      const amount = Number(p.amount_paid);
+      if (p.invoice_id) {
+        const { data: inv } = await supabase
+          .from("invoices")
+          .select("id,total_due,balance_remaining")
+          .eq("id", p.invoice_id)
+          .maybeSingle();
+        if (inv) {
+          const restored = Math.min(Number(inv.total_due), Number(inv.balance_remaining) + amount);
+          const { error: uErr } = await supabase
+            .from("invoices")
+            .update({
+              balance_remaining: restored,
+              status: restored <= 0 ? "paid" : restored >= Number(inv.total_due) ? "unpaid" : "partial",
+            })
+            .eq("id", inv.id);
+          if (uErr) throw uErr;
+        }
+      }
+      const { error } = await supabase.from("payments").delete().eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries();
+      toast.success("Payment removed - collected total updated");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const drillTitle: Record<Exclude<DrillKey, null>, string> = {
     units: "All Units",
@@ -301,6 +333,7 @@ function Dashboard() {
                   <TableHead>Tenant</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Remove</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -310,10 +343,39 @@ function Dashboard() {
                     <TableCell className="font-medium">{p.tenants?.full_name ?? "—"}</TableCell>
                     <TableCell><Badge variant="outline" className="uppercase">{p.payment_method}</Badge></TableCell>
                     <TableCell className="text-right font-semibold text-primary">{money(Number(p.amount_paid))}</TableCell>
+                    <TableCell className="text-right">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" aria-label="Remove payment" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-[calc(100vw-1.5rem)] max-w-sm">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove this payment?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {money(Number(p.amount_paid))} for {p.tenants?.full_name ?? "this tenant"} on {p.payment_date} will be
+                              deleted from the collected total and added back to the invoice balance. Use this only for records
+                              entered by mistake.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={deletePayment.isPending}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deletePayment.mutate(p)}
+                              disabled={deletePayment.isPending}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {deletePayment.isPending ? "Removing..." : "Remove payment"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {collectedList && collectedList.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No payments this month.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No payments this month.</TableCell></TableRow>
                 )}
                 {collectedList && collectedList.length > 0 && (
                   <TableRow>
@@ -321,6 +383,7 @@ function Dashboard() {
                     <TableCell className="text-right font-bold text-primary">
                       {money(collectedList.reduce((s: number, p: any) => s + Number(p.amount_paid), 0))}
                     </TableCell>
+                    <TableCell />
                   </TableRow>
                 )}
               </TableBody>
