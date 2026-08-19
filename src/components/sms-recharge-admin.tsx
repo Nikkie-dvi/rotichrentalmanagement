@@ -8,7 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { listSmsRecharges, decideSmsRecharge, adjustSmsBalance } from "@/lib/sms-wallet.functions";
+import {
+  listSmsRecharges,
+  decideSmsRecharge,
+  adjustSmsBalance,
+  creditAllSmsWallets,
+} from "@/lib/sms-wallet.functions";
 
 const ksh = (n: number) => `KES ${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 
