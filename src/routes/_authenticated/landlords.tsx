@@ -41,6 +41,7 @@ function LandlordsPage() {
   const isSuper = useIsSuperAdmin();
   const qc = useQueryClient();
   const [reasons, setReasons] = useState<Record<string, string>>({});
+  const [query, setQuery] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   type PayDraft = { amount: string; date: string; months: string; reference: string };
   const [payDrafts, setPayDrafts] = useState<Record<string, PayDraft>>({});
