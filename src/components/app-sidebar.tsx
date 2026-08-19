@@ -32,6 +32,12 @@ const items = [
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isSuper = useIsSuperAdmin();
+  const counts = usePendingCounts();
+  const badgeFor = (url: string) =>
+    url === "/applications" ? counts.applications
+    : url === "/maintenance" ? counts.issues
+    : url === "/billing" ? counts.unpaidInvoices
+    : 0;
   const menu = isSuper
     ? [
         ...items,
@@ -43,12 +49,10 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold">
-            R
-          </div>
+          <AppLogo className="h-8 w-8 shrink-0" />
           <div className="group-data-[collapsible=icon]:hidden">
-            <div className="text-sm font-semibold text-sidebar-foreground">Rotich Management</div>
-            <div className="text-xs text-sidebar-foreground/60">Systems</div>
+            <div className="text-sm font-semibold text-sidebar-foreground">Rotich Rental</div>
+            <div className="text-xs text-sidebar-foreground/60">Management Systems</div>
           </div>
         </div>
       </SidebarHeader>
