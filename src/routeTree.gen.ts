@@ -35,12 +35,14 @@ import { Route as AuthenticatedSettingsPaymentsRouteImport } from './routes/_aut
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedSettingsManagersRouteImport } from './routes/_authenticated/settings.managers'
 import { Route as AuthenticatedSettingsLeaseRouteImport } from './routes/_authenticated/settings.lease'
+import { Route as AuthenticatedSettingsBillingRouteImport } from './routes/_authenticated/settings.billing'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
 import { Route as ApiPublicHooksSendPushRemindersRouteImport } from './routes/api/public/hooks/send-push-reminders'
 import { Route as ApiPublicHooksGenerateMonthlyInvoicesRouteImport } from './routes/api/public/hooks/generate-monthly-invoices'
+import { Route as ApiPublicHooksApplyLatePenaltiesRouteImport } from './routes/api/public/hooks/apply-late-penalties'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -179,6 +181,12 @@ const AuthenticatedSettingsLeaseRoute =
     path: '/settings/lease',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsBillingRoute =
+  AuthenticatedSettingsBillingRouteImport.update({
+    id: '/settings/billing',
+    path: '/settings/billing',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -213,6 +221,12 @@ const ApiPublicHooksGenerateMonthlyInvoicesRoute =
     path: '/api/public/hooks/generate-monthly-invoices',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksApplyLatePenaltiesRoute =
+  ApiPublicHooksApplyLatePenaltiesRouteImport.update({
+    id: '/api/public/hooks/apply-late-penalties',
+    path: '/api/public/hooks/apply-late-penalties',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -236,11 +250,13 @@ export interface FileRoutesByFullPath {
   '/tenant/': typeof TenantIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/settings/billing': typeof AuthenticatedSettingsBillingRoute
   '/settings/lease': typeof AuthenticatedSettingsLeaseRoute
   '/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
+  '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
@@ -268,11 +284,13 @@ export interface FileRoutesByTo {
   '/tenant': typeof TenantIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/settings/billing': typeof AuthenticatedSettingsBillingRoute
   '/settings/lease': typeof AuthenticatedSettingsLeaseRoute
   '/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
+  '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
@@ -303,11 +321,13 @@ export interface FileRoutesById {
   '/tenant/': typeof TenantIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/settings/billing': typeof AuthenticatedSettingsBillingRoute
   '/_authenticated/settings/lease': typeof AuthenticatedSettingsLeaseRoute
   '/_authenticated/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/_tenantauth/tenant/dashboard': typeof TenantauthTenantDashboardRoute
+  '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
@@ -337,11 +357,13 @@ export interface FileRouteTypes {
     | '/tenant/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/settings/billing'
     | '/settings/lease'
     | '/settings/managers'
     | '/settings/notifications'
     | '/settings/payments'
     | '/tenant/dashboard'
+    | '/api/public/hooks/apply-late-penalties'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
@@ -369,11 +391,13 @@ export interface FileRouteTypes {
     | '/tenant'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/settings/billing'
     | '/settings/lease'
     | '/settings/managers'
     | '/settings/notifications'
     | '/settings/payments'
     | '/tenant/dashboard'
+    | '/api/public/hooks/apply-late-penalties'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
@@ -403,11 +427,13 @@ export interface FileRouteTypes {
     | '/tenant/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/settings/billing'
     | '/_authenticated/settings/lease'
     | '/_authenticated/settings/managers'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/payments'
     | '/_tenantauth/tenant/dashboard'
+    | '/api/public/hooks/apply-late-penalties'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
@@ -427,6 +453,7 @@ export interface RootRouteChildren {
   TenantIndexRoute: typeof TenantIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicHooksApplyLatePenaltiesRoute: typeof ApiPublicHooksApplyLatePenaltiesRoute
   ApiPublicHooksGenerateMonthlyInvoicesRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   ApiPublicHooksSendPushRemindersRoute: typeof ApiPublicHooksSendPushRemindersRoute
   ApiPublicMpesaSimulateCallbackRoute: typeof ApiPublicMpesaSimulateCallbackRoute
@@ -617,6 +644,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsLeaseRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/billing': {
+      id: '/_authenticated/settings/billing'
+      path: '/settings/billing'
+      fullPath: '/settings/billing'
+      preLoaderRoute: typeof AuthenticatedSettingsBillingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -659,6 +693,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/apply-late-penalties': {
+      id: '/api/public/hooks/apply-late-penalties'
+      path: '/api/public/hooks/apply-late-penalties'
+      fullPath: '/api/public/hooks/apply-late-penalties'
+      preLoaderRoute: typeof ApiPublicHooksApplyLatePenaltiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -674,6 +715,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPropertiesRoute: typeof AuthenticatedPropertiesRoute
   AuthenticatedTenantsRoute: typeof AuthenticatedTenantsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedSettingsBillingRoute: typeof AuthenticatedSettingsBillingRoute
   AuthenticatedSettingsLeaseRoute: typeof AuthenticatedSettingsLeaseRoute
   AuthenticatedSettingsManagersRoute: typeof AuthenticatedSettingsManagersRoute
   AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
@@ -692,6 +734,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPropertiesRoute: AuthenticatedPropertiesRoute,
   AuthenticatedTenantsRoute: AuthenticatedTenantsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedSettingsBillingRoute: AuthenticatedSettingsBillingRoute,
   AuthenticatedSettingsLeaseRoute: AuthenticatedSettingsLeaseRoute,
   AuthenticatedSettingsManagersRoute: AuthenticatedSettingsManagersRoute,
   AuthenticatedSettingsNotificationsRoute:
@@ -728,6 +771,7 @@ const rootRouteChildren: RootRouteChildren = {
   TenantIndexRoute: TenantIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicHooksApplyLatePenaltiesRoute: ApiPublicHooksApplyLatePenaltiesRoute,
   ApiPublicHooksGenerateMonthlyInvoicesRoute:
     ApiPublicHooksGenerateMonthlyInvoicesRoute,
   ApiPublicHooksSendPushRemindersRoute: ApiPublicHooksSendPushRemindersRoute,
