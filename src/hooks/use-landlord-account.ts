@@ -178,6 +178,15 @@ export function useLandlordAccount() {
         .maybeSingle();
       if (tenantRow && !isSuper) return null;
 
+      // Property managers work under a landlord who already pays — no account, no gate.
+      const { data: managerRow } = await (supabase as any)
+        .from("property_managers")
+        .select("id")
+        .eq("manager_user_id", user.id)
+        .eq("active", true)
+        .maybeSingle();
+      if (managerRow && !isSuper) return null;
+
       const { data: existing } = await supabase
         .from("landlord_accounts")
         .select("*")
