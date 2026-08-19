@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const notifyMyTenants = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { title: string; body: string; url?: string; tag?: string }) => {
+  .inputValidator((data: { title: string; body: string; url?: string; tag?: string; sms?: boolean; push?: boolean }) => {
     const title = (data?.title ?? "").trim();
     const body = (data?.body ?? "").trim();
     if (!title || !body) throw new Error("A title and a message are required");
@@ -14,51 +14,89 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
       body: body.slice(0, 400),
       url: data.url ?? "/tenant/dashboard",
       tag: data.tag ?? `landlord-notice-${Date.now()}`,
+      sms: data.sms ?? false,
+      push: data.push ?? true,
     };
   })
   .handler(async ({ data, context }) => {
     // RLS scopes this to tenants the caller may see (owner or active manager).
     const { data: tenants, error } = await context.supabase
       .from("tenants")
-      .select("auth_user_id")
-      .eq("active", true)
-      .not("auth_user_id", "is", null);
+      .select("id, owner_id, phone_number, auth_user_id")
+      .eq("active", true);
     if (error) throw new Error(error.message);
 
-    const userIds = Array.from(
-      new Set((tenants ?? []).map((t: { auth_user_id: string | null }) => t.auth_user_id).filter(Boolean)),
-    ) as string[];
-    if (userIds.length === 0) return { ok: true, sent: 0, devices: 0 };
+    const rows = (tenants ?? []) as {
+      id: string;
+      owner_id: string;
+      phone_number: string | null;
+      auth_user_id: string | null;
+    }[];
+
+    const userIds = Array.from(new Set(rows.map((t) => t.auth_user_id).filter(Boolean))) as string[];
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const webpush = (await import("web-push")).default;
-
-    webpush.setVapidDetails(
-      process.env["VAPID_SUBJECT"] || "mailto:reminders@example.com",
-      process.env["VAPID_PUBLIC_KEY"]!,
-      process.env["VAPID_PRIVATE_KEY"]!,
-    );
-
-    const { data: subs } = await supabaseAdmin
-      .from("push_subscriptions")
-      .select("id, endpoint, p256dh, auth")
-      .in("owner_id", userIds);
+    const logs: Record<string, unknown>[] = [];
 
     let sent = 0;
-    for (const sub of (subs ?? []) as { id: string; endpoint: string; p256dh: string; auth: string }[]) {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify({ title: data.title, body: data.body, tag: data.tag, url: data.url }),
-        );
-        sent++;
-      } catch (err: any) {
-        const status = err?.statusCode;
-        if (status === 404 || status === 410) {
-          await supabaseAdmin.from("push_subscriptions").delete().eq("id", sub.id);
+    let devices = 0;
+
+    if (data.push && userIds.length > 0) {
+      const webpush = (await import("web-push")).default;
+      webpush.setVapidDetails(
+        process.env["VAPID_SUBJECT"] || "mailto:reminders@example.com",
+        process.env["VAPID_PUBLIC_KEY"]!,
+        process.env["VAPID_PRIVATE_KEY"]!,
+      );
+
+      const { data: subs } = await supabaseAdmin
+        .from("push_subscriptions")
+        .select("id, endpoint, p256dh, auth")
+        .in("owner_id", userIds);
+
+      devices = (subs ?? []).length;
+      for (const sub of (subs ?? []) as { id: string; endpoint: string; p256dh: string; auth: string }[]) {
+        try {
+          await webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+            JSON.stringify({ title: data.title, body: data.body, tag: data.tag, url: data.url }),
+          );
+          sent++;
+        } catch (err: any) {
+          const status = err?.statusCode;
+          if (status === 404 || status === 410) {
+            await supabaseAdmin.from("push_subscriptions").delete().eq("id", sub.id);
+          }
         }
       }
     }
 
-    return { ok: true, sent, devices: (subs ?? []).length };
+    let smsSent = 0;
+    let smsFailed = 0;
+
+    if (data.sms) {
+      const { sendSms } = await import("@/lib/sms.server");
+      const message = `${data.title}: ${data.body}`.slice(0, 400);
+      for (const t of rows) {
+        if (!t.phone_number) continue;
+        const res = await sendSms(t.phone_number, message);
+        if (res.ok) smsSent++;
+        else smsFailed++;
+        logs.push({
+          owner_id: t.owner_id,
+          tenant_id: t.id,
+          channel: "sms",
+          recipient: t.phone_number,
+          subject: data.title,
+          message,
+          status: res.ok ? "delivered" : "failed",
+          error: res.error ?? null,
+        });
+      }
+    }
+
+    if (logs.length) await supabaseAdmin.from("notification_logs").insert(logs as never);
+
+    return { ok: true, sent, devices, smsSent, smsFailed };
   });
+
