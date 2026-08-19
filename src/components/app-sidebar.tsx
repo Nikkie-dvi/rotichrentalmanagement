@@ -45,6 +45,9 @@ export function AppSidebar() {
     url === "/applications" ? counts.applications
     : url === "/maintenance" ? counts.issues
     : url === "/billing" ? counts.unpaidInvoices
+    : url === "/payments" ? counts.recentPayments
+    : url === "/reports" ? counts.overdueInvoices
+    : url === "/tenants" ? counts.moveOuts
     : 0;
   const base = isManager ? items.filter((i) => !LANDLORD_ONLY.includes(i.url)) : items;
   const menu = isSuper
