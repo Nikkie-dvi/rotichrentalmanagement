@@ -321,7 +321,34 @@ function PaymentsPage() {
                   <TableCell className="text-muted-foreground">{p.reference_no ?? "—"}</TableCell>
                   <TableCell className="text-right font-semibold text-primary">{money(Number(p.amount_paid))}</TableCell>
                   <TableCell>
-                    <Button size="sm" variant="ghost" onClick={() => setReceipt(p)}><Receipt className="h-4 w-4" /></Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button size="sm" variant="ghost" aria-label="View receipt" onClick={() => setReceipt(p)}><Receipt className="h-4 w-4" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" aria-label="Remove payment" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-[calc(100vw-1.5rem)] max-w-sm">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove this payment?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {money(Number(p.amount_paid))} for {p.tenants?.full_name ?? "this tenant"} on {p.payment_date} will be
+                              deleted and the amount added back to the invoice balance. Use this only for payments logged by mistake.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => removePayment.mutate(p)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Remove payment
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
