@@ -208,13 +208,30 @@ function BillingPage() {
                 <Input type="number" min="0" value={singleRent} onChange={(e) => setSingleRent(e.target.value)} />
               </div>
               <div className="grid gap-1.5">
-                <Label>Utilities / extras</Label>
-                <Input type="number" min="0" value={singleUtil} onChange={(e) => setSingleUtil(e.target.value)} />
+                <Label>Water bill</Label>
+                <Input type="number" min="0" value={singleWater} onChange={(e) => setSingleWater(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Electricity</Label>
+                <Input type="number" min="0" value={singlePower} onChange={(e) => setSinglePower(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Garbage / service</Label>
+                <Input type="number" min="0" value={singleGarbage} onChange={(e) => setSingleGarbage(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Other charge</Label>
+                <Input type="number" min="0" value={singleOther} onChange={(e) => setSingleOther(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Other label</Label>
+                <Input placeholder="e.g. Security" value={singleOtherLabel} onChange={(e) => setSingleOtherLabel(e.target.value)} />
               </div>
             </div>
-            <div className="rounded-md bg-muted/50 p-3 text-sm flex justify-between">
-              <span>Total due</span>
-              <span className="font-semibold">{money((Number(singleRent) || 0) + (Number(singleUtil) || 0))}</span>
+            <div className="rounded-md bg-muted/50 p-3 text-sm space-y-1">
+              <div className="flex justify-between text-muted-foreground"><span>Rent</span><span>{money(Number(singleRent) || 0)}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span>Water + electricity + garbage + other</span><span>{money(singleExtras)}</span></div>
+              <div className="flex justify-between font-semibold border-t pt-1"><span>Total due</span><span>{money((Number(singleRent) || 0) + singleExtras)}</span></div>
             </div>
             <Button onClick={() => invoiceOne.mutate()} disabled={invoiceOne.isPending || !singleTenant}>
               Send invoice
