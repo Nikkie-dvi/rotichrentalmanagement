@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { SignaturePad, type SignatureValue } from "@/components/tenant/signature-pad";
 import { unitTypeLabel } from "@/lib/unit-types";
 import { LeaseDocument } from "@/components/lease-document";
+import { enablePush, pushSupported } from "@/lib/push";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/tenant/register")({
   ssr: false,
@@ -50,6 +52,8 @@ function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [codeInput, setCodeInput] = useState("");
   const [searchCode, setSearchCode] = useState("");
+  const [askNotify, setAskNotify] = useState(false);
+  const [enabling, setEnabling] = useState(false);
 
   const vacantQuery = useQuery({
     queryKey: ["tenant", "vacant-units", searchCode],
@@ -128,6 +132,12 @@ function RegisterPage() {
       });
 
       toast.success("Application submitted! Awaiting landlord approval.");
+      // Offer notifications right away so tenants never have to hunt for the
+      // setting. Only possible when sign-up returned a live session.
+      if (signUp.session && pushSupported()) {
+        setAskNotify(true);
+        return;
+      }
       if (!signUp.session) {
         navigate({ to: "/tenant/login" });
         return;
@@ -139,6 +149,22 @@ function RegisterPage() {
       setSubmitting(false);
     }
   };
+
+  const acceptNotifications = async () => {
+    setEnabling(true);
+    try {
+      const res = await enablePush();
+      if (res.ok) toast.success("Notifications on — we'll remind you before rent is due");
+      else if (res.reason === "denied") toast.error("Notifications are blocked in your browser settings");
+    } catch {
+      /* best effort — never block the tenant from continuing */
+    } finally {
+      setEnabling(false);
+      setAskNotify(false);
+      navigate({ to: "/tenant/dashboard" });
+    }
+  };
+
 
 
   return (
@@ -350,7 +376,35 @@ function RegisterPage() {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={askNotify}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Turn on rent reminders?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Get alerts on this phone 3 days before rent is due, on the due day, and for urgent notices from your
+              landlord. You can change this later in your dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={enabling}
+              onClick={() => {
+                setAskNotify(false);
+                navigate({ to: "/tenant/dashboard" });
+              }}
+            >
+              Not now
+            </AlertDialogCancel>
+            <AlertDialogAction disabled={enabling} onClick={(e) => { e.preventDefault(); acceptNotifications(); }}>
+              {enabling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Yes, notify me
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </div>
     </div>
+
   );
 }
