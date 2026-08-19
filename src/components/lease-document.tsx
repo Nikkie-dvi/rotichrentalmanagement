@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Printer } from "lucide-react";
+import { fillLeaseText, resolveLeaseTemplate, type LeaseTemplate } from "@/lib/lease-template";
 
 export type LeaseData = {
   full_name: string;
@@ -40,8 +41,22 @@ function SignatureView({ signature, name }: { signature?: string | null; name: s
 }
 
 /** Full, printable lease agreement with the tenant's details and signature. */
-export function LeaseDocument({ lease }: { lease: LeaseData }) {
+export function LeaseDocument({
+  lease,
+  template,
+}: {
+  lease: LeaseData;
+  template?: LeaseTemplate | null;
+}) {
   const ref = useRef<HTMLDivElement>(null);
+  const tpl = template ?? resolveLeaseTemplate(null);
+  const introText = fillLeaseText(tpl.intro, {
+    landlord: tpl.landlordName,
+    tenant: lease.full_name,
+    unit: lease.unit_number ?? "—",
+    property: lease.property_name ?? "—",
+    rent: KES(lease.rent_amount),
+  });
 
   const print = () => {
     const html = ref.current?.innerHTML;
@@ -62,10 +77,7 @@ export function LeaseDocument({ lease }: { lease: LeaseData }) {
     <div className="grid gap-3">
       <div ref={ref} className="max-h-[60vh] overflow-y-auto rounded-md border bg-muted/20 p-4 text-sm leading-relaxed">
         <h1 className="text-center font-semibold uppercase tracking-wide">Residential Lease Agreement</h1>
-        <p className="mt-3">
-          This lease is entered into between <b>Rotich Management Systems</b> (the "Landlord") and{" "}
-          <b>{lease.full_name}</b> (the "Tenant").
-        </p>
+        <p className="mt-3 whitespace-pre-wrap">{introText}</p>
 
         <p className="mt-3 font-semibold">Tenant details</p>
         <ul className="mt-1 list-disc space-y-0.5 pl-5">
@@ -86,18 +98,20 @@ export function LeaseDocument({ lease }: { lease: LeaseData }) {
 
         <p className="mt-3 font-semibold">Standard clauses</p>
         <ol className="mt-1 list-decimal space-y-1 pl-5">
-          <li>Rent is due monthly on the day of month above; late payment may attract a penalty.</li>
-          <li>Utility charges (water, electricity where metered) are billed in addition to rent.</li>
-          <li>The Tenant shall keep the premises in clean and habitable condition and report damage promptly.</li>
-          <li>The Tenant may not sublet or transfer occupancy without written landlord consent.</li>
-          <li>Either party may terminate this lease with 30 days' written notice.</li>
-          <li>Structural, plumbing, electrical, and security repairs shall be reported through the tenant portal.</li>
-          <li>The Landlord retains right of reasonable inspection with prior notice.</li>
+          {tpl.clauses.map((c, i) => (
+            <li key={i}>
+              {fillLeaseText(c, {
+                landlord: tpl.landlordName,
+                tenant: lease.full_name,
+                unit: lease.unit_number ?? "—",
+                property: lease.property_name ?? "—",
+                rent: KES(lease.rent_amount),
+              })}
+            </li>
+          ))}
         </ol>
 
-        <p className="mt-3">
-          By signing below, the Tenant acknowledges reading, understanding, and agreeing to the terms above.
-        </p>
+        <p className="mt-3 whitespace-pre-wrap">{tpl.footer}</p>
 
         <p className="mt-4 font-semibold">Signed by the Tenant</p>
         <div className="mt-1">
@@ -120,10 +134,12 @@ export function LeaseDocument({ lease }: { lease: LeaseData }) {
 
 export function LeaseDialog({
   lease,
+  template,
   open,
   onOpenChange,
 }: {
   lease: LeaseData | null;
+  template?: LeaseTemplate | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
@@ -137,7 +153,7 @@ export function LeaseDialog({
             {lease?.lease_signed_at ? ` · Signed ${new Date(lease.lease_signed_at).toLocaleString()}` : ""}
           </DialogDescription>
         </DialogHeader>
-        {lease ? <LeaseDocument lease={lease} /> : null}
+        {lease ? <LeaseDocument lease={lease} template={template} /> : null}
       </DialogContent>
     </Dialog>
   );

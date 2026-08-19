@@ -12,6 +12,8 @@ import { MoveOutCard } from "@/components/tenant/move-out-card";
 import { TenantBackBar } from "@/components/tenant/back-bar";
 import { RentRemindersCard } from "@/components/tenant/rent-reminders-card";
 import { LandlordPaymentCard } from "@/components/tenant/landlord-payment-card";
+import { LandlordMessageCard } from "@/components/tenant/landlord-message-card";
+import { getMyLandlordInfo } from "@/lib/tenant.functions";
 import { LeaseDialog } from "@/components/lease-document";
 import { toast } from "sonner";
 
@@ -62,6 +64,11 @@ function statusBadge(status: string) {
 function DashboardPage() {
   const navigate = useNavigate();
   const [leaseOpen, setLeaseOpen] = useState(false);
+  const landlordInfoQuery = useQuery({
+    queryKey: ["tenant", "landlord-info"],
+    queryFn: () => getMyLandlordInfo(),
+    staleTime: 60_000,
+  });
 
 
   // Fetch tenant profile + unit + property.
@@ -288,6 +295,8 @@ function DashboardPage() {
         </Button>
       </div>
 
+      <LandlordMessageCard />
+
       {status === "pending" && (
         <Card className="mb-4 glass-card glow-amber border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
           <CardContent className="flex items-start gap-3 p-4 text-sm">
@@ -467,6 +476,7 @@ function DashboardPage() {
       </Card>
 
       <LeaseDialog
+        template={landlordInfoQuery.data?.leaseTemplate ?? null}
         open={leaseOpen}
         onOpenChange={setLeaseOpen}
         lease={{

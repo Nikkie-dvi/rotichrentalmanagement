@@ -4,6 +4,7 @@
 //   the correct landlord owner_id derived from the picked unit.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveLeaseTemplate } from "@/lib/lease-template";
 
 export const getVacantUnits = createServerFn({ method: "GET" })
   .inputValidator((data: { code: string }) => {
@@ -16,7 +17,7 @@ export const getVacantUnits = createServerFn({ method: "GET" })
 
     const { data: landlord } = await supabaseAdmin
       .from("landlord_accounts")
-      .select("user_id, full_name")
+      .select("user_id, full_name, lease_landlord_name, lease_intro, lease_clauses, lease_footer")
       .eq("landlord_code", data.code)
       .maybeSingle();
     if (!landlord) throw new Error("No landlord found with that code");
@@ -30,6 +31,7 @@ export const getVacantUnits = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return {
       landlordName: (landlord.full_name as string) ?? null,
+      leaseTemplate: resolveLeaseTemplate(landlord as any),
       units: (units ?? []).map((u: any) => ({
         id: u.id as string,
         unit_number: u.unit_number as string,
@@ -131,7 +133,9 @@ export const getMyLandlordInfo = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: landlord } = await supabaseAdmin
       .from("landlord_accounts")
-      .select("full_name, phone, rent_payment_number, rent_payment_method, rent_payment_note")
+      .select(
+        "full_name, phone, rent_payment_number, rent_payment_method, rent_payment_note, lease_landlord_name, lease_intro, lease_clauses, lease_footer",
+      )
       .eq("user_id", tenant.owner_id)
       .maybeSingle();
     if (!landlord) return null;
@@ -141,5 +145,6 @@ export const getMyLandlordInfo = createServerFn({ method: "GET" })
       paymentNumber: (landlord.rent_payment_number as string) ?? null,
       paymentMethod: (landlord.rent_payment_method as string) ?? "mpesa_send_money",
       note: (landlord.rent_payment_note as string) ?? null,
+      leaseTemplate: resolveLeaseTemplate(landlord as any),
     };
   });

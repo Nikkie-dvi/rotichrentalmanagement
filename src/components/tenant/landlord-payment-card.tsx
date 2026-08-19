@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Copy, Info, Wallet } from "lucide-react";
+import { Copy, Wallet } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ export function LandlordPaymentCard() {
     staleTime: 60_000,
   });
 
-  if (!data || (!data.paymentNumber && !data.note)) return null;
+  if (!data?.paymentNumber) return null;
 
   const copy = async (value: string) => {
     try {
@@ -43,12 +43,6 @@ export function LandlordPaymentCard() {
             <Button size="sm" variant="ghost" onClick={() => copy(data.paymentNumber!)}>
               <Copy className="h-4 w-4" /> Copy
             </Button>
-          </div>
-        )}
-        {data.note && (
-          <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-            <p className="whitespace-pre-wrap">{data.note}</p>
           </div>
         )}
       </CardContent>

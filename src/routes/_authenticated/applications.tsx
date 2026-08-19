@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Check, X, Mail, Phone, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import { LeaseDialog } from "@/components/lease-document";
+import { useLandlordAccount } from "@/hooks/use-landlord-account";
+import { resolveLeaseTemplate } from "@/lib/lease-template";
 
 export const Route = createFileRoute("/_authenticated/applications")({
   head: () => ({
@@ -49,6 +51,7 @@ type Row = {
 };
 
 function ApplicationsPage() {
+  const { data: landlordAccount } = useLandlordAccount();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"pending" | "approved" | "declined">("pending");
   const [preview, setPreview] = useState<Row | null>(null);
@@ -267,6 +270,7 @@ function ApplicationsPage() {
 
       {/* Lease preview dialog */}
       <LeaseDialog
+        template={resolveLeaseTemplate(landlordAccount as any)}
         open={Boolean(preview)}
         onOpenChange={(o) => !o && setPreview(null)}
         lease={

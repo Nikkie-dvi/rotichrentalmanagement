@@ -90,6 +90,10 @@ export type Database = {
           last_payment_amount: number | null
           last_payment_at: string | null
           last_payment_reference: string | null
+          lease_clauses: string | null
+          lease_footer: string | null
+          lease_intro: string | null
+          lease_landlord_name: string | null
           monthly_fee: number
           offer_note: string | null
           paid_until: string | null
@@ -117,6 +121,10 @@ export type Database = {
           last_payment_amount?: number | null
           last_payment_at?: string | null
           last_payment_reference?: string | null
+          lease_clauses?: string | null
+          lease_footer?: string | null
+          lease_intro?: string | null
+          lease_landlord_name?: string | null
           monthly_fee?: number
           offer_note?: string | null
           paid_until?: string | null
@@ -144,6 +152,10 @@ export type Database = {
           last_payment_amount?: number | null
           last_payment_at?: string | null
           last_payment_reference?: string | null
+          lease_clauses?: string | null
+          lease_footer?: string | null
+          lease_intro?: string | null
+          lease_landlord_name?: string | null
           monthly_fee?: number
           offer_note?: string | null
           paid_until?: string | null

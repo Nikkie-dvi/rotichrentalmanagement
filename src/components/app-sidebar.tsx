@@ -26,6 +26,7 @@ const items = [
   { title: "Billing & Invoices", url: "/billing", icon: FileText },
   { title: "Payments & Receipts", url: "/payments", icon: Receipt },
   { title: "Rent Payment Details", url: "/settings/payments", icon: Wallet },
+  { title: "Lease Template", url: "/settings/lease", icon: FileSignature },
   { title: "Notification Tones", url: "/settings/notifications", icon: Bell },
 ];
 

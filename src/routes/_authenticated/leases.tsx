@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Loader2, FileSignature } from "lucide-react";
 import { LeaseDialog, type LeaseData } from "@/components/lease-document";
+import { useLandlordAccount } from "@/hooks/use-landlord-account";
+import { resolveLeaseTemplate } from "@/lib/lease-template";
 
 export const Route = createFileRoute("/_authenticated/leases")({
   head: () => ({
@@ -25,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/leases")({
 });
 
 function LeasesPage() {
+  const { data: landlordAccount } = useLandlordAccount();
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<LeaseData | null>(null);
 
@@ -119,7 +122,8 @@ function LeasesPage() {
         </CardContent>
       </Card>
 
-      <LeaseDialog lease={selected} open={Boolean(selected)} onOpenChange={(o) => !o && setSelected(null)} />
+      <LeaseDialog
+        template={resolveLeaseTemplate(landlordAccount as any)} lease={selected} open={Boolean(selected)} onOpenChange={(o) => !o && setSelected(null)} />
     </div>
   );
 }
