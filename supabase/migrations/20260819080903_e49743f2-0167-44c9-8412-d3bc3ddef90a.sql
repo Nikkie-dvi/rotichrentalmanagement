@@ -1,0 +1,1 @@
+CREATE POLICY "Managers read employer landlord account" ON public.landlord_accounts FOR SELECT TO authenticated USING (public.manages_owner(user_id));

@@ -11,6 +11,7 @@ import { money } from "@/lib/types";
 import {
   useLandlordAccount,
   useIsSuperAdmin,
+  useIsPropertyManager,
   subscriptionState,
   PAYMENT_NUMBER,
   paymentMethodLabel,
@@ -35,6 +36,7 @@ async function copyText(value: string) {
 export function LandlordGate({ children }: { children: ReactNode }) {
   const { data: account, isLoading, refetch, isRefetching } = useLandlordAccount();
   const isSuper = useIsSuperAdmin();
+  const isManager = useIsPropertyManager();
   const { data: pricing } = usePlatformPricing();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -47,7 +49,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!account || isSuper) return <>{children}</>;
+  if (!account || isSuper || isManager) return <>{children}</>;
 
   const payNumber = account.payment_number?.trim() || PAYMENT_NUMBER;
   const payMethod = paymentMethodLabel(account.payment_method);
