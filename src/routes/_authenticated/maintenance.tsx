@@ -150,6 +150,7 @@ function MaintenancePage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const openTicketCount = (tickets.data ?? []).filter((t: any) => t.status !== "resolved").length;
   const openMoveOuts = (moveOuts.data ?? []).filter((r: any) => r.status === "pending");
   const pastMoveOuts = (moveOuts.data ?? []).filter((r: any) => r.status !== "pending");
 
@@ -164,6 +165,11 @@ function MaintenancePage() {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <Wrench className="h-4 w-4" /> Maintenance issues
+            {openTicketCount > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-bold leading-none text-destructive-foreground">
+                {openTicketCount}
+              </span>
+            )}
           </CardTitle>
           <CardDescription>Photos uploaded by tenants — tap a photo to enlarge.</CardDescription>
         </CardHeader>
@@ -233,6 +239,11 @@ function MaintenancePage() {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <DoorOpen className="h-4 w-4" /> Move-out requests
+            {openMoveOuts.length > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-bold leading-none text-destructive-foreground">
+                {openMoveOuts.length}
+              </span>
+            )}
           </CardTitle>
           <CardDescription>Approving marks the tenant inactive and frees the unit.</CardDescription>
         </CardHeader>
