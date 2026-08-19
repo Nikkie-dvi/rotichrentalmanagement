@@ -27,6 +27,7 @@ export function SmsCreditCard() {
 
   const pending = (data?.requests ?? []).find((r: any) => r.status === "pending");
   const low = (data?.messagesLeft ?? 0) < 10;
+  const empty = (data?.messagesLeft ?? 0) < 1;
 
   const submit = async () => {
     setBusy(true);
