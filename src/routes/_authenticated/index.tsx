@@ -76,16 +76,31 @@ export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
 });
 
-// An invoice only counts as arrears once its due date has actually passed.
-function isDue(monthYear: string, dueDay: number | null | undefined, moveIn?: string | null) {
+// An invoice counts as arrears from its due date onwards — including the day it falls due.
+function startOfToday() {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
+}
+function isDue(
+  monthYear: string,
+  dueDay: number | null | undefined,
+  moveIn?: string | null,
+  dueDate?: string | null,
+) {
+  if (dueDate) {
+    const [dy, dm, dd] = dueDate.split("-").map(Number);
+    if (dy && dm && dd) return startOfToday() >= new Date(dy, dm - 1, dd).getTime();
+  }
   if (!monthYear) return true;
   const [y, m] = monthYear.split("-").map(Number);
   if (!y || !m) return true;
   const day = Number(dueDay) || (moveIn ? new Date(moveIn).getUTCDate() : 0) || 1;
-  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const due = new Date(Date.UTC(y, m - 1, Math.min(day, lastDay), 23, 59, 59));
-  return Date.now() >= due.getTime();
+  const lastDay = new Date(y, m, 0).getDate();
+  // Due at the start of the due day, so rent due today already shows in arrears.
+  const due = new Date(y, m - 1, Math.min(day, lastDay));
+  return startOfToday() >= due.getTime();
 }
+
 
 function Dashboard() {
   const { data: stats } = useQuery({
