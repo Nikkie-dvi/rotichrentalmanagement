@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AlertCircle, Plus, Printer, Receipt, Trash2 } from "lucide-react";
+import { AlertCircle, Loader2, Plus, Printer, Receipt, Send, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+import { sendPaymentReceiptSms } from "@/lib/receipts.functions";
 
 export const Route = createFileRoute("/_authenticated/payments")({
   head: () => ({
@@ -45,6 +46,22 @@ function PaymentsPage() {
   const [ref, setRef] = useState<string>("");
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [receipt, setReceipt] = useState<any>(null);
+
+  // Texts the tenant a receipt for one logged payment (1.2 KES from the SMS wallet).
+  const textReceipt = useMutation({
+    mutationFn: async (p: any) =>
+      sendPaymentReceiptSms({
+        data: {
+          tenantId: p.tenant_id,
+          amount: Number(p.amount_paid),
+          paymentDate: p.payment_date,
+          method: p.payment_method === "mpesa" ? "M-Pesa" : p.payment_method === "bank" ? "Bank" : "Cash",
+          reference: p.reference_no ?? null,
+        },
+      }),
+    onSuccess: () => toast.success("Receipt texted to the tenant"),
+    onError: (e: any) => toast.error(e?.message ?? "Could not send the receipt"),
+  });
 
   const { data: tenants } = useQuery({
     queryKey: ["active-tenants-min"],
@@ -329,6 +346,15 @@ function PaymentsPage() {
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
                       <Button size="sm" variant="ghost" aria-label="View receipt" onClick={() => setReceipt(p)}><Receipt className="h-4 w-4" /></Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        aria-label="Text receipt to tenant"
+                        onClick={() => textReceipt.mutate(p)}
+                        disabled={textReceipt.isPending}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
                       <AlertDialog
                         open={deletingPayment?.id === p.id}
                         onOpenChange={(open) => !open && setDeletingPayment(null)}
@@ -399,7 +425,16 @@ function PaymentsPage() {
                 <span className="text-primary">{money(Number(receipt.amount_paid))}</span>
               </div>
               <p className="text-xs text-center text-muted-foreground">Thank you for your payment.</p>
-              <Button className="w-full" onClick={() => window.print()}><Printer className="h-4 w-4" />Print / Save PDF</Button>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4" />Print / Save PDF</Button>
+                <Button onClick={() => textReceipt.mutate(receipt)} disabled={textReceipt.isPending}>
+                  {textReceipt.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  Text receipt to tenant
+                </Button>
+              </div>
+              <p className="text-xs text-center text-muted-foreground">
+                The SMS shows the amount paid, the balance left and any late fees still owed. Uses 1.2 KES of your SMS credit.
+              </p>
             </div>
           )}
         </DialogContent>
