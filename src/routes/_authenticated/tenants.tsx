@@ -99,25 +99,50 @@ function TenantsPage() {
 
   const assign = useMutation({
     mutationFn: async (v: any) => {
-      const { data: unit } = await supabase.from("units").select("id,status").eq("id", v.unit_id).single();
+      const { data: unit } = await supabase
+        .from("units")
+        .select("id,status,rent_amount")
+        .eq("id", v.unit_id)
+        .single();
       if (unit?.status === "occupied") throw new Error("Unit is already occupied");
-      const { error: tErr } = await supabase.from("tenants").insert({
-        unit_id: v.unit_id,
-        full_name: v.full_name,
-        phone_number: v.phone_number,
-        deposit_paid: Number(v.deposit_paid) || 0,
-        move_in_date: v.move_in_date || null,
-        rent_due_day: v.rent_due_day ? Number(v.rent_due_day) : null,
-        active: true,
-      });
+      const { data: inserted, error: tErr } = await supabase
+        .from("tenants")
+        .insert({
+          unit_id: v.unit_id,
+          full_name: v.full_name,
+          phone_number: v.phone_number,
+          deposit_paid: Number(v.deposit_paid) || 0,
+          move_in_date: v.move_in_date || null,
+          rent_due_day: v.rent_due_day ? Number(v.rent_due_day) : null,
+          active: true,
+        })
+        .select("id")
+        .single();
       if (tErr) throw tErr;
       const { error: uErr } = await supabase.from("units").update({ status: "occupied" }).eq("id", v.unit_id);
       if (uErr) throw uErr;
+
+      // Open the tenant with the first month's rent already owed so it lands
+      // in arrears until the landlord records a payment.
+      let invoiced = false;
+      if (inserted?.id) {
+        try {
+          const res = await createFirstRentInvoice({
+            tenantId: inserted.id,
+            rentAmount: Number(unit?.rent_amount ?? 0),
+            moveInDate: v.move_in_date || null,
+          });
+          invoiced = res.created;
+        } catch {
+          /* never block the assignment on billing */
+        }
+      }
+      return { invoiced };
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       qc.invalidateQueries();
       setOpen(false);
-      toast.success("Tenant assigned");
+      toast.success(res?.invoiced ? "Tenant assigned — first rent invoice added" : "Tenant assigned");
     },
     onError: (e: any) => toast.error(e.message),
   });
