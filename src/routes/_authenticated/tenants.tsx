@@ -226,6 +226,19 @@ function TenantsPage() {
     );
   const inactive = (tenants ?? []).filter((t: any) => !t.active && matches(t));
 
+  // Flag tenants that look like the same person entered more than once
+  // (same name + phone). They stay listed, but are clearly marked.
+  const dupKey = (t: any) =>
+    `${String(t.full_name ?? "").trim().toLowerCase()}|${String(t.phone_number ?? "").replace(/\D/g, "").slice(-9)}`;
+  const dupCounts = new Map<string, number>();
+  for (const t of (tenants ?? []).filter((x: any) => x.active)) {
+    const k = dupKey(t);
+    if (!k.replace("|", "")) continue;
+    dupCounts.set(k, (dupCounts.get(k) ?? 0) + 1);
+  }
+  const isDuplicate = (t: any) => (dupCounts.get(dupKey(t)) ?? 0) > 1;
+  const duplicateCount = active.filter(isDuplicate).length;
+
   const flagged = active.filter((t: any) => {
     const l = risks.get(t.id)?.level;
     return l === "overdue" || l === "high";
@@ -280,6 +293,15 @@ function TenantsPage() {
         </div>
       )}
 
+      {duplicateCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>
+            <b>{duplicateCount}</b> tenant record{duplicateCount === 1 ? "" : "s"} look like duplicates (same name and phone). Move out the extra record to keep balances clean.
+          </span>
+        </div>
+      )}
+
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -309,6 +331,7 @@ function TenantsPage() {
               tenant={t}
               balance={balance}
               risk={risk}
+              duplicate={isDuplicate(t)}
               onMoveOut={() => moveOut.mutate(t)}
             />
           );
@@ -342,11 +365,13 @@ function TenantCard({
   tenant: t,
   balance,
   risk,
+  duplicate,
   onMoveOut,
 }: {
   tenant: any;
   balance: number;
   risk: Risk;
+  duplicate?: boolean;
   onMoveOut: () => void;
 }) {
   const flagged = risk.level === "overdue" || risk.level === "high";
@@ -383,7 +408,14 @@ function TenantCard({
             <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
           </div>
         </div>
-        {(flagged || inCredit) && <div className="mt-2"><RiskBadge risk={inCredit ? { ...risk, level: "credit" } : risk} /></div>}
+        <div className="mt-2 flex flex-wrap gap-2">
+          {(flagged || inCredit) && <RiskBadge risk={inCredit ? { ...risk, level: "credit" } : risk} />}
+          {duplicate && (
+            <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-300">
+              <AlertTriangle className="h-3 w-3" /> Possible duplicate
+            </Badge>
+          )}
+        </div>
       </button>
 
       {expanded && (
