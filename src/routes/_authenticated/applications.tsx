@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { LeaseDialog } from "@/components/lease-document";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { resolveLeaseTemplate } from "@/lib/lease-template";
+import { createFirstRentInvoice } from "@/lib/first-invoice";
 
 export const Route = createFileRoute("/_authenticated/applications")({
   head: () => ({
@@ -110,11 +111,31 @@ function ApplicationsPage() {
           .update({ active: false, move_out_date: today })
           .eq("id", d.id);
       }
-      return { merged: dupes?.length ?? 0 };
+      // Open their account with the first month's rent already owed, so it
+      // shows in arrears until a payment is logged.
+      let invoiced = false;
+      try {
+        const res = await createFirstRentInvoice({
+          tenantId: t.id,
+          rentAmount: Number(t.units?.rent_amount ?? 0),
+          moveInDate: today,
+        });
+        invoiced = res.created;
+      } catch {
+        /* approval must not fail because of billing */
+      }
+      return { merged: dupes?.length ?? 0, invoiced };
     },
 
     onSuccess: (res) => {
-      toast.success(res?.merged ? "Tenant approved — existing rent records linked to their account" : "Tenant approved");
+      toast.success(
+        res?.merged
+          ? "Tenant approved — existing rent records linked to their account"
+          : res?.invoiced
+            ? "Tenant approved — first rent invoice added to their balance"
+            : "Tenant approved",
+      );
+
 
       qc.invalidateQueries({ queryKey: ["applications"] });
       qc.invalidateQueries({ queryKey: ["tenants"] });
