@@ -41,20 +41,34 @@ export const sendPaymentReceiptSms = createServerFn({ method: "POST" })
     // Outstanding balance after the payment, so the receipt is useful.
     const { data: invoices } = await context.supabase
       .from("invoices")
-      .select("balance_remaining")
+      .select("month_year, balance_remaining, late_penalty_amount, penalty_waived")
       .eq("tenant_id", data.tenantId)
       .gt("balance_remaining", 0);
     const balance = (invoices ?? []).reduce(
       (sum: number, i: any) => sum + (Number(i.balance_remaining) || 0),
       0,
     );
+    // Spell out any late fees still sitting on the tenant's unpaid invoices.
+    const penaltyRows = (invoices ?? []).filter(
+      (i: any) => !i.penalty_waived && (Number(i.late_penalty_amount) || 0) > 0,
+    );
+    const penaltyTotal = penaltyRows.reduce((s: number, i: any) => s + (Number(i.late_penalty_amount) || 0), 0);
+    const penaltyPart =
+      penaltyTotal > 0
+        ? ` This includes late fees of ${money(penaltyTotal)} (${penaltyRows
+            .map((i: any) => `${i.month_year} ${money(Number(i.late_penalty_amount) || 0)}`)
+            .join(", ")}).`
+        : "";
 
     const first = (((tenant as any).full_name as string) ?? "there").split(" ")[0];
     const refPart = data.reference ? ` Ref ${data.reference}.` : "";
     const message =
       `Hi ${first}, we have received your payment of ${money(data.amount)} on ${data.paymentDate}` +
       `${data.method ? ` via ${data.method}` : ""}.${refPart} ` +
-      (balance > 0 ? `Outstanding balance: ${money(balance)}.` : `Your account is fully settled. Thank you!`);
+      (balance > 0
+        ? `Outstanding balance: ${money(balance)}.${penaltyPart}`
+        : `Your account is fully settled. Thank you!`);
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
