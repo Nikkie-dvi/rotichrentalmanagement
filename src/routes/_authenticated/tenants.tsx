@@ -210,7 +210,7 @@ function TenantsPage() {
     return map;
   }, [tenants, unpaidInvoices, balances, today]);
 
-  const rank: Record<RiskLevel, number> = { high: 0, overdue: 1, soon: 2, clear: 3 };
+  const rank: Record<RiskLevel, number> = { high: 0, overdue: 1, soon: 2, clear: 3, credit: 4 };
   const matches = (t: any) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
