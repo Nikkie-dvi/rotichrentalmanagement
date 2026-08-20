@@ -140,8 +140,11 @@ export async function runLatePenalties(opts: { ownerId?: string; today?: string 
       month: inv.month_year,
     };
 
-    const smsBody = fillTemplate(s.sms_template, vars);
-    const emailBody = fillTemplate(s.email_template, vars);
+    const { invoiceBreakdown } = await import("./invoice-breakdown.server");
+    const bd = await invoiceBreakdown(supabaseAdmin, inv.id);
+    const detail = bd?.text ? ` Breakdown: ${bd.text}.` : "";
+    const smsBody = `${fillTemplate(s.sms_template, vars)}${detail}`;
+    const emailBody = `${fillTemplate(s.email_template, vars)}${detail}`;
 
     const logs: any[] = [];
 
