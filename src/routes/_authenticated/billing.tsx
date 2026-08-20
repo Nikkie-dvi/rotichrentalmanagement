@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Printer, UserPlus, Coins, Zap, Trash2 } from "lucide-react";
+import { FileText, Printer, UserPlus, Coins, Zap, Trash2, MessageSquare } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +27,7 @@ import { RecordPaymentButton } from "@/components/record-payment-button";
 import { InvoiceCharges } from "@/components/invoice-charges";
 import { InvoiceExtrasDialog } from "@/components/invoice-extras-dialog";
 import { runLateFeesNow } from "@/lib/billing.functions";
-import { sendInvoiceSms } from "@/lib/receipts.functions";
+import { sendInvoiceSms, sendBulkOverdueNoticesSms } from "@/lib/receipts.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/billing")({
@@ -195,6 +195,27 @@ function BillingPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const bulkNotices = useMutation({
+    mutationFn: async () => (sendBulkOverdueNoticesSms as any)({ data: { month } }),
+    onSuccess: (r: any) => {
+      qc.invalidateQueries();
+      if (!r?.sent && !r?.failed && !r?.skipped) {
+        toast.success(`No unpaid invoices for ${month}`);
+        return;
+      }
+      toast.success(`Texted ${r.sent} tenant(s)`, {
+        description: [
+          r.failed ? `${r.failed} failed` : null,
+          r.skipped ? `${r.skipped} skipped (no phone number)` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ") || undefined,
+      });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not send notices"),
+  });
+
+
   const deleteInvoice = useMutation({
     mutationFn: async (invoice: any) => {
       // Keep genuine payment history, but remove its link to the mistaken invoice.
@@ -247,6 +268,11 @@ function BillingPage() {
           <Button variant="outline" onClick={() => lateFees.mutate()} disabled={lateFees.isPending}>
             <Zap className="h-4 w-4" />Apply late fees now
           </Button>
+          <Button variant="outline" onClick={() => bulkNotices.mutate()} disabled={bulkNotices.isPending}>
+            <MessageSquare className="h-4 w-4" />
+            {bulkNotices.isPending ? "Texting tenants…" : `Text all unpaid for ${month}`}
+          </Button>
+
         </CardContent>
       </Card>
 

@@ -29,10 +29,16 @@ export const Route = createFileRoute("/_authenticated/tenants")({
   component: TenantsPage,
 });
 
-type RiskLevel = "clear" | "soon" | "overdue" | "high";
+type RiskLevel = "clear" | "credit" | "soon" | "overdue" | "high";
 type Risk = { level: RiskLevel; total: number; monthsUnpaid: number; daysLate: number };
 
 function RiskBadge({ risk }: { risk: Risk }) {
+  if (risk.level === "credit")
+    return (
+      <Badge className="gap-1 bg-emerald-600 text-white hover:bg-emerald-600">
+        <CheckCircle2 className="h-3.5 w-3.5" /> Paid ahead · {money(Math.abs(risk.total))}
+      </Badge>
+    );
   if (risk.level === "high")
     return (
       <Badge variant="destructive" className="animate-pulse gap-1">
@@ -204,7 +210,7 @@ function TenantsPage() {
     return map;
   }, [tenants, unpaidInvoices, balances, today]);
 
-  const rank: Record<RiskLevel, number> = { high: 0, overdue: 1, soon: 2, clear: 3 };
+  const rank: Record<RiskLevel, number> = { high: 0, overdue: 1, soon: 2, clear: 3, credit: 4 };
   const matches = (t: any) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
@@ -292,7 +298,7 @@ function TenantsPage() {
         {active.map((t: any) => {
           const balance = balances?.get(t.id) ?? 0;
           const risk: Risk = risks.get(t.id) ?? {
-            level: balance > 0 ? "soon" : "clear",
+            level: balance > 0 ? "soon" : balance < 0 ? "credit" : "clear",
             total: balance,
             monthsUnpaid: 0,
             daysLate: 0,
@@ -344,6 +350,7 @@ function TenantCard({
   onMoveOut: () => void;
 }) {
   const flagged = risk.level === "overdue" || risk.level === "high";
+  const inCredit = balance < 0;
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -362,18 +369,26 @@ function TenantCard({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <span className={balance > 0 ? "text-sm font-semibold text-destructive" : "text-sm font-semibold text-primary"}>
-              {money(balance)}
+            <span
+              className={
+                balance > 0
+                  ? "text-sm font-semibold text-destructive"
+                  : inCredit
+                    ? "text-sm font-semibold text-emerald-600 dark:text-emerald-400"
+                    : "text-sm font-semibold text-primary"
+              }
+            >
+              {inCredit ? `+${money(Math.abs(balance))}` : money(balance)}
             </span>
             <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
           </div>
         </div>
-        {flagged && <div className="mt-2"><RiskBadge risk={risk} /></div>}
+        {(flagged || inCredit) && <div className="mt-2"><RiskBadge risk={inCredit ? { ...risk, level: "credit" } : risk} /></div>}
       </button>
 
       {expanded && (
         <CardContent className="space-y-2 p-4 pt-0 text-sm">
-          {!flagged && <div className="pb-1"><RiskBadge risk={risk} /></div>}
+          {!flagged && !inCredit && <div className="pb-1"><RiskBadge risk={risk} /></div>}
           <Row label="Property" value={t.units?.properties?.name ?? "—"} />
           <Row label="Unit" value={t.units?.unit_number ?? "—"} />
           <Row label="Rent Due" value={money(Number(t.units?.rent_amount ?? 0))} />

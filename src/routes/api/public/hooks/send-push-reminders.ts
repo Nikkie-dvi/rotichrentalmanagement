@@ -115,6 +115,20 @@ export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
           return Response.json({ ok: true, sent: 0, note: "no reminders today" });
         }
 
+        // Fan out landlord reminders to their active property managers too.
+        const { data: managers } = await supabaseAdmin
+          .from("property_managers")
+          .select("landlord_user_id, manager_user_id")
+          .eq("active", true);
+        for (const m of ((managers ?? []) as any[])) {
+          if (!m.manager_user_id) continue;
+          const landlordReminders = byOwner.get(m.landlord_user_id);
+          if (!landlordReminders?.length) continue;
+          const list = byOwner.get(m.manager_user_id) ?? [];
+          list.push(...landlordReminders);
+          byOwner.set(m.manager_user_id, list);
+        }
+
         const { data: subs } = await supabaseAdmin
           .from("push_subscriptions")
           .select("id, owner_id, endpoint, p256dh, auth")
