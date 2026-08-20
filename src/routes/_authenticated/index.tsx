@@ -76,16 +76,31 @@ export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
 });
 
-// An invoice only counts as arrears once its due date has actually passed.
-function isDue(monthYear: string, dueDay: number | null | undefined, moveIn?: string | null) {
+// An invoice counts as arrears from its due date onwards — including the day it falls due.
+function startOfToday() {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
+}
+function isDue(
+  monthYear: string,
+  dueDay: number | null | undefined,
+  moveIn?: string | null,
+  dueDate?: string | null,
+) {
+  if (dueDate) {
+    const [dy, dm, dd] = dueDate.split("-").map(Number);
+    if (dy && dm && dd) return startOfToday() >= new Date(dy, dm - 1, dd).getTime();
+  }
   if (!monthYear) return true;
   const [y, m] = monthYear.split("-").map(Number);
   if (!y || !m) return true;
   const day = Number(dueDay) || (moveIn ? new Date(moveIn).getUTCDate() : 0) || 1;
-  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const due = new Date(Date.UTC(y, m - 1, Math.min(day, lastDay), 23, 59, 59));
-  return Date.now() >= due.getTime();
+  const lastDay = new Date(y, m, 0).getDate();
+  // Due at the start of the due day, so rent due today already shows in arrears.
+  const due = new Date(y, m - 1, Math.min(day, lastDay));
+  return startOfToday() >= due.getTime();
 }
+
 
 function Dashboard() {
   const { data: stats } = useQuery({
@@ -94,7 +109,7 @@ function Dashboard() {
       const monthKey = new Date().toISOString().slice(0, 7);
       const [{ data: units }, { data: invoices }, { data: payments }] = await Promise.all([
         supabase.from("units").select("id,status"),
-        supabase.from("invoices").select("balance_remaining,total_due,month_year,tenants(rent_due_day,move_in_date)"),
+        supabase.from("invoices").select("balance_remaining,total_due,month_year,due_date,tenants(rent_due_day,move_in_date)"),
         supabase.from("payments").select("amount_paid,payment_date"),
       ]);
       const totalUnits = units?.length ?? 0;
@@ -104,7 +119,7 @@ function Dashboard() {
         payments?.filter((p: any) => (p.payment_date ?? "").startsWith(monthKey)).reduce((s: number, p: any) => s + Number(p.amount_paid), 0) ?? 0;
       const arrears =
         invoices
-          ?.filter((i: any) => isDue(i.month_year, i.tenants?.rent_due_day, i.tenants?.move_in_date))
+          ?.filter((i: any) => isDue(i.month_year, i.tenants?.rent_due_day, i.tenants?.move_in_date, i.due_date))
           .reduce((s: number, i: any) => s + Number(i.balance_remaining), 0) ?? 0;
       return { totalUnits, occupied, occupancy, collected, arrears };
     },
@@ -192,11 +207,11 @@ function Dashboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("invoices")
-        .select("id,month_year,balance_remaining,total_due,status,tenants(full_name,rent_due_day,move_in_date,units(unit_number,properties(name,location)))")
+        .select("id,month_year,balance_remaining,total_due,status,due_date,tenants(full_name,rent_due_day,move_in_date,units(unit_number,properties(name,location)))")
         .gt("balance_remaining", 0)
         .order("month_year", { ascending: false });
       // Hide invoices whose due date hasn't been reached yet — they aren't arrears.
-      return (data ?? []).filter((i: any) => isDue(i.month_year, i.tenants?.rent_due_day, i.tenants?.move_in_date));
+      return (data ?? []).filter((i: any) => isDue(i.month_year, i.tenants?.rent_due_day, i.tenants?.move_in_date, i.due_date));
     },
   });
 
