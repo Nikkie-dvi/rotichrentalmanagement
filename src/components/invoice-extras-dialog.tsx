@@ -61,6 +61,15 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
     onError: (e: any) => toast.error(e.message),
   });
 
+  const notice = useMutation({
+    mutationFn: async () => sendLateFeeNoticeSms({ data: { invoiceId: invoice.id } }),
+    onSuccess: () => {
+      refresh();
+      toast.success("SMS sent to the tenant");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const penalty = Number(invoice?.late_penalty_amount ?? 0) || 0;
 
   return (
