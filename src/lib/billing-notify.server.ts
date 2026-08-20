@@ -29,7 +29,10 @@ export async function notifyTenantOfCharge(args: {
     .maybeSingle();
 
   const first = ((tenant as any).full_name ?? "there").split(" ")[0];
-  const message = `Hi ${first}, ${args.label} of ${money(args.amount)} was added to your ${args.month} invoice. Your balance is now ${money(args.balance)}.`;
+  const { invoiceBreakdown } = await import("./invoice-breakdown.server");
+  const breakdown = await invoiceBreakdown(supabaseAdmin, args.invoiceId);
+  const detail = breakdown?.text ? ` ${args.month} bill: ${breakdown.text}.` : "";
+  const message = `Hi ${first}, ${args.label} of ${money(args.amount)} was added to your ${args.month} invoice.${detail} Your balance is now ${money(args.balance)}.`;
 
   const logs: any[] = [];
 

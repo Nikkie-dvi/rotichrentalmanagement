@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { money } from "@/lib/types";
 import { useInvoiceLineItems } from "@/components/invoice-charges";
 import { addInvoiceCharge, removeInvoiceCharge, waiveLateFee } from "@/lib/billing.functions";
@@ -20,6 +21,7 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [notifySms, setNotifySms] = useState(true);
   const { data: items } = useInvoiceLineItems(invoice?.id);
 
   const refresh = () => {
@@ -31,14 +33,14 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
   const add = useMutation({
     mutationFn: async () =>
       addInvoiceCharge({
-        data: { invoiceId: invoice.id, category, amount: Number(amount), description: description || undefined },
+        data: { invoiceId: invoice.id, category, amount: Number(amount), description: description || undefined, notify: notifySms },
       }),
     onSuccess: () => {
       setCategory("");
       setAmount("");
       setDescription("");
       refresh();
-      toast.success("Charge added — the tenant has been notified");
+      toast.success(notifySms ? "Charge added — the tenant has been notified" : "Charge added (no message sent)");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -78,7 +80,7 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
         <DialogHeader>
           <DialogTitle>Extra charges & fees</DialogTitle>
           <DialogDescription>
-            {invoice?.tenants?.full_name ?? "Tenant"} — {invoice?.month_year}. Tenants get an SMS and phone alert the moment a charge is added.
+            {invoice?.tenants?.full_name ?? "Tenant"} — {invoice?.month_year}. Charges are itemised in the tenant's SMS (e.g. "Garbage KES 200, Water KES 500").
           </DialogDescription>
         </DialogHeader>
 
@@ -128,8 +130,18 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
             <Input placeholder="Charge name" value={category} onChange={(e) => setCategory(e.target.value)} />
             <Input type="number" min="1" placeholder="Amount (KES)" value={amount} onChange={(e) => setAmount(e.target.value)} />
             <Input placeholder="Note shown to tenant (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <label className="flex items-start gap-2 rounded-lg border p-2 text-sm">
+              <Checkbox checked={notifySms} onCheckedChange={(v) => setNotifySms(v === true)} className="mt-0.5" />
+              <span>
+                Text the tenant about this charge
+                <span className="block text-xs text-muted-foreground">
+                  The SMS names the charge and lists the full bill breakdown, including any late fee.
+                </span>
+              </span>
+            </label>
             <Button onClick={() => add.mutate()} disabled={add.isPending || !category.trim() || !(Number(amount) > 0)}>
-              {add.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}Add & notify tenant
+              {add.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {notifySms ? "Add & notify tenant" : "Add charge"}
             </Button>
           </div>
 

@@ -115,10 +115,13 @@ export const sendLateFeeNoticeSms = createServerFn({ method: "POST" })
     const balance = Number((invoice as any).balance_remaining ?? 0) || 0;
     const first = (((tenant as any)?.full_name as string) ?? "there").split(" ")[0];
     const duePart = (invoice as any).due_date ? ` It was due on ${(invoice as any).due_date}.` : "";
+    const { invoiceBreakdown } = await import("@/lib/invoice-breakdown.server");
+    const bd = await invoiceBreakdown(context.supabase, (invoice as any).id);
+    const detail = bd?.text ? ` Breakdown: ${bd.text}.` : "";
     const message =
       penalty > 0
-        ? `Hi ${first}, a late payment fee of ${money(penalty)} has been added to your ${(invoice as any).month_year} rent.${duePart} Your outstanding balance is now ${money(balance)}. Kindly clear it as soon as possible.`
-        : `Hi ${first}, your ${(invoice as any).month_year} rent of ${money(balance)} is still outstanding.${duePart} Kindly clear it to avoid a late payment fee.`;
+        ? `Hi ${first}, a late payment fee of ${money(penalty)} has been added to your ${(invoice as any).month_year} rent.${duePart}${detail} Your outstanding balance is now ${money(balance)}. Kindly clear it as soon as possible.`
+        : `Hi ${first}, your ${(invoice as any).month_year} rent of ${money(balance)} is still outstanding.${duePart}${detail} Kindly clear it to avoid a late payment fee.`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: walletBalance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
@@ -147,5 +150,68 @@ export const sendLateFeeNoticeSms = createServerFn({ method: "POST" })
     } as never);
 
     if (!res.ok) throw new Error(res.error ?? "Notice SMS could not be sent");
+    return { ok: true, message };
+  });
+
+/** Texts a tenant the full itemised breakdown of one invoice (rent, water, power, garbage, extras, late fees). */
+export const sendInvoiceSms = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { invoiceId: string }) => {
+    const invoiceId = (data?.invoiceId ?? "").trim();
+    if (!invoiceId) throw new Error("Invoice is required");
+    return { invoiceId };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: invoice, error } = await context.supabase
+      .from("invoices")
+      .select("id, owner_id, tenant_id, month_year, due_date, total_due, balance_remaining")
+      .eq("id", data.invoiceId)
+      .maybeSingle();
+    if (error || !invoice) throw new Error(error?.message ?? "Invoice not found");
+
+    const { data: tenant } = await context.supabase
+      .from("tenants")
+      .select("id, full_name, phone_number")
+      .eq("id", (invoice as any).tenant_id)
+      .maybeSingle();
+    const phone = (tenant as any)?.phone_number as string | null;
+    if (!phone) throw new Error("This tenant has no phone number saved");
+
+    const { invoiceBreakdown } = await import("@/lib/invoice-breakdown.server");
+    const bd = await invoiceBreakdown(context.supabase, (invoice as any).id);
+    const first = (((tenant as any)?.full_name as string) ?? "there").split(" ")[0];
+    const duePart = (invoice as any).due_date ? ` Due ${(invoice as any).due_date}.` : "";
+    const message =
+      `Hi ${first}, your ${(invoice as any).month_year} invoice is ready. ` +
+      (bd?.text ? `${bd.text}. ` : "") +
+      `Total ${money(Number((invoice as any).total_due) || 0)}, balance ${money(Number((invoice as any).balance_remaining) || 0)}.${duePart}`;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: walletBalance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
+      _owner: (invoice as any).owner_id,
+      _count: 1,
+      _reason: "invoice",
+      _note: `Invoice ${(invoice as any).month_year}`,
+    } as never);
+    if (chargeErr || walletBalance === null) {
+      throw new Error("Not enough SMS credit. Request a recharge to text invoices.");
+    }
+
+    const { sendSms } = await import("@/lib/sms.server");
+    const res = await sendSms(phone, message);
+
+    await supabaseAdmin.from("notification_logs").insert({
+      owner_id: (invoice as any).owner_id,
+      tenant_id: (invoice as any).tenant_id,
+      invoice_id: (invoice as any).id,
+      channel: "sms",
+      recipient: phone,
+      subject: "Invoice",
+      message,
+      status: res.ok ? "delivered" : "failed",
+      error: res.error ?? null,
+    } as never);
+
+    if (!res.ok) throw new Error(res.error ?? "Invoice SMS could not be sent");
     return { ok: true, message };
   });
