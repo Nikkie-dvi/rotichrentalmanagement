@@ -195,6 +195,27 @@ function BillingPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const bulkNotices = useMutation({
+    mutationFn: async () => (sendBulkOverdueNoticesSms as any)({ data: { month } }),
+    onSuccess: (r: any) => {
+      qc.invalidateQueries();
+      if (!r?.sent && !r?.failed && !r?.skipped) {
+        toast.success(`No unpaid invoices for ${month}`);
+        return;
+      }
+      toast.success(`Texted ${r.sent} tenant(s)`, {
+        description: [
+          r.failed ? `${r.failed} failed` : null,
+          r.skipped ? `${r.skipped} skipped (no phone number)` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ") || undefined,
+      });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not send notices"),
+  });
+
+
   const deleteInvoice = useMutation({
     mutationFn: async (invoice: any) => {
       // Keep genuine payment history, but remove its link to the mistaken invoice.
