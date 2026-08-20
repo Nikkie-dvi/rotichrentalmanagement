@@ -1,4 +1,4 @@
-import logoAsset from "@/assets/rotich-logo.png.asset.json";
+import logoAsset from "@/assets/rotich-logo-v2.png.asset.json";
 
 export function AppLogo({ className = "h-8 w-8" }: { className?: string }) {
   return (
