@@ -217,7 +217,7 @@ function BillingSettingsPage() {
               <div className="font-medium text-sm">Send SMS (SMS Leopard)</div>
               <div className="text-xs text-muted-foreground">Goes to the tenant's phone number.</div>
             </div>
-            <Switch checked={!!form.sms_enabled} onCheckedChange={(v) => set("sms_enabled", v)} />
+            <Switch checked={!!form.sms_enabled} onCheckedChange={(v) => toggle("sms_enabled", v, "Late fee SMS")} />
           </div>
           <div className="grid gap-1.5">
             <Label>SMS message</Label>
