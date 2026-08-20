@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { LeaseDialog } from "@/components/lease-document";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { resolveLeaseTemplate } from "@/lib/lease-template";
+import { createFirstRentInvoice } from "@/lib/first-invoice";
 
 export const Route = createFileRoute("/_authenticated/applications")({
   head: () => ({
