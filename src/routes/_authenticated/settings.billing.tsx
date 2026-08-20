@@ -76,28 +76,51 @@ function BillingSettingsPage() {
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
-  const save = async () => {
-    setSaving(true);
+  /** Persists the whole form (optionally with an immediate override for toggles). */
+  const persist = async (override: Record<string, any> = {}) => {
+    const f = { ...form, ...override };
     const { data: auth } = await supabase.auth.getUser();
     const payload: any = {
       owner_id: (settings as any)?.owner_id ?? auth.user?.id,
-      default_due_day: Math.min(31, Math.max(1, Number(form.default_due_day) || 1)),
-      grace_days: Math.max(0, Number(form.grace_days) || 0),
-      penalty_type: form.penalty_type,
-      penalty_value: Math.max(0, Number(form.penalty_value) || 0),
-      penalty_max: form.penalty_max === "" ? null : Number(form.penalty_max),
-      auto_penalties_enabled: !!form.auto_penalties_enabled,
-      sms_enabled: !!form.sms_enabled,
+      default_due_day: Math.min(31, Math.max(1, Number(f.default_due_day) || 1)),
+      grace_days: Math.max(0, Number(f.grace_days) || 0),
+      penalty_type: f.penalty_type,
+      penalty_value: Math.max(0, Number(f.penalty_value) || 0),
+      penalty_max: f.penalty_max === "" ? null : Number(f.penalty_max),
+      auto_penalties_enabled: !!f.auto_penalties_enabled,
+      sms_enabled: !!f.sms_enabled,
       email_enabled: false,
-      sms_template: form.sms_template,
-      email_subject: form.email_subject,
-      email_template: form.email_template,
+      sms_template: f.sms_template,
+      email_subject: f.email_subject,
+      email_template: f.email_template,
     };
     const { error } = await supabase.from("billing_settings").upsert(payload, { onConflict: "owner_id" });
-    setSaving(false);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["billing-settings"] });
-    toast.success("Late fee settings saved");
+    if (error) throw new Error(error.message);
+    await qc.invalidateQueries({ queryKey: ["billing-settings"] });
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await persist();
+      toast.success("Late fee settings saved");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /** Toggles save straight away so the setting survives leaving the app. */
+  const toggle = async (key: string, value: boolean, label: string) => {
+    set(key, value);
+    try {
+      await persist({ [key]: value });
+      toast.success(`${label} ${value ? "on" : "off"} — saved`);
+    } catch (e: any) {
+      set(key, !value);
+      toast.error(e.message);
+    }
   };
 
   const runNow = useMutation({
@@ -137,7 +160,7 @@ function BillingSettingsPage() {
               <div className="font-medium text-sm">Automatic late fees</div>
               <div className="text-xs text-muted-foreground">Turn off to add penalties manually only.</div>
             </div>
-            <Switch checked={!!form.auto_penalties_enabled} onCheckedChange={(v) => set("auto_penalties_enabled", v)} />
+            <Switch checked={!!form.auto_penalties_enabled} onCheckedChange={(v) => toggle("auto_penalties_enabled", v, "Automatic late fees")} />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -194,7 +217,7 @@ function BillingSettingsPage() {
               <div className="font-medium text-sm">Send SMS (SMS Leopard)</div>
               <div className="text-xs text-muted-foreground">Goes to the tenant's phone number.</div>
             </div>
-            <Switch checked={!!form.sms_enabled} onCheckedChange={(v) => set("sms_enabled", v)} />
+            <Switch checked={!!form.sms_enabled} onCheckedChange={(v) => toggle("sms_enabled", v, "Late fee SMS")} />
           </div>
           <div className="grid gap-1.5">
             <Label>SMS message</Label>
