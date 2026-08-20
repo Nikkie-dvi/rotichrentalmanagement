@@ -160,7 +160,7 @@ function BillingSettingsPage() {
               <div className="font-medium text-sm">Automatic late fees</div>
               <div className="text-xs text-muted-foreground">Turn off to add penalties manually only.</div>
             </div>
-            <Switch checked={!!form.auto_penalties_enabled} onCheckedChange={(v) => set("auto_penalties_enabled", v)} />
+            <Switch checked={!!form.auto_penalties_enabled} onCheckedChange={(v) => toggle("auto_penalties_enabled", v, "Automatic late fees")} />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
