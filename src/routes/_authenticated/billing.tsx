@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Printer, UserPlus, Coins, Zap, Trash2 } from "lucide-react";
+import { FileText, Printer, UserPlus, Coins, Zap, Trash2, MessageSquare } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +27,7 @@ import { RecordPaymentButton } from "@/components/record-payment-button";
 import { InvoiceCharges } from "@/components/invoice-charges";
 import { InvoiceExtrasDialog } from "@/components/invoice-extras-dialog";
 import { runLateFeesNow } from "@/lib/billing.functions";
-import { sendInvoiceSms } from "@/lib/receipts.functions";
+import { sendInvoiceSms, sendBulkOverdueNoticesSms } from "@/lib/receipts.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/billing")({
