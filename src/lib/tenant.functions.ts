@@ -114,6 +114,19 @@ export const submitTenantApplication = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (iErr) throw new Error(iErr.message);
+    // Alert the landlord (and their active managers) instantly on their phones.
+    try {
+      const { pushToUsers, landlordAudience } = await import("@/lib/push.server");
+      await pushToUsers(await landlordAudience(unit.owner_id as string), {
+        title: "New tenant application",
+        body: `${data.fullName} applied for a unit and signed the lease. Review and approve.`,
+        url: "/applications",
+        tag: `application-${inserted.id}`,
+      });
+    } catch {
+      /* never block signup on notifications */
+    }
+
     return { tenantId: inserted.id as string, alreadyExists: false };
   });
 
