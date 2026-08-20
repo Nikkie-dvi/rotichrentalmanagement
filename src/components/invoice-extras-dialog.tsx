@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, ShieldOff } from "lucide-react";
+import { Loader2, Plus, Trash2, ShieldOff, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { money } from "@/lib/types";
 import { useInvoiceLineItems } from "@/components/invoice-charges";
 import { addInvoiceCharge, removeInvoiceCharge, waiveLateFee } from "@/lib/billing.functions";
+import { sendLateFeeNoticeSms } from "@/lib/receipts.functions";
 
 const PRESETS = ["Watchman fee", "Water bill", "Electricity", "Garbage collection", "Service charge", "Repairs"];
 
