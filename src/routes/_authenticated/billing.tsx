@@ -247,6 +247,11 @@ function BillingPage() {
           <Button variant="outline" onClick={() => lateFees.mutate()} disabled={lateFees.isPending}>
             <Zap className="h-4 w-4" />Apply late fees now
           </Button>
+          <Button variant="outline" onClick={() => bulkNotices.mutate()} disabled={bulkNotices.isPending}>
+            <MessageSquare className="h-4 w-4" />
+            {bulkNotices.isPending ? "Texting tenants…" : `Text all unpaid for ${month}`}
+          </Button>
+
         </CardContent>
       </Card>
 
