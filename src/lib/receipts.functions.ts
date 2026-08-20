@@ -115,10 +115,13 @@ export const sendLateFeeNoticeSms = createServerFn({ method: "POST" })
     const balance = Number((invoice as any).balance_remaining ?? 0) || 0;
     const first = (((tenant as any)?.full_name as string) ?? "there").split(" ")[0];
     const duePart = (invoice as any).due_date ? ` It was due on ${(invoice as any).due_date}.` : "";
+    const { invoiceBreakdown } = await import("@/lib/invoice-breakdown.server");
+    const bd = await invoiceBreakdown(context.supabase, (invoice as any).id);
+    const detail = bd?.text ? ` Breakdown: ${bd.text}.` : "";
     const message =
       penalty > 0
-        ? `Hi ${first}, a late payment fee of ${money(penalty)} has been added to your ${(invoice as any).month_year} rent.${duePart} Your outstanding balance is now ${money(balance)}. Kindly clear it as soon as possible.`
-        : `Hi ${first}, your ${(invoice as any).month_year} rent of ${money(balance)} is still outstanding.${duePart} Kindly clear it to avoid a late payment fee.`;
+        ? `Hi ${first}, a late payment fee of ${money(penalty)} has been added to your ${(invoice as any).month_year} rent.${duePart}${detail} Your outstanding balance is now ${money(balance)}. Kindly clear it as soon as possible.`
+        : `Hi ${first}, your ${(invoice as any).month_year} rent of ${money(balance)} is still outstanding.${duePart}${detail} Kindly clear it to avoid a late payment fee.`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: walletBalance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
