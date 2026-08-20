@@ -27,6 +27,8 @@ import { RecordPaymentButton } from "@/components/record-payment-button";
 import { InvoiceCharges } from "@/components/invoice-charges";
 import { InvoiceExtrasDialog } from "@/components/invoice-extras-dialog";
 import { runLateFeesNow } from "@/lib/billing.functions";
+import { sendInvoiceSms } from "@/lib/receipts.functions";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({
@@ -55,6 +57,7 @@ function BillingPage() {
   const [singleGarbage, setSingleGarbage] = useState<string>("0");
   const [singleOther, setSingleOther] = useState<string>("0");
   const [singleOtherLabel, setSingleOtherLabel] = useState<string>("");
+  const [singleSms, setSingleSms] = useState(true);
   const singleExtras =
     (Number(singleWater) || 0) + (Number(singlePower) || 0) + (Number(singleGarbage) || 0) + (Number(singleOther) || 0);
 
@@ -82,7 +85,7 @@ function BillingPage() {
       const rent = Number(singleRent) || 0;
       const util = singleExtras;
       const total = rent + util;
-      const { error } = await supabase.from("invoices").upsert(
+      const { data: saved, error } = await supabase.from("invoices").upsert(
         {
           tenant_id: singleTenant,
           month_year: singleMonth,
@@ -98,12 +101,18 @@ function BillingPage() {
           status: total === 0 ? "paid" : "unpaid",
         },
         { onConflict: "tenant_id,month_year" },
-      );
+      ).select("id").maybeSingle();
       if (error) throw error;
+
+      if (singleSms && saved?.id) {
+        await sendInvoiceSms({ data: { invoiceId: saved.id } });
+        return { texted: true };
+      }
+      return { texted: false };
     },
-    onSuccess: () => {
+    onSuccess: (r: any) => {
       qc.invalidateQueries();
-      toast.success("Invoice sent to tenant");
+      toast.success(r?.texted ? "Invoice saved and texted to the tenant" : "Invoice saved");
       setSingleOpen(false);
     },
     onError: (e: any) => toast.error(e.message),
@@ -293,8 +302,17 @@ function BillingPage() {
               <div className="flex justify-between text-muted-foreground"><span>Water + electricity + garbage + other</span><span>{money(singleExtras)}</span></div>
               <div className="flex justify-between font-semibold border-t pt-1"><span>Total due</span><span>{money((Number(singleRent) || 0) + singleExtras)}</span></div>
             </div>
+            <label className="flex items-start gap-2 rounded-lg border p-3 text-sm">
+              <Checkbox checked={singleSms} onCheckedChange={(v) => setSingleSms(v === true)} className="mt-0.5" />
+              <span>
+                Text the tenant this invoice
+                <span className="block text-xs text-muted-foreground">
+                  The SMS lists each charge (rent, water, electricity, garbage, extras). Uses 1.2 KES of your SMS credit.
+                </span>
+              </span>
+            </label>
             <Button onClick={() => invoiceOne.mutate()} disabled={invoiceOne.isPending || !singleTenant}>
-              Send invoice
+              {singleSms ? "Save & text invoice" : "Save invoice"}
             </Button>
           </div>
         </DialogContent>
