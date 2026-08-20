@@ -124,11 +124,18 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
             </Button>
           </div>
 
-          {penalty > 0 && !invoice?.penalty_waived && (
-            <Button variant="outline" onClick={() => waive.mutate()} disabled={waive.isPending}>
-              {waive.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldOff className="h-4 w-4" />}Waive late fee
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => notice.mutate()} disabled={notice.isPending}>
+              {notice.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {penalty > 0 ? "Text late fee receipt" : "Text overdue rent notice"}
             </Button>
-          )}
+            {penalty > 0 && !invoice?.penalty_waived && (
+              <Button variant="outline" onClick={() => waive.mutate()} disabled={waive.isPending}>
+                {waive.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldOff className="h-4 w-4" />}Waive late fee
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">Each SMS costs KES 1.20 from your SMS balance.</p>
         </div>
       </DialogContent>
     </Dialog>
