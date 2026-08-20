@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
 import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
+import { createFirstRentInvoice } from "@/lib/first-invoice";
 
 export const Route = createFileRoute("/_authenticated/tenants")({
   head: () => ({
