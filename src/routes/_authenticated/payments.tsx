@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { SectionSwitcher, FINANCE_TABS } from "@/components/section-switcher";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AlertCircle, Loader2, Plus, Printer, Receipt, Send, Trash2 } from "lucide-react";
@@ -216,6 +217,7 @@ function PaymentsPage() {
 
   return (
     <div className="space-y-6">
+      <SectionSwitcher items={FINANCE_TABS} />
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Payment Ledger & Receipts</h2>
         <p className="text-sm text-muted-foreground">Log payments; balances auto-adjust across invoices.</p>

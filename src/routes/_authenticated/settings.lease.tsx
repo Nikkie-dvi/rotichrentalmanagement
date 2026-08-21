@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SectionSwitcher, LEASE_TABS } from "@/components/section-switcher";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -167,6 +168,7 @@ function LeaseTemplatePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
+      <SectionSwitcher items={LEASE_TABS} />
       <div>
         <h1 className="text-2xl font-semibold">Lease template</h1>
         <p className="text-sm text-muted-foreground">
