@@ -361,18 +361,23 @@ function TenantsPage() {
       </p>
 
       {creditHeld > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span>
-            <b>{money(creditHeld)}</b> held as tenant credit. It is automatically deducted from their next invoice — it does
-            not mean their next month is already paid.
-          </span>
+        <div className="space-y-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span>
+              <b>{money(creditHeld)}</b> held as tenant credit. It is automatically deducted from their next invoice — it does
+              not mean their next month is already paid.
+            </span>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => creditWatch.mutate()} disabled={creditWatch.isPending}>
+            {creditWatch.isPending ? "Checking…" : "Check credit & alert me"}
+          </Button>
         </div>
       )}
 
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
-          const ledger = ledgers.get(t.id) ?? { invoiced: 0, paid: 0, arrears: 0, credit: 0 };
+          const ledger = ledgers.get(t.id) ?? { invoiced: 0, paid: 0, arrears: 0, credit: 0, adjustments: 0 };
           const balance = balances?.get(t.id) ?? 0;
           const risk: Risk = risks.get(t.id) ?? {
             level: balance > 0 ? "soon" : balance < 0 ? "credit" : "clear",
