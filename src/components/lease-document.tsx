@@ -174,7 +174,10 @@ export function LeaseDocument({
         </p>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={download}>
+          <Download className="mr-2 h-4 w-4" /> Download
+        </Button>
         <Button variant="outline" size="sm" onClick={print}>
           <Printer className="mr-2 h-4 w-4" /> Print / Save PDF
         </Button>
