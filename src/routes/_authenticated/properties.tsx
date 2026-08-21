@@ -390,6 +390,27 @@ function UnitForm({
           </SelectContent>
         </Select>
       </div>
+      {status === "occupied" && (
+        <div>
+          <Label>Assign existing tenant (optional)</Label>
+          <Select value={tenantId} onValueChange={setTenantId}>
+            <SelectTrigger><SelectValue placeholder="No tenant" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No tenant — just mark occupied</SelectItem>
+              {tenants.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.full_name}{t.phone_number ? ` — ${t.phone_number}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {tenants.length === 0
+              ? "All tenants are already assigned to a unit."
+              : "Only tenants without a unit are listed."}
+          </p>
+        </div>
+      )}
       <DialogFooter><Button type="submit" disabled={pending}>Save</Button></DialogFooter>
     </form>
   );
