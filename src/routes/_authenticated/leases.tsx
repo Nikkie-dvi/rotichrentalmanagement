@@ -10,6 +10,7 @@ import { Loader2, FileSignature } from "lucide-react";
 import { LeaseDialog, type LeaseData } from "@/components/lease-document";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { resolveLeaseTemplate } from "@/lib/lease-template";
+import { SectionSwitcher, LEASE_TABS } from "@/components/section-switcher";
 
 export const Route = createFileRoute("/_authenticated/leases")({
   head: () => ({
@@ -75,6 +76,7 @@ function LeasesPage() {
 
   return (
     <div className="grid gap-4">
+      <SectionSwitcher items={LEASE_TABS} />
       <div>
         <h1 className="text-2xl font-bold">Lease agreements</h1>
         <p className="text-sm text-muted-foreground">Every tenant's signed lease copy, with name and signature.</p>
