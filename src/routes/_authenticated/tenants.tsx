@@ -273,6 +273,8 @@ function TenantsPage() {
     return l === "overdue" || l === "high";
   });
   const atRisk = flagged.reduce((s: number, t: any) => s + (balances.get(t.id) ?? 0), 0);
+  const creditHeld = active.reduce((s: number, t: any) => s + (ledgers.get(t.id)?.credit ?? 0), 0);
+
 
 
   return (
