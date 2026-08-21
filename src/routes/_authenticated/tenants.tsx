@@ -98,17 +98,24 @@ function TenantsPage() {
     queryFn: async () => (await supabase.from("payments").select("tenant_id,amount_paid")).data ?? [],
   });
 
+  // Manual credit edits (applied / written off / topped up) by the landlord.
+  const { data: creditAdjustments } = useQuery({
+    queryKey: ["tenant-credit-adjustments"],
+    queryFn: async () => (await supabase.from("tenant_credit_events").select("tenant_id,delta")).data ?? [],
+  });
+
   /**
    * Real account statement per tenant:
    *  - arrears  = money still owed on issued invoices
-   *  - credit   = money paid over and above everything invoiced so far
+   *  - credit   = money paid over and above everything invoiced so far,
+   *               plus/minus any manual credit edits the landlord made
    * A tenant can only be "paid ahead" when they have credit AND no arrears.
    */
   const ledgers = useMemo(() => {
-    const map = new Map<string, { invoiced: number; paid: number; arrears: number; credit: number }>();
+    const map = new Map<string, { invoiced: number; paid: number; arrears: number; credit: number; adjustments: number }>();
     const get = (id: string) => {
       let l = map.get(id);
-      if (!l) map.set(id, (l = { invoiced: 0, paid: 0, arrears: 0, credit: 0 }));
+      if (!l) map.set(id, (l = { invoiced: 0, paid: 0, arrears: 0, credit: 0, adjustments: 0 }));
       return l;
     };
     for (const inv of unpaidInvoices ?? []) {
@@ -117,9 +124,10 @@ function TenantsPage() {
       l.arrears += Math.max(0, Number(inv.balance_remaining));
     }
     for (const p of allPayments ?? []) get((p as any).tenant_id).paid += Number((p as any).amount_paid ?? 0);
-    for (const l of map.values()) l.credit = Math.max(0, l.paid - l.invoiced);
+    for (const a of creditAdjustments ?? []) get((a as any).tenant_id).adjustments += Number((a as any).delta ?? 0);
+    for (const l of map.values()) l.credit = Math.max(0, l.paid - l.invoiced + l.adjustments);
     return map;
-  }, [unpaidInvoices, allPayments]);
+  }, [unpaidInvoices, allPayments, creditAdjustments]);
 
   const balances = useMemo(() => {
     const map = new Map<string, number>();
