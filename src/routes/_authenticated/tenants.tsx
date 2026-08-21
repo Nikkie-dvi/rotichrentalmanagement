@@ -462,6 +462,11 @@ function TenantCard({
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           {(flagged || inCredit) && <RiskBadge risk={inCredit ? { ...risk, level: "credit" } : risk} />}
+          {ledger.credit > 0 && ledger.arrears > 0 && (
+            <Badge variant="outline" className="gap-1 border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+              Credit {money(ledger.credit)}
+            </Badge>
+          )}
           {duplicate && (
             <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-300">
               <AlertTriangle className="h-3 w-3" /> Possible duplicate
@@ -473,12 +478,39 @@ function TenantCard({
       {expanded && (
         <CardContent className="space-y-2 p-4 pt-0 text-sm">
           {!flagged && !inCredit && <div className="pb-1"><RiskBadge risk={risk} /></div>}
+
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account statement</div>
+            <Row label="Total invoiced" value={money(ledger.invoiced)} />
+            <Row label="Total paid" value={money(ledger.paid)} />
+            <div className="flex justify-between py-1">
+              <span className="text-muted-foreground">Arrears still owed</span>
+              <span className={ledger.arrears > 0 ? "font-semibold text-destructive" : "font-medium"}>
+                {money(ledger.arrears)}
+              </span>
+            </div>
+            <div className="flex justify-between py-1">
+              <span className="text-muted-foreground">Credit on account</span>
+              <span className={ledger.credit > 0 ? "font-semibold text-emerald-600 dark:text-emerald-400" : "font-medium"}>
+                {money(ledger.credit)}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {ledger.credit > 0
+                ? "This credit is extra money already paid. It is deducted from the next invoice when it is generated — the tenant is not yet paid up for next month."
+                : ledger.arrears > 0
+                  ? "Amount still owed on invoices issued so far."
+                  : "Everything invoiced so far has been paid in full."}
+            </p>
+          </div>
+
           <Row label="Property" value={t.units?.properties?.name ?? "—"} />
           <Row label="Unit" value={t.units?.unit_number ?? "—"} />
           <Row label="Rent Due" value={money(Number(t.units?.rent_amount ?? 0))} />
           <Row label="Deposit" value={money(Number(t.deposit_paid))} />
           <Row label="Move-in" value={t.move_in_date ?? "—"} />
           <Row label="Due Day" value={t.rent_due_day ? `${t.rent_due_day} of month` : "—"} />
+
           <div className="mt-2 grid grid-cols-2 gap-2">
             <RecordPaymentButton
               tenantId={t.id}
