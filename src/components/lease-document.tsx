@@ -58,19 +58,69 @@ export function LeaseDocument({
     rent: KES(lease.rent_amount),
   });
 
-  const print = () => {
+  const buildHtml = () => {
     const html = ref.current?.innerHTML;
-    if (!html) return;
-    const w = window.open("", "_blank", "noopener,width=800,height=900");
-    if (!w) return;
-    w.document.write(
-      `<html><head><title>Lease Agreement — ${lease.full_name}</title>` +
-        `<style>body{font-family:ui-sans-serif,system-ui,sans-serif;padding:32px;line-height:1.6;color:#111}
-         img{max-height:140px}ol{padding-left:20px}h1{font-size:18px}</style></head><body>${html}</body></html>`,
+    if (!html) return null;
+    return (
+      `<!doctype html><html><head><meta charset="utf-8"/>` +
+      `<meta name="viewport" content="width=device-width,initial-scale=1"/>` +
+      `<title>Lease Agreement — ${lease.full_name}</title>` +
+      `<style>body{font-family:ui-sans-serif,system-ui,sans-serif;padding:32px;line-height:1.6;color:#111;background:#fff}
+       img{max-height:140px}ol,ul{padding-left:20px}h1{font-size:18px}
+       @page{margin:16mm}</style></head><body>${html}</body></html>`
     );
-    w.document.close();
-    w.focus();
-    w.print();
+  };
+
+  /** Prints via a hidden iframe (works on mobile where pop-ups are blocked). */
+  const print = () => {
+    const html = buildHtml();
+    if (!html) return;
+    const frame = document.createElement("iframe");
+    frame.setAttribute("aria-hidden", "true");
+    frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+    document.body.appendChild(frame);
+    const doc = frame.contentWindow?.document;
+    if (!doc) {
+      frame.remove();
+      toast.error("Printing is not supported on this device");
+      return;
+    }
+    doc.open();
+    doc.write(html);
+    doc.close();
+    const run = () => {
+      try {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+      } catch {
+        const w = window.open("", "_blank", "noopener,width=800,height=900");
+        if (w) {
+          w.document.write(html);
+          w.document.close();
+          w.focus();
+          w.print();
+        } else {
+          toast.error("Allow pop-ups to print the lease");
+        }
+      }
+      setTimeout(() => frame.remove(), 60_000);
+    };
+    if (frame.contentWindow?.document.readyState === "complete") setTimeout(run, 150);
+    else frame.onload = () => setTimeout(run, 150);
+  };
+
+  /** Saves the lease as a self-contained HTML file (openable / printable to PDF). */
+  const download = () => {
+    const html = buildHtml();
+    if (!html) return;
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `lease-${lease.full_name.replace(/[^\w-]+/g, "-").toLowerCase()}.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
   };
 
   return (
