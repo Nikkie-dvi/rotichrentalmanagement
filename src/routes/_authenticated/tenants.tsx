@@ -86,17 +86,45 @@ function TenantsPage() {
   const { data: unpaidInvoices } = useQuery({
     queryKey: ["tenant-balances"],
     queryFn: async () => {
-      const { data } = await supabase.from("invoices").select("tenant_id,month_year,balance_remaining");
+      const { data } = await supabase.from("invoices").select("tenant_id,month_year,balance_remaining,total_due");
       return data ?? [];
     },
   });
 
+  const { data: allPayments } = useQuery({
+    queryKey: ["tenant-payment-totals"],
+    queryFn: async () => (await supabase.from("payments").select("tenant_id,amount_paid")).data ?? [],
+  });
+
+  /**
+   * Real account statement per tenant:
+   *  - arrears  = money still owed on issued invoices
+   *  - credit   = money paid over and above everything invoiced so far
+   * A tenant can only be "paid ahead" when they have credit AND no arrears.
+   */
+  const ledgers = useMemo(() => {
+    const map = new Map<string, { invoiced: number; paid: number; arrears: number; credit: number }>();
+    const get = (id: string) => {
+      let l = map.get(id);
+      if (!l) map.set(id, (l = { invoiced: 0, paid: 0, arrears: 0, credit: 0 }));
+      return l;
+    };
+    for (const inv of unpaidInvoices ?? []) {
+      const l = get(inv.tenant_id);
+      l.invoiced += Number((inv as any).total_due ?? 0);
+      l.arrears += Math.max(0, Number(inv.balance_remaining));
+    }
+    for (const p of allPayments ?? []) get((p as any).tenant_id).paid += Number((p as any).amount_paid ?? 0);
+    for (const l of map.values()) l.credit = Math.max(0, l.paid - l.invoiced);
+    return map;
+  }, [unpaidInvoices, allPayments]);
+
   const balances = useMemo(() => {
     const map = new Map<string, number>();
-    for (const inv of unpaidInvoices ?? [])
-      map.set(inv.tenant_id, (map.get(inv.tenant_id) ?? 0) + Number(inv.balance_remaining));
+    for (const [id, l] of ledgers) map.set(id, l.arrears - l.credit);
     return map;
-  }, [unpaidInvoices]);
+  }, [ledgers]);
+
 
   const { data: vacantUnits } = useQuery({
     queryKey: ["vacant-units"],
