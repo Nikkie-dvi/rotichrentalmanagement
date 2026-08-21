@@ -36,8 +36,8 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
 
   return (
-    <div className="-mx-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <div className="mx-auto inline-flex min-w-full items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 backdrop-blur-md sm:min-w-0">
+    <div className="sticky top-0 z-20 -mx-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mx-auto inline-flex min-w-full items-center justify-center gap-1 rounded-full border border-border/50 bg-background/50 p-1 shadow-sm ring-1 ring-inset ring-background/40 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-background/40 sm:min-w-0">
         {items.map((item) => {
           const active = pathname === item.url;
           return (
