@@ -164,8 +164,9 @@ function DashboardPage() {
     const d = accountQuery.data;
     if (!d) return 0;
     const owed = Math.max(Number(d.totalInvoiced ?? 0), accrued);
-    return Number(d.totalPaid ?? 0) - owed;
+    return Number(d.totalPaid ?? 0) - owed + Number((d as any).adjustments ?? 0);
   }, [accountQuery.data, accrued]);
+
 
   const rentSettled = net >= 0;
 
