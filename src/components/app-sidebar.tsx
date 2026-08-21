@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3, Wallet, UserCog, AlarmClock, Download } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3, Wallet, UserCog, AlarmClock, Download, ImageUp } from "lucide-react";
 import { useIsSuperAdmin, useIsPropertyManager } from "@/hooks/use-landlord-account";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { AppLogo } from "@/components/app-logo";
@@ -60,6 +60,7 @@ export function AppSidebar() {
         ...base,
         { title: "Landlord accounts", url: "/landlords", icon: ShieldCheck },
         { title: "CEO Analytics", url: "/analytics", icon: BarChart3 },
+        { title: "App Branding", url: "/settings/branding", icon: ImageUp },
       ]
     : base;
   return (

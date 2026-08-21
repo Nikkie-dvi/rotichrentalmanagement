@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Building2, Users, DollarSign, AlertCircle, Plus, Gauge, FileText, Trash2, Download } from "lucide-react";
+import { Building2, Users, DollarSign, AlertCircle, Plus, Gauge, FileText, Trash2, Download, BellRing, Receipt as ReceiptIcon, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -23,6 +23,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
+import { sendLateFeeNoticeSms, sendPaymentReceiptSms } from "@/lib/receipts.functions";
+import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 
 
 type DrillKey = "units" | "occupancy" | "collected" | "arrears" | null;
@@ -194,7 +196,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("payments")
-        .select("id,invoice_id,amount_paid,payment_method,reference_no,payment_date,tenants(full_name)")
+        .select("id,invoice_id,tenant_id,amount_paid,payment_method,reference_no,payment_date,tenants(full_name)")
         .gte("payment_date", `${monthKey}-01`)
         .order("payment_date", { ascending: false });
       return data ?? [];
@@ -264,6 +266,68 @@ function Dashboard() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  // One-tap reminders / receipts straight from the dashboard drill-downs.
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [notifyingAll, setNotifyingAll] = useState(false);
+
+  const remindOne = async (invoiceId: string) => {
+    setBusyId(invoiceId);
+    try {
+      await sendLateFeeNoticeSms({ data: { invoiceId } });
+      toast.success("Reminder texted to the tenant");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not send the reminder");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const remindAllArrears = async () => {
+    setNotifyingAll(true);
+    try {
+      const res: any = await notifyMyTenants({
+        data: {
+          title: "Rent arrears reminder",
+          body: "You have an outstanding rent balance. Kindly clear it as soon as possible to avoid a late fee.",
+          audience: "overdue",
+          push: true,
+          sms: true,
+        },
+      });
+      if (res.recipients === 0) toast.info("No tenants with arrears to notify");
+      else
+        toast.success(
+          `Notified ${res.recipients} tenant(s) — ${res.sent} app alert(s) + ${res.smsSent} SMS`,
+          { description: res.smsSkippedNoCredit ? `${res.smsSkippedNoCredit} skipped (no SMS credit)` : undefined },
+        );
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not notify tenants");
+    } finally {
+      setNotifyingAll(false);
+    }
+  };
+
+  const textReceipt = async (p: any) => {
+    setBusyId(p.id);
+    try {
+      await sendPaymentReceiptSms({
+        data: {
+          tenantId: p.tenant_id ?? p.tenants?.id,
+          amount: Number(p.amount_paid),
+          paymentDate: p.payment_date,
+          method: p.payment_method,
+          reference: p.reference_no ?? null,
+        },
+      });
+      toast.success("Receipt texted to the tenant");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not send the receipt");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
 
   const drillTitle: Record<Exclude<DrillKey, null>, string> = {
     units: "All Units",
@@ -341,6 +405,11 @@ function Dashboard() {
           )}
 
           {drill === "collected" && (
+            <>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Tap <span className="font-medium text-foreground">Receipt</span> on any row to text that tenant a payment
+              confirmation (1.20 KES from your SMS balance).
+            </p>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -348,6 +417,7 @@ function Dashboard() {
                   <TableHead>Tenant</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Receipt</TableHead>
                   <TableHead className="text-right">Remove</TableHead>
                 </TableRow>
               </TableHeader>
@@ -358,6 +428,18 @@ function Dashboard() {
                     <TableCell className="font-medium">{p.tenants?.full_name ?? "—"}</TableCell>
                     <TableCell><Badge variant="outline" className="uppercase">{p.payment_method}</Badge></TableCell>
                     <TableCell className="text-right font-semibold text-primary">{money(Number(p.amount_paid))}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="glass-btn glow-green h-8 gap-1 px-2 text-xs"
+                        disabled={busyId === p.id}
+                        onClick={() => textReceipt(p)}
+                      >
+                        {busyId === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ReceiptIcon className="h-3.5 w-3.5" />}
+                        Receipt
+                      </Button>
+                    </TableCell>
                     <TableCell className="text-right">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -390,7 +472,7 @@ function Dashboard() {
                   </TableRow>
                 ))}
                 {collectedList && collectedList.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No payments this month.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">No payments this month.</TableCell></TableRow>
                 )}
                 {collectedList && collectedList.length > 0 && (
                   <TableRow>
@@ -399,13 +481,33 @@ function Dashboard() {
                       {money(collectedList.reduce((s: number, p: any) => s + Number(p.amount_paid), 0))}
                     </TableCell>
                     <TableCell />
+                    <TableCell />
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+            </>
           )}
 
           {drill === "arrears" && (
+            <>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">Chase these balances</p>
+                <p className="text-xs text-muted-foreground">
+                  Send everyone in arrears an app alert + SMS, or remind one tenant at a time.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                className="glow-red bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={notifyingAll || (arrearsList ?? []).length === 0}
+                onClick={remindAllArrears}
+              >
+                {notifyingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellRing className="h-4 w-4" />}
+                Notify all tenants
+              </Button>
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -413,6 +515,7 @@ function Dashboard() {
                   <TableHead>Area / Unit</TableHead>
                   <TableHead>Month</TableHead>
                   <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Notify</TableHead>
                   <TableHead className="text-right">Remove</TableHead>
                 </TableRow>
               </TableHeader>
@@ -427,6 +530,18 @@ function Dashboard() {
                       <TableCell className="text-muted-foreground">{area}{unit ? ` · ${unit}` : ""}</TableCell>
                       <TableCell>{i.month_year}</TableCell>
                       <TableCell className="text-right font-semibold text-destructive">{money(Number(i.balance_remaining))}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="glass-btn glow-amber h-8 gap-1 px-2 text-xs"
+                          disabled={busyId === i.id}
+                          onClick={() => remindOne(i.id)}
+                        >
+                          {busyId === i.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellRing className="h-3.5 w-3.5" />}
+                          Remind
+                        </Button>
+                      </TableCell>
                       <TableCell className="text-right">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -457,10 +572,11 @@ function Dashboard() {
                   );
                 })}
                 {arrearsList && arrearsList.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No outstanding arrears.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">No outstanding arrears.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
+            </>
           )}
 
         </DialogContent>
