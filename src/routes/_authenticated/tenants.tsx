@@ -408,22 +408,27 @@ function TenantsPage() {
   );
 }
 
+type Ledger = { invoiced: number; paid: number; arrears: number; credit: number };
+
 function TenantCard({
   tenant: t,
   balance,
+  ledger,
   risk,
   duplicate,
   onMoveOut,
 }: {
   tenant: any;
   balance: number;
+  ledger: Ledger;
   risk: Risk;
   duplicate?: boolean;
   onMoveOut: () => void;
 }) {
   const flagged = risk.level === "overdue" || risk.level === "high";
-  const inCredit = balance < 0;
+  const inCredit = ledger.credit > 0 && ledger.arrears === 0;
   const [expanded, setExpanded] = useState(false);
+
 
   return (
     <Card className={`glass-card relative ${flagged ? "border-l-4 border-l-destructive" : ""}`}>
