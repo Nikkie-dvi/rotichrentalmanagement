@@ -268,6 +268,7 @@ function TenantsPage() {
           </Link>
         </Button>
       </div>
+      <SectionSwitcher items={PEOPLE_TABS} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Tenants</h2>

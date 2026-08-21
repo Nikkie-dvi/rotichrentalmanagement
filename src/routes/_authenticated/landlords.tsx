@@ -329,6 +329,7 @@ function LandlordsPage() {
 
   return (
     <div className="space-y-4">
+      <SectionSwitcher items={ADMIN_TABS} />
       <div>
         <h1 className="text-2xl font-semibold">Landlord accounts</h1>
         <p className="text-sm text-muted-foreground">
