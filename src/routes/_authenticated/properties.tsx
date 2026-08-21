@@ -71,17 +71,31 @@ function PropertiesPage() {
   });
 
   const saveUnit = useMutation({
-    mutationFn: async (v: any) => {
+    mutationFn: async ({ tenantId, ...v }: any) => {
+      let unitId = editing?.id as string | undefined;
       if (editing) {
         const { error } = await supabase.from("units").update(v).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("units").insert(v);
+        const { data, error } = await supabase.from("units").insert(v).select("id").single();
         if (error) throw error;
+        unitId = data.id as string;
+      }
+      // Optionally move an existing tenant into this unit when marking it occupied.
+      if (tenantId && unitId) {
+        const { error: tErr } = await supabase
+          .from("tenants")
+          .update({ unit_id: unitId, active: true })
+          .eq("id", tenantId);
+        if (tErr) throw tErr;
+        const { error: sErr } = await supabase.from("units").update({ status: "occupied" }).eq("id", unitId);
+        if (sErr) throw sErr;
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["units-full"] });
+      qc.invalidateQueries({ queryKey: ["tenants"] });
+      qc.invalidateQueries({ queryKey: ["assignable-tenants"] });
       qc.invalidateQueries({ queryKey: ["summary"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setUnitOpen(false);
