@@ -405,6 +405,11 @@ function Dashboard() {
           )}
 
           {drill === "collected" && (
+            <>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Tap <span className="font-medium text-foreground">Receipt</span> on any row to text that tenant a payment
+              confirmation (1.20 KES from your SMS balance).
+            </p>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -412,6 +417,7 @@ function Dashboard() {
                   <TableHead>Tenant</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Receipt</TableHead>
                   <TableHead className="text-right">Remove</TableHead>
                 </TableRow>
               </TableHeader>
@@ -422,6 +428,18 @@ function Dashboard() {
                     <TableCell className="font-medium">{p.tenants?.full_name ?? "—"}</TableCell>
                     <TableCell><Badge variant="outline" className="uppercase">{p.payment_method}</Badge></TableCell>
                     <TableCell className="text-right font-semibold text-primary">{money(Number(p.amount_paid))}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="glass-btn glow-green h-8 gap-1 px-2 text-xs"
+                        disabled={busyId === p.id}
+                        onClick={() => textReceipt(p)}
+                      >
+                        {busyId === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ReceiptIcon className="h-3.5 w-3.5" />}
+                        Receipt
+                      </Button>
+                    </TableCell>
                     <TableCell className="text-right">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
