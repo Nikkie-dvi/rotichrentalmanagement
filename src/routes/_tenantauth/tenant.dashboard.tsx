@@ -112,7 +112,7 @@ function DashboardPage() {
     refetchInterval: 30000,
     queryFn: async () => {
       const tenantId = tenantQuery.data!.id;
-      const [inv, pay, allPay] = await Promise.all([
+      const [inv, pay, allPay, credits] = await Promise.all([
         supabase
           .from("invoices")
           .select("id, month_year, total_due, balance_remaining, status, created_at, base_rent, utility_amount, water_amount, electricity_amount, garbage_amount, other_amount, other_label, late_penalty_amount, due_date, penalty_waived")
@@ -125,6 +125,7 @@ function DashboardPage() {
           .order("payment_date", { ascending: false })
           .limit(5),
         supabase.from("payments").select("amount_paid").eq("tenant_id", tenantId),
+        supabase.from("tenant_credit_events").select("delta").eq("tenant_id", tenantId),
       ]);
       if (inv.error) throw inv.error;
       if (pay.error) throw pay.error;
@@ -133,7 +134,10 @@ function DashboardPage() {
       const outstanding = invoices.reduce((s, i) => s + Number(i.balance_remaining), 0);
       const totalInvoiced = invoices.reduce((s, i) => s + Number(i.total_due), 0);
       const totalPaid = (allPay.data ?? []).reduce((s: number, p: any) => s + Number(p.amount_paid), 0);
-      return { invoices, payments: pay.data ?? [], balance: outstanding, totalInvoiced, totalPaid };
+      // Landlord credit edits (applied / written off / topped up) shift the balance too.
+      const adjustments = (credits.data ?? []).reduce((s: number, c: any) => s + Number(c.delta ?? 0), 0);
+      return { invoices, payments: pay.data ?? [], balance: outstanding, totalInvoiced, totalPaid, adjustments };
+
     },
   });
 
