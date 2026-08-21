@@ -44,6 +44,13 @@ export type Database = {
           penalty_max: number | null
           penalty_type: string
           penalty_value: number
+          reminder_after_template: string
+          reminder_before_template: string
+          reminder_days_after: number
+          reminder_days_before: number
+          reminder_push_enabled: boolean
+          reminder_sms_enabled: boolean
+          rent_reminders_enabled: boolean
           sms_enabled: boolean
           sms_template: string
           updated_at: string
@@ -59,6 +66,13 @@ export type Database = {
           penalty_max?: number | null
           penalty_type?: string
           penalty_value?: number
+          reminder_after_template?: string
+          reminder_before_template?: string
+          reminder_days_after?: number
+          reminder_days_before?: number
+          reminder_push_enabled?: boolean
+          reminder_sms_enabled?: boolean
+          rent_reminders_enabled?: boolean
           sms_enabled?: boolean
           sms_template?: string
           updated_at?: string
@@ -74,6 +88,13 @@ export type Database = {
           penalty_max?: number | null
           penalty_type?: string
           penalty_value?: number
+          reminder_after_template?: string
+          reminder_before_template?: string
+          reminder_days_after?: number
+          reminder_days_before?: number
+          reminder_push_enabled?: boolean
+          reminder_sms_enabled?: boolean
+          rent_reminders_enabled?: boolean
           sms_enabled?: boolean
           sms_template?: string
           updated_at?: string
