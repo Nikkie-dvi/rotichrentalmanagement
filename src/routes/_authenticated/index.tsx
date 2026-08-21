@@ -472,7 +472,7 @@ function Dashboard() {
                   </TableRow>
                 ))}
                 {collectedList && collectedList.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No payments this month.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">No payments this month.</TableCell></TableRow>
                 )}
                 {collectedList && collectedList.length > 0 && (
                   <TableRow>
@@ -481,10 +481,12 @@ function Dashboard() {
                       {money(collectedList.reduce((s: number, p: any) => s + Number(p.amount_paid), 0))}
                     </TableCell>
                     <TableCell />
+                    <TableCell />
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+            </>
           )}
 
           {drill === "arrears" && (
