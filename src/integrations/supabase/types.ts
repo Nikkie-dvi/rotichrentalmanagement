@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_branding: {
+        Row: {
+          id: string
+          logo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          logo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          logo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       billing_settings: {
         Row: {
           auto_penalties_enabled: boolean
