@@ -73,6 +73,22 @@ export const Route = createFileRoute("/api/public/hooks/generate-monthly-invoice
             { onConflict: "tenant_id,month_year" },
           );
           if (!error) created++;
+
+          // Tell the landlord whenever credit was eaten by this new invoice.
+          if (!error && credit > 0) {
+            try {
+              const { logCreditEvent } = await import("@/lib/credit.server");
+              await logCreditEvent({
+                ownerId: (t as any).owner_id,
+                tenantId: (t as any).id,
+                kind: "applied",
+                amount: Math.min(credit, total),
+                note: `Applied to ${month} invoice`,
+              });
+            } catch {
+              /* never block invoicing on alerts */
+            }
+          }
         }
 
         return new Response(

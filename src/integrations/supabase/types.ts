@@ -864,6 +864,56 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_credit_events: {
+        Row: {
+          acknowledged: boolean
+          amount: number
+          created_at: string
+          created_by: string | null
+          delta: number
+          id: string
+          kind: string
+          note: string | null
+          owner_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged?: boolean
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          delta?: number
+          id?: string
+          kind?: string
+          note?: string | null
+          owner_id?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged?: boolean
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          delta?: number
+          id?: string
+          kind?: string
+          note?: string | null
+          owner_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_credit_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           active: boolean

@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
+import { TenantCreditDialog } from "@/components/tenant-credit-dialog";
+import { runCreditWatch } from "@/lib/credit.functions";
 import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
 import { createFirstRentInvoice } from "@/lib/first-invoice";
 import { SectionSwitcher, PEOPLE_TABS } from "@/components/section-switcher";
@@ -96,17 +98,24 @@ function TenantsPage() {
     queryFn: async () => (await supabase.from("payments").select("tenant_id,amount_paid")).data ?? [],
   });
 
+  // Manual credit edits (applied / written off / topped up) by the landlord.
+  const { data: creditAdjustments } = useQuery({
+    queryKey: ["tenant-credit-adjustments"],
+    queryFn: async () => (await supabase.from("tenant_credit_events").select("tenant_id,delta")).data ?? [],
+  });
+
   /**
    * Real account statement per tenant:
    *  - arrears  = money still owed on issued invoices
-   *  - credit   = money paid over and above everything invoiced so far
+   *  - credit   = money paid over and above everything invoiced so far,
+   *               plus/minus any manual credit edits the landlord made
    * A tenant can only be "paid ahead" when they have credit AND no arrears.
    */
   const ledgers = useMemo(() => {
-    const map = new Map<string, { invoiced: number; paid: number; arrears: number; credit: number }>();
+    const map = new Map<string, { invoiced: number; paid: number; arrears: number; credit: number; adjustments: number }>();
     const get = (id: string) => {
       let l = map.get(id);
-      if (!l) map.set(id, (l = { invoiced: 0, paid: 0, arrears: 0, credit: 0 }));
+      if (!l) map.set(id, (l = { invoiced: 0, paid: 0, arrears: 0, credit: 0, adjustments: 0 }));
       return l;
     };
     for (const inv of unpaidInvoices ?? []) {
@@ -115,9 +124,10 @@ function TenantsPage() {
       l.arrears += Math.max(0, Number(inv.balance_remaining));
     }
     for (const p of allPayments ?? []) get((p as any).tenant_id).paid += Number((p as any).amount_paid ?? 0);
-    for (const l of map.values()) l.credit = Math.max(0, l.paid - l.invoiced);
+    for (const a of creditAdjustments ?? []) get((a as any).tenant_id).adjustments += Number((a as any).delta ?? 0);
+    for (const l of map.values()) l.credit = Math.max(0, l.paid - l.invoiced + l.adjustments);
     return map;
-  }, [unpaidInvoices, allPayments]);
+  }, [unpaidInvoices, allPayments, creditAdjustments]);
 
   const balances = useMemo(() => {
     const map = new Map<string, number>();
@@ -275,6 +285,16 @@ function TenantsPage() {
   const atRisk = flagged.reduce((s: number, t: any) => s + (balances.get(t.id) ?? 0), 0);
   const creditHeld = active.reduce((s: number, t: any) => s + (ledgers.get(t.id)?.credit ?? 0), 0);
 
+  // Re-checks every tenant's credit now and pushes an alert for anything new.
+  const creditWatch = useMutation({
+    mutationFn: () => runCreditWatch({}),
+    onSuccess: (res: any) =>
+      toast.success(res?.logged ? `${res.logged} credit update${res.logged > 1 ? "s" : ""} sent to your phone` : "Credit is up to date"),
+    onError: (e: any) => toast.error(e?.message ?? "Could not check credit"),
+  });
+
+
+
 
 
   return (
@@ -351,18 +371,23 @@ function TenantsPage() {
       </p>
 
       {creditHeld > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span>
-            <b>{money(creditHeld)}</b> held as tenant credit. It is automatically deducted from their next invoice — it does
-            not mean their next month is already paid.
-          </span>
+        <div className="space-y-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span>
+              <b>{money(creditHeld)}</b> held as tenant credit. It is automatically deducted from their next invoice — it does
+              not mean their next month is already paid.
+            </span>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => creditWatch.mutate()} disabled={creditWatch.isPending}>
+            {creditWatch.isPending ? "Checking…" : "Check credit & alert me"}
+          </Button>
         </div>
       )}
 
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
-          const ledger = ledgers.get(t.id) ?? { invoiced: 0, paid: 0, arrears: 0, credit: 0 };
+          const ledger = ledgers.get(t.id) ?? { invoiced: 0, paid: 0, arrears: 0, credit: 0, adjustments: 0 };
           const balance = balances?.get(t.id) ?? 0;
           const risk: Risk = risks.get(t.id) ?? {
             level: balance > 0 ? "soon" : balance < 0 ? "credit" : "clear",
@@ -408,7 +433,7 @@ function TenantsPage() {
   );
 }
 
-type Ledger = { invoiced: number; paid: number; arrears: number; credit: number };
+type Ledger = { invoiced: number; paid: number; arrears: number; credit: number; adjustments?: number };
 
 function TenantCard({
   tenant: t,
@@ -523,6 +548,9 @@ function TenantCard({
             </Button>
             <div className="col-span-2">
               <EditTenantDatesDialog tenant={t} />
+            </div>
+            <div className="col-span-2">
+              <TenantCreditDialog tenant={t} credit={ledger.credit} arrears={ledger.arrears} />
             </div>
             <div className="col-span-2">
               {t.auth_user_id ? <ResetTenantPasswordDialog tenant={t} /> : <CreateTenantLoginDialog tenant={t} />}

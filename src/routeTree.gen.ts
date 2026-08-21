@@ -45,6 +45,7 @@ import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/m
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
 import { Route as ApiPublicHooksSendPushRemindersRouteImport } from './routes/api/public/hooks/send-push-reminders'
 import { Route as ApiPublicHooksGenerateMonthlyInvoicesRouteImport } from './routes/api/public/hooks/generate-monthly-invoices'
+import { Route as ApiPublicHooksCreditWatchRouteImport } from './routes/api/public/hooks/credit-watch'
 import { Route as ApiPublicHooksApplyLatePenaltiesRouteImport } from './routes/api/public/hooks/apply-late-penalties'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -241,6 +242,12 @@ const ApiPublicHooksGenerateMonthlyInvoicesRoute =
     path: '/api/public/hooks/generate-monthly-invoices',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCreditWatchRoute =
+  ApiPublicHooksCreditWatchRouteImport.update({
+    id: '/api/public/hooks/credit-watch',
+    path: '/api/public/hooks/credit-watch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksApplyLatePenaltiesRoute =
   ApiPublicHooksApplyLatePenaltiesRouteImport.update({
     id: '/api/public/hooks/apply-late-penalties',
@@ -280,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
+  '/api/public/hooks/credit-watch': typeof ApiPublicHooksCreditWatchRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
@@ -317,6 +325,7 @@ export interface FileRoutesByTo {
   '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
+  '/api/public/hooks/credit-watch': typeof ApiPublicHooksCreditWatchRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
@@ -357,6 +366,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/_tenantauth/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
+  '/api/public/hooks/credit-watch': typeof ApiPublicHooksCreditWatchRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
@@ -396,6 +406,7 @@ export interface FileRouteTypes {
     | '/settings/payments'
     | '/tenant/dashboard'
     | '/api/public/hooks/apply-late-penalties'
+    | '/api/public/hooks/credit-watch'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
@@ -433,6 +444,7 @@ export interface FileRouteTypes {
     | '/settings/payments'
     | '/tenant/dashboard'
     | '/api/public/hooks/apply-late-penalties'
+    | '/api/public/hooks/credit-watch'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
@@ -472,6 +484,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/payments'
     | '/_tenantauth/tenant/dashboard'
     | '/api/public/hooks/apply-late-penalties'
+    | '/api/public/hooks/credit-watch'
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/mpesa/simulate-callback'
@@ -492,6 +505,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicHooksApplyLatePenaltiesRoute: typeof ApiPublicHooksApplyLatePenaltiesRoute
+  ApiPublicHooksCreditWatchRoute: typeof ApiPublicHooksCreditWatchRoute
   ApiPublicHooksGenerateMonthlyInvoicesRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   ApiPublicHooksSendPushRemindersRoute: typeof ApiPublicHooksSendPushRemindersRoute
   ApiPublicMpesaSimulateCallbackRoute: typeof ApiPublicMpesaSimulateCallbackRoute
@@ -752,6 +766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/credit-watch': {
+      id: '/api/public/hooks/credit-watch'
+      path: '/api/public/hooks/credit-watch'
+      fullPath: '/api/public/hooks/credit-watch'
+      preLoaderRoute: typeof ApiPublicHooksCreditWatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/apply-late-penalties': {
       id: '/api/public/hooks/apply-late-penalties'
       path: '/api/public/hooks/apply-late-penalties'
@@ -837,6 +858,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicHooksApplyLatePenaltiesRoute: ApiPublicHooksApplyLatePenaltiesRoute,
+  ApiPublicHooksCreditWatchRoute: ApiPublicHooksCreditWatchRoute,
   ApiPublicHooksGenerateMonthlyInvoicesRoute:
     ApiPublicHooksGenerateMonthlyInvoicesRoute,
   ApiPublicHooksSendPushRemindersRoute: ApiPublicHooksSendPushRemindersRoute,
