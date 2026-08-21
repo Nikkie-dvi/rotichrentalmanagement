@@ -197,3 +197,11 @@ export const smsTenant = createServerFn({ method: "POST" })
     if (!res.ok) throw new Error(res.error ?? "SMS could not be sent");
     return { ok: true };
   });
+
+/** Sends the before-due / after-due rent reminders for the caller's tenants now. */
+export const runRentRemindersNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { runRentReminders } = await import("@/lib/rent-reminders.server");
+    return runRentReminders({ ownerId: context.userId });
+  });

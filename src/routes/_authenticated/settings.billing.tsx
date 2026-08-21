@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
-import { runLateFeesNow } from "@/lib/billing.functions";
+import { runLateFeesNow, runRentRemindersNow } from "@/lib/billing.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/billing")({
   head: () => ({
@@ -38,6 +38,15 @@ const DEFAULTS = {
   auto_penalties_enabled: true,
   sms_enabled: true,
   email_enabled: false,
+  rent_reminders_enabled: true,
+  reminder_days_before: 5,
+  reminder_days_after: 3,
+  reminder_sms_enabled: true,
+  reminder_push_enabled: true,
+  reminder_before_template:
+    "Hi {tenant_name}, your rent of {total_balance} is due on {due_date} ({days} day(s) from today). Kindly pay on time. Thank you.",
+  reminder_after_template:
+    "Hi {tenant_name}, we have not yet received your rent of {total_balance} which was due on {due_date} ({days} day(s) ago). Kindly settle it as soon as possible.",
   sms_template:
     "Hi {tenant_name}, a late fee of {penalty_amount} has been added to your rent. Your updated balance is {total_balance}, due by {due_date}.",
   email_subject: "Late payment fee added to your rent",
@@ -93,6 +102,13 @@ function BillingSettingsPage() {
       sms_template: f.sms_template,
       email_subject: f.email_subject,
       email_template: f.email_template,
+      rent_reminders_enabled: !!f.rent_reminders_enabled,
+      reminder_days_before: Math.min(30, Math.max(0, Number(f.reminder_days_before) || 0)),
+      reminder_days_after: Math.min(30, Math.max(0, Number(f.reminder_days_after) || 0)),
+      reminder_sms_enabled: !!f.reminder_sms_enabled,
+      reminder_push_enabled: !!f.reminder_push_enabled,
+      reminder_before_template: f.reminder_before_template,
+      reminder_after_template: f.reminder_after_template,
     };
     const { error } = await supabase.from("billing_settings").upsert(payload, { onConflict: "owner_id" });
     if (error) throw new Error(error.message);
@@ -131,6 +147,19 @@ function BillingSettingsPage() {
         r.applied > 0
           ? `Added late fees to ${r.applied} invoice(s) and alerted ${r.notified} tenant(s)`
           : "No invoices are past the grace period right now",
+      );
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const runReminders = useMutation({
+    mutationFn: async () => (runRentRemindersNow as any)(),
+    onSuccess: (r: any) => {
+      qc.invalidateQueries();
+      toast.success(
+        r.considered > 0
+          ? `Reminded ${r.considered} tenant(s) — ${r.smsSent} SMS, ${r.pushSent} phone alert(s)${r.smsSkippedNoCredit ? `, ${r.smsSkippedNoCredit} skipped (no SMS credit)` : ""}`
+          : "No tenant matches your reminder days today",
       );
     },
     onError: (e: any) => toast.error(e.message),
@@ -199,6 +228,67 @@ function BillingSettingsPage() {
             </Button>
             <Button variant="outline" onClick={() => runNow.mutate()} disabled={runNow.isPending}>
               {runNow.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}Run late fee check now
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base"><AlarmClock className="h-4 w-4" />Rent reminders to tenants</CardTitle>
+          <CardDescription>
+            Checked daily. Tenants get a heads-up before rent is due, and a follow-up if payment still hasn't come in.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <div className="text-sm font-medium">Send rent reminders</div>
+              <div className="text-xs text-muted-foreground">Turn off to stop all before/after due reminders.</div>
+            </div>
+            <Switch checked={!!form.rent_reminders_enabled} onCheckedChange={(v) => toggle("rent_reminders_enabled", v, "Rent reminders")} />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label>Remind this many days BEFORE due</Label>
+              <Input type="number" min="0" max="30" value={form.reminder_days_before} onChange={(e) => set("reminder_days_before", e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Follow up this many days AFTER due (if unpaid)</Label>
+              <Input type="number" min="0" max="30" value={form.reminder_days_after} onChange={(e) => set("reminder_days_after", e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="text-sm font-medium">Send by SMS</div>
+              <Switch checked={!!form.reminder_sms_enabled} onCheckedChange={(v) => toggle("reminder_sms_enabled", v, "Reminder SMS")} />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="text-sm font-medium">Send phone alert</div>
+              <Switch checked={!!form.reminder_push_enabled} onCheckedChange={(v) => toggle("reminder_push_enabled", v, "Reminder push")} />
+            </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label>Before-due message</Label>
+            <Textarea rows={3} value={form.reminder_before_template} onChange={(e) => set("reminder_before_template", e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>After-due message</Label>
+            <Textarea rows={3} value={form.reminder_after_template} onChange={(e) => set("reminder_after_template", e.target.value)} />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Use {"{tenant_name}"}, {"{total_balance}"}, {"{due_date}"}, {"{days}"} and {"{month}"}. SMS costs come off your SMS credit.
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save reminders
+            </Button>
+            <Button variant="outline" onClick={() => runReminders.mutate()} disabled={runReminders.isPending}>
+              {runReminders.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}Send reminders now
             </Button>
           </div>
         </CardContent>
