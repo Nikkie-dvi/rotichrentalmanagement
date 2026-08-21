@@ -285,6 +285,16 @@ function TenantsPage() {
   const atRisk = flagged.reduce((s: number, t: any) => s + (balances.get(t.id) ?? 0), 0);
   const creditHeld = active.reduce((s: number, t: any) => s + (ledgers.get(t.id)?.credit ?? 0), 0);
 
+  // Re-checks every tenant's credit now and pushes an alert for anything new.
+  const creditWatch = useMutation({
+    mutationFn: () => runCreditWatch({}),
+    onSuccess: (res: any) =>
+      toast.success(res?.logged ? `${res.logged} credit update${res.logged > 1 ? "s" : ""} sent to your phone` : "Credit is up to date"),
+    onError: (e: any) => toast.error(e?.message ?? "Could not check credit"),
+  });
+
+
+
 
 
   return (
