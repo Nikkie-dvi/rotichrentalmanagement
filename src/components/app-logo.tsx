@@ -1,9 +1,10 @@
-import logoAsset from "@/assets/rotich-logo-v2.png.asset.json";
+import { useAppLogo } from "@/hooks/use-branding";
 
 export function AppLogo({ className = "h-8 w-8" }: { className?: string }) {
+  const src = useAppLogo();
   return (
     <img
-      src={logoAsset.url}
+      src={src}
       alt="Rotich Rental Management Systems logo"
       className={`${className} rounded-lg object-cover shadow-sm`}
       loading="lazy"
