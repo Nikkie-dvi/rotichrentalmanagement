@@ -16,6 +16,7 @@ import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
 import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
 import { createFirstRentInvoice } from "@/lib/first-invoice";
+import { SectionSwitcher, PEOPLE_TABS } from "@/components/section-switcher";
 
 export const Route = createFileRoute("/_authenticated/tenants")({
   head: () => ({

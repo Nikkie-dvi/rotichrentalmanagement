@@ -32,6 +32,7 @@ import { downloadCsv } from "@/lib/csv";
 import { useIsSuperAdmin } from "@/hooks/use-landlord-account";
 import { getCeoAnalytics } from "@/lib/analytics.functions";
 import { SubscriptionPricingPanel } from "@/components/subscription-pricing-panel";
+import { SectionSwitcher, ADMIN_TABS } from "@/components/section-switcher";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({

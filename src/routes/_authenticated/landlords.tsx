@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SmsRechargeAdmin } from "@/components/sms-recharge-admin";
 
 import {
+import { SectionSwitcher, ADMIN_TABS } from "@/components/section-switcher";
   useIsSuperAdmin,
   subscriptionState,
   MONTHLY_FEE,
