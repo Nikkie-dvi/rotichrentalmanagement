@@ -155,6 +155,7 @@ function PerformancePage() {
 
     return {
       rows: scored,
+      worstPayers,
       punctuality: { early, onTime, late, totalPaid, avgLateDays: late ? Math.round(lateDaysTotal / late) : 0 },
       tickets: [...ticketsByCategory.entries()]
         .map(([category, c]) => ({
