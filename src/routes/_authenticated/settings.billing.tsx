@@ -327,7 +327,7 @@ function BillingSettingsPage() {
           <CardTitle className="text-base">Recent alerts</CardTitle>
           <CardDescription>Every SMS and app alert sent to your tenants.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="max-h-80 overflow-y-auto space-y-2 pr-1">
           {(logs ?? []).length === 0 && <p className="text-sm text-muted-foreground">No alerts sent yet.</p>}
           {(logs ?? []).map((l: any) => (
             <div key={l.id} className="rounded-lg border p-3 text-sm">
