@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { SectionSwitcher, FINANCE_TABS } from "@/components/section-switcher";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Download, FileSpreadsheet, Printer, TrendingUp } from "lucide-react";
@@ -202,6 +203,7 @@ function ReportsPage() {
 
   return (
     <div className="space-y-6">
+      <SectionSwitcher items={FINANCE_TABS} />
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Monthly Reports & Downloads</h2>
         <p className="text-sm text-muted-foreground">
