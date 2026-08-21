@@ -60,6 +60,7 @@ export function AppSidebar() {
         ...base,
         { title: "Landlord accounts", url: "/landlords", icon: ShieldCheck },
         { title: "CEO Analytics", url: "/analytics", icon: BarChart3 },
+        { title: "App Branding", url: "/settings/branding", icon: ImageUp },
       ]
     : base;
   return (
