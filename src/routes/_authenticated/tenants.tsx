@@ -343,11 +343,24 @@ function TenantsPage() {
         />
       </div>
 
-      <p className="text-xs text-muted-foreground">Tap a tenant to see details and actions.</p>
+      <p className="text-xs text-muted-foreground">
+        Tap a tenant to see their full statement — what was invoiced, what they paid, arrears still owed and any credit
+        that will be taken off their next invoice.
+      </p>
 
+      {creditHeld > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>
+            <b>{money(creditHeld)}</b> held as tenant credit. It is automatically deducted from their next invoice — it does
+            not mean their next month is already paid.
+          </span>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
+          const ledger = ledgers.get(t.id) ?? { invoiced: 0, paid: 0, arrears: 0, credit: 0 };
           const balance = balances?.get(t.id) ?? 0;
           const risk: Risk = risks.get(t.id) ?? {
             level: balance > 0 ? "soon" : balance < 0 ? "credit" : "clear",
@@ -360,12 +373,14 @@ function TenantsPage() {
               key={t.id}
               tenant={t}
               balance={balance}
+              ledger={ledger}
               risk={risk}
               duplicate={isDuplicate(t)}
               onMoveOut={() => moveOut.mutate(t)}
             />
           );
         })}
+
         {active.length === 0 && (
           <Card className="md:col-span-2 xl:col-span-3">
             <CardContent className="py-10 text-center text-muted-foreground">No active tenants yet.</CardContent>
