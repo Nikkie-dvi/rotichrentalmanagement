@@ -1,7 +1,8 @@
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Printer } from "lucide-react";
+import { Download, Printer } from "lucide-react";
+import { toast } from "sonner";
 import { fillLeaseText, resolveLeaseTemplate, type LeaseTemplate } from "@/lib/lease-template";
 
 export type LeaseData = {
