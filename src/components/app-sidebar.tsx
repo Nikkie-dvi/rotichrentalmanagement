@@ -70,7 +70,7 @@ export function AppSidebar() {
               {menu.map((item) => {
                 const group =
                   item.url === "/billing"
-                    ? ["/billing", "/payments", "/reports"]
+                    ? ["/billing", "/payments", "/reports", "/performance"]
                     : item.url === "/leases"
                       ? ["/leases", "/settings/lease"]
                       : item.url === "/tenants"

@@ -7,6 +7,7 @@ export const FINANCE_TABS: SwitcherItem[] = [
   { label: "Billing", url: "/billing" },
   { label: "Payments", url: "/payments" },
   { label: "Reports", url: "/reports" },
+  { label: "Performance", url: "/performance" },
 ];
 
 /** Lease group — the signed agreements and the template that produces them. */
