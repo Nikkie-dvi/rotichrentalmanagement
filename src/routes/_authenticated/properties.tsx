@@ -328,11 +328,13 @@ function PropertiesPage() {
 
 function UnitForm({
   properties,
+  tenants,
   initial,
   onSubmit,
   pending,
 }: {
   properties: any[];
+  tenants: any[];
   initial: any;
   onSubmit: (v: any) => void;
   pending: boolean;
@@ -340,6 +342,7 @@ function UnitForm({
   const [propertyId, setPropertyId] = useState<string>(initial?.property_id ?? properties[0]?.id ?? "");
   const [status, setStatus] = useState<string>(initial?.status ?? "vacant");
   const [unitType, setUnitType] = useState<string>(initial?.unit_type ?? "bedsitter");
+  const [tenantId, setTenantId] = useState<string>("none");
   return (
     <form
       onSubmit={(e) => {
@@ -352,6 +355,7 @@ function UnitForm({
           rent_amount: Number(f.get("rent_amount")),
           unit_type: unitType,
           status,
+          tenantId: status === "occupied" && tenantId !== "none" ? tenantId : null,
         });
       }}
       className="space-y-3"
