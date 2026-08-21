@@ -15,6 +15,19 @@ export const LEASE_TABS: SwitcherItem[] = [
   { label: "Template", url: "/settings/lease" },
 ];
 
+/** Main-account group — company analytics, landlord accounts and branding. */
+export const ADMIN_TABS: SwitcherItem[] = [
+  { label: "Analytics", url: "/analytics" },
+  { label: "Landlords", url: "/landlords" },
+  { label: "Branding", url: "/settings/branding" },
+];
+
+/** People group — current tenants and the applications waiting for review. */
+export const PEOPLE_TABS: SwitcherItem[] = [
+  { label: "Tenants", url: "/tenants" },
+  { label: "Applications", url: "/applications" },
+];
+
 /**
  * iPhone-camera style mode switcher: a horizontally scrollable rail of labels
  * where the active one sits in a raised pill.
