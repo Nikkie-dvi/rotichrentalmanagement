@@ -490,6 +490,24 @@ function Dashboard() {
           )}
 
           {drill === "arrears" && (
+            <>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">Chase these balances</p>
+                <p className="text-xs text-muted-foreground">
+                  Send everyone in arrears an app alert + SMS, or remind one tenant at a time.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                className="glow-red bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={notifyingAll || (arrearsList ?? []).length === 0}
+                onClick={remindAllArrears}
+              >
+                {notifyingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellRing className="h-4 w-4" />}
+                Notify all tenants
+              </Button>
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -497,6 +515,7 @@ function Dashboard() {
                   <TableHead>Area / Unit</TableHead>
                   <TableHead>Month</TableHead>
                   <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Notify</TableHead>
                   <TableHead className="text-right">Remove</TableHead>
                 </TableRow>
               </TableHeader>
@@ -511,6 +530,18 @@ function Dashboard() {
                       <TableCell className="text-muted-foreground">{area}{unit ? ` · ${unit}` : ""}</TableCell>
                       <TableCell>{i.month_year}</TableCell>
                       <TableCell className="text-right font-semibold text-destructive">{money(Number(i.balance_remaining))}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="glass-btn glow-amber h-8 gap-1 px-2 text-xs"
+                          disabled={busyId === i.id}
+                          onClick={() => remindOne(i.id)}
+                        >
+                          {busyId === i.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellRing className="h-3.5 w-3.5" />}
+                          Remind
+                        </Button>
+                      </TableCell>
                       <TableCell className="text-right">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
