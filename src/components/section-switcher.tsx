@@ -38,7 +38,7 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
 
   return (
     <div className="sticky top-0 z-20 -mx-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <div className="mx-auto inline-flex min-w-full items-center justify-center gap-1 rounded-full border border-border/50 bg-background/50 p-1 shadow-sm ring-1 ring-inset ring-background/40 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-background/40 sm:min-w-0">
+      <div className="mx-auto inline-flex min-w-full items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 shadow-sm ring-1 ring-inset ring-border/30 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-muted/30 sm:min-w-0">
         {items.map((item) => {
           const active = pathname === item.url;
           return (
@@ -47,9 +47,10 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
               to={item.url}
               className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center text-sm font-semibold uppercase tracking-wide transition-all duration-300 ${
                 active
-                  ? "bg-background text-primary shadow-sm scale-[1.02]"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-card text-primary shadow-sm ring-1 ring-border/60 scale-[1.02]"
+                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
               }`}
+
               aria-current={active ? "page" : undefined}
             >
               {item.label}
