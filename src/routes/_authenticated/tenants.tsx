@@ -550,6 +550,9 @@ function TenantCard({
               <EditTenantDatesDialog tenant={t} />
             </div>
             <div className="col-span-2">
+              <TenantCreditDialog tenant={t} credit={ledger.credit} arrears={ledger.arrears} />
+            </div>
+            <div className="col-span-2">
               {t.auth_user_id ? <ResetTenantPasswordDialog tenant={t} /> : <CreateTenantLoginDialog tenant={t} />}
             </div>
           </div>
