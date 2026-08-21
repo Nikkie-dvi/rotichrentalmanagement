@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Users, Gauge, FileText, Receipt, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3, Wallet, UserCog, AlarmClock, Download, ImageUp } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Gauge, FileText, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3, Wallet, UserCog, AlarmClock, ImageUp } from "lucide-react";
 import { useIsSuperAdmin, useIsPropertyManager } from "@/hooks/use-landlord-account";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { AppLogo } from "@/components/app-logo";
@@ -41,16 +41,11 @@ export function AppSidebar() {
   const badgeFor = (url: string) =>
     url === "/applications" ? counts.applications
     : url === "/maintenance" ? counts.issues
-    : url === "/billing" ? counts.unpaidInvoices
-    : url === "/payments" ? counts.recentPayments
-    : url === "/reports" ? counts.overdueInvoices
+    : url === "/billing" ? counts.unpaidInvoices + counts.overdueInvoices
     : url === "/tenants" ? counts.moveOuts
     : 0;
   // Money in is good news — everything else is something to act on.
-  const toneFor = (url: string) =>
-    url === "/payments"
-      ? "bg-emerald-500 text-emerald-950"
-      : "bg-destructive text-destructive-foreground";
+  const toneFor = (_url: string) => "bg-destructive text-destructive-foreground";
   const base = isManager ? items.filter((i) => !LANDLORD_ONLY.includes(i.url)) : items;
   const menu = isSuper
     ? [
@@ -77,7 +72,13 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menu.map((item) => {
-                const active = pathname === item.url;
+                const group =
+                  item.url === "/billing"
+                    ? ["/billing", "/payments", "/reports"]
+                    : item.url === "/leases"
+                      ? ["/leases", "/settings/lease"]
+                      : [item.url];
+                const active = group.includes(pathname);
                 const count = badgeFor(item.url);
                 const tone = toneFor(item.url);
                 return (
