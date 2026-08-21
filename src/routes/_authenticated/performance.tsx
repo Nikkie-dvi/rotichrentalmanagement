@@ -267,10 +267,20 @@ function PerformancePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!view || !("worstPayers" in (view as any)) ? null : null}
                 {q.isLoading ? (
                   <TableRow><TableCell colSpan={4} className="py-6 text-center text-muted-foreground">Loading…</TableCell></TableRow>
-                ) : !(view as any)?.rows.length ? null : null}
+                ) : !view?.worstPayers.length ? (
+                  <TableRow><TableCell colSpan={4} className="py-6 text-center text-muted-foreground">No late payments recorded. </TableCell></TableRow>
+                ) : (
+                  view.worstPayers.map((w) => (
+                    <TableRow key={w.name}>
+                      <TableCell className="font-medium">{w.name}</TableCell>
+                      <TableCell className="text-right font-semibold text-destructive">{w.late}</TableCell>
+                      <TableCell className="text-right">{w.total}</TableCell>
+                      <TableCell className="text-right">{w.avgDays}d</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
