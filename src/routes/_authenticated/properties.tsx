@@ -182,6 +182,7 @@ function PropertiesPage() {
               <DialogHeader><DialogTitle>{editing ? "Edit Unit" : "New Unit"}</DialogTitle></DialogHeader>
               <UnitForm
                 properties={properties ?? []}
+                tenants={assignableTenants ?? []}
                 initial={editing}
                 onSubmit={(v) => saveUnit.mutate(v)}
                 pending={saveUnit.isPending}
