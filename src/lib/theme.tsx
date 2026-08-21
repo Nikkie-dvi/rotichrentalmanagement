@@ -8,20 +8,31 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = (typeof window !== "undefined" && localStorage.getItem("theme")) as Theme | null;
-    const initial: Theme = stored ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    setTheme(initial);
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    setTheme(stored ?? (mq.matches ? "dark" : "light"));
+    // Automatically track the system theme unless the user picked one manually.
+    const onChange = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem("theme")) setTheme(e.matches ? "dark" : "light");
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
-    if (typeof window !== "undefined") localStorage.setItem("theme", theme);
   }, [theme]);
 
-  return (
-    <ThemeCtx.Provider value={{ theme, toggle: () => setTheme((t) => (t === "dark" ? "light" : "dark")) }}>
-      {children}
-    </ThemeCtx.Provider>
-  );
+
+  const toggle = () => {
+    setTheme((t) => {
+      const next: Theme = t === "dark" ? "light" : "dark";
+      if (typeof window !== "undefined") localStorage.setItem("theme", next);
+      return next;
+    });
+  };
+
+  return <ThemeCtx.Provider value={{ theme, toggle }}>{children}</ThemeCtx.Provider>;
 }
 
 export const useTheme = () => useContext(ThemeCtx);
+
