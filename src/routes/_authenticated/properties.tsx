@@ -56,6 +56,19 @@ function PropertiesPage() {
     queryFn: async () =>
       (await supabase.from("units").select("*,properties(name)").order("unit_number")).data ?? [],
   });
+  // Tenants that can be moved into a unit (approved, no unit yet).
+  const { data: assignableTenants } = useQuery({
+    queryKey: ["assignable-tenants"],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("tenants")
+          .select("id, full_name, phone_number, unit_id, approval_status")
+          .is("unit_id", null)
+          .neq("approval_status", "declined")
+          .order("full_name")
+      ).data ?? [],
+  });
 
   const saveProperty = useMutation({
     mutationFn: async (v: { name: string; location: string }) => {
@@ -71,17 +84,31 @@ function PropertiesPage() {
   });
 
   const saveUnit = useMutation({
-    mutationFn: async (v: any) => {
+    mutationFn: async ({ tenantId, ...v }: any) => {
+      let unitId = editing?.id as string | undefined;
       if (editing) {
         const { error } = await supabase.from("units").update(v).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("units").insert(v);
+        const { data, error } = await supabase.from("units").insert(v).select("id").single();
         if (error) throw error;
+        unitId = data.id as string;
+      }
+      // Optionally move an existing tenant into this unit when marking it occupied.
+      if (tenantId && unitId) {
+        const { error: tErr } = await supabase
+          .from("tenants")
+          .update({ unit_id: unitId, active: true })
+          .eq("id", tenantId);
+        if (tErr) throw tErr;
+        const { error: sErr } = await supabase.from("units").update({ status: "occupied" }).eq("id", unitId);
+        if (sErr) throw sErr;
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["units-full"] });
+      qc.invalidateQueries({ queryKey: ["tenants"] });
+      qc.invalidateQueries({ queryKey: ["assignable-tenants"] });
       qc.invalidateQueries({ queryKey: ["summary"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setUnitOpen(false);
@@ -155,6 +182,7 @@ function PropertiesPage() {
               <DialogHeader><DialogTitle>{editing ? "Edit Unit" : "New Unit"}</DialogTitle></DialogHeader>
               <UnitForm
                 properties={properties ?? []}
+                tenants={assignableTenants ?? []}
                 initial={editing}
                 onSubmit={(v) => saveUnit.mutate(v)}
                 pending={saveUnit.isPending}
@@ -300,11 +328,13 @@ function PropertiesPage() {
 
 function UnitForm({
   properties,
+  tenants,
   initial,
   onSubmit,
   pending,
 }: {
   properties: any[];
+  tenants: any[];
   initial: any;
   onSubmit: (v: any) => void;
   pending: boolean;
@@ -312,6 +342,7 @@ function UnitForm({
   const [propertyId, setPropertyId] = useState<string>(initial?.property_id ?? properties[0]?.id ?? "");
   const [status, setStatus] = useState<string>(initial?.status ?? "vacant");
   const [unitType, setUnitType] = useState<string>(initial?.unit_type ?? "bedsitter");
+  const [tenantId, setTenantId] = useState<string>("none");
   return (
     <form
       onSubmit={(e) => {
@@ -324,6 +355,7 @@ function UnitForm({
           rent_amount: Number(f.get("rent_amount")),
           unit_type: unitType,
           status,
+          tenantId: status === "occupied" && tenantId !== "none" ? tenantId : null,
         });
       }}
       className="space-y-3"
@@ -358,6 +390,27 @@ function UnitForm({
           </SelectContent>
         </Select>
       </div>
+      {status === "occupied" && (
+        <div>
+          <Label>Assign existing tenant (optional)</Label>
+          <Select value={tenantId} onValueChange={setTenantId}>
+            <SelectTrigger><SelectValue placeholder="No tenant" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No tenant — just mark occupied</SelectItem>
+              {tenants.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.full_name}{t.phone_number ? ` — ${t.phone_number}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {tenants.length === 0
+              ? "All tenants are already assigned to a unit."
+              : "Only tenants without a unit are listed."}
+          </p>
+        </div>
+      )}
       <DialogFooter><Button type="submit" disabled={pending}>Save</Button></DialogFooter>
     </form>
   );
