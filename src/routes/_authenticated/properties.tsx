@@ -56,6 +56,19 @@ function PropertiesPage() {
     queryFn: async () =>
       (await supabase.from("units").select("*,properties(name)").order("unit_number")).data ?? [],
   });
+  // Tenants that can be moved into a unit (approved, no unit yet).
+  const { data: assignableTenants } = useQuery({
+    queryKey: ["assignable-tenants"],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("tenants")
+          .select("id, full_name, phone_number, unit_id, approval_status")
+          .is("unit_id", null)
+          .neq("approval_status", "declined")
+          .order("full_name")
+      ).data ?? [],
+  });
 
   const saveProperty = useMutation({
     mutationFn: async (v: { name: string; location: string }) => {
