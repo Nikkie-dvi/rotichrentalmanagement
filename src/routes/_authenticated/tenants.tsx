@@ -86,17 +86,45 @@ function TenantsPage() {
   const { data: unpaidInvoices } = useQuery({
     queryKey: ["tenant-balances"],
     queryFn: async () => {
-      const { data } = await supabase.from("invoices").select("tenant_id,month_year,balance_remaining");
+      const { data } = await supabase.from("invoices").select("tenant_id,month_year,balance_remaining,total_due");
       return data ?? [];
     },
   });
 
+  const { data: allPayments } = useQuery({
+    queryKey: ["tenant-payment-totals"],
+    queryFn: async () => (await supabase.from("payments").select("tenant_id,amount_paid")).data ?? [],
+  });
+
+  /**
+   * Real account statement per tenant:
+   *  - arrears  = money still owed on issued invoices
+   *  - credit   = money paid over and above everything invoiced so far
+   * A tenant can only be "paid ahead" when they have credit AND no arrears.
+   */
+  const ledgers = useMemo(() => {
+    const map = new Map<string, { invoiced: number; paid: number; arrears: number; credit: number }>();
+    const get = (id: string) => {
+      let l = map.get(id);
+      if (!l) map.set(id, (l = { invoiced: 0, paid: 0, arrears: 0, credit: 0 }));
+      return l;
+    };
+    for (const inv of unpaidInvoices ?? []) {
+      const l = get(inv.tenant_id);
+      l.invoiced += Number((inv as any).total_due ?? 0);
+      l.arrears += Math.max(0, Number(inv.balance_remaining));
+    }
+    for (const p of allPayments ?? []) get((p as any).tenant_id).paid += Number((p as any).amount_paid ?? 0);
+    for (const l of map.values()) l.credit = Math.max(0, l.paid - l.invoiced);
+    return map;
+  }, [unpaidInvoices, allPayments]);
+
   const balances = useMemo(() => {
     const map = new Map<string, number>();
-    for (const inv of unpaidInvoices ?? [])
-      map.set(inv.tenant_id, (map.get(inv.tenant_id) ?? 0) + Number(inv.balance_remaining));
+    for (const [id, l] of ledgers) map.set(id, l.arrears - l.credit);
     return map;
-  }, [unpaidInvoices]);
+  }, [ledgers]);
+
 
   const { data: vacantUnits } = useQuery({
     queryKey: ["vacant-units"],
@@ -245,6 +273,8 @@ function TenantsPage() {
     return l === "overdue" || l === "high";
   });
   const atRisk = flagged.reduce((s: number, t: any) => s + (balances.get(t.id) ?? 0), 0);
+  const creditHeld = active.reduce((s: number, t: any) => s + (ledgers.get(t.id)?.credit ?? 0), 0);
+
 
 
   return (
@@ -315,11 +345,24 @@ function TenantsPage() {
         />
       </div>
 
-      <p className="text-xs text-muted-foreground">Tap a tenant to see details and actions.</p>
+      <p className="text-xs text-muted-foreground">
+        Tap a tenant to see their full statement — what was invoiced, what they paid, arrears still owed and any credit
+        that will be taken off their next invoice.
+      </p>
 
+      {creditHeld > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>
+            <b>{money(creditHeld)}</b> held as tenant credit. It is automatically deducted from their next invoice — it does
+            not mean their next month is already paid.
+          </span>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
+          const ledger = ledgers.get(t.id) ?? { invoiced: 0, paid: 0, arrears: 0, credit: 0 };
           const balance = balances?.get(t.id) ?? 0;
           const risk: Risk = risks.get(t.id) ?? {
             level: balance > 0 ? "soon" : balance < 0 ? "credit" : "clear",
@@ -332,12 +375,14 @@ function TenantsPage() {
               key={t.id}
               tenant={t}
               balance={balance}
+              ledger={ledger}
               risk={risk}
               duplicate={isDuplicate(t)}
               onMoveOut={() => moveOut.mutate(t)}
             />
           );
         })}
+
         {active.length === 0 && (
           <Card className="md:col-span-2 xl:col-span-3">
             <CardContent className="py-10 text-center text-muted-foreground">No active tenants yet.</CardContent>
@@ -363,22 +408,27 @@ function TenantsPage() {
   );
 }
 
+type Ledger = { invoiced: number; paid: number; arrears: number; credit: number };
+
 function TenantCard({
   tenant: t,
   balance,
+  ledger,
   risk,
   duplicate,
   onMoveOut,
 }: {
   tenant: any;
   balance: number;
+  ledger: Ledger;
   risk: Risk;
   duplicate?: boolean;
   onMoveOut: () => void;
 }) {
   const flagged = risk.level === "overdue" || risk.level === "high";
-  const inCredit = balance < 0;
+  const inCredit = ledger.credit > 0 && ledger.arrears === 0;
   const [expanded, setExpanded] = useState(false);
+
 
   return (
     <Card className={`glass-card relative ${flagged ? "border-l-4 border-l-destructive" : ""}`}>
@@ -412,6 +462,11 @@ function TenantCard({
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           {(flagged || inCredit) && <RiskBadge risk={inCredit ? { ...risk, level: "credit" } : risk} />}
+          {ledger.credit > 0 && ledger.arrears > 0 && (
+            <Badge variant="outline" className="gap-1 border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+              Credit {money(ledger.credit)}
+            </Badge>
+          )}
           {duplicate && (
             <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-300">
               <AlertTriangle className="h-3 w-3" /> Possible duplicate
@@ -423,12 +478,39 @@ function TenantCard({
       {expanded && (
         <CardContent className="space-y-2 p-4 pt-0 text-sm">
           {!flagged && !inCredit && <div className="pb-1"><RiskBadge risk={risk} /></div>}
+
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account statement</div>
+            <Row label="Total invoiced" value={money(ledger.invoiced)} />
+            <Row label="Total paid" value={money(ledger.paid)} />
+            <div className="flex justify-between py-1">
+              <span className="text-muted-foreground">Arrears still owed</span>
+              <span className={ledger.arrears > 0 ? "font-semibold text-destructive" : "font-medium"}>
+                {money(ledger.arrears)}
+              </span>
+            </div>
+            <div className="flex justify-between py-1">
+              <span className="text-muted-foreground">Credit on account</span>
+              <span className={ledger.credit > 0 ? "font-semibold text-emerald-600 dark:text-emerald-400" : "font-medium"}>
+                {money(ledger.credit)}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {ledger.credit > 0
+                ? "This credit is extra money already paid. It is deducted from the next invoice when it is generated — the tenant is not yet paid up for next month."
+                : ledger.arrears > 0
+                  ? "Amount still owed on invoices issued so far."
+                  : "Everything invoiced so far has been paid in full."}
+            </p>
+          </div>
+
           <Row label="Property" value={t.units?.properties?.name ?? "—"} />
           <Row label="Unit" value={t.units?.unit_number ?? "—"} />
           <Row label="Rent Due" value={money(Number(t.units?.rent_amount ?? 0))} />
           <Row label="Deposit" value={money(Number(t.deposit_paid))} />
           <Row label="Move-in" value={t.move_in_date ?? "—"} />
           <Row label="Due Day" value={t.rent_due_day ? `${t.rent_due_day} of month` : "—"} />
+
           <div className="mt-2 grid grid-cols-2 gap-2">
             <RecordPaymentButton
               tenantId={t.id}
