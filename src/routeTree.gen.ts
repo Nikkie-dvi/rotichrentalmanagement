@@ -36,6 +36,7 @@ import { Route as AuthenticatedSettingsPaymentsRouteImport } from './routes/_aut
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedSettingsManagersRouteImport } from './routes/_authenticated/settings.managers'
 import { Route as AuthenticatedSettingsLeaseRouteImport } from './routes/_authenticated/settings.lease'
+import { Route as AuthenticatedSettingsBrandingRouteImport } from './routes/_authenticated/settings.branding'
 import { Route as AuthenticatedSettingsBillingRouteImport } from './routes/_authenticated/settings.billing'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -187,6 +188,12 @@ const AuthenticatedSettingsLeaseRoute =
     path: '/settings/lease',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsBrandingRoute =
+  AuthenticatedSettingsBrandingRouteImport.update({
+    id: '/settings/branding',
+    path: '/settings/branding',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsBillingRoute =
   AuthenticatedSettingsBillingRouteImport.update({
     id: '/settings/billing',
@@ -258,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/settings/billing': typeof AuthenticatedSettingsBillingRoute
+  '/settings/branding': typeof AuthenticatedSettingsBrandingRoute
   '/settings/lease': typeof AuthenticatedSettingsLeaseRoute
   '/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -293,6 +301,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/settings/billing': typeof AuthenticatedSettingsBillingRoute
+  '/settings/branding': typeof AuthenticatedSettingsBrandingRoute
   '/settings/lease': typeof AuthenticatedSettingsLeaseRoute
   '/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -331,6 +340,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/settings/billing': typeof AuthenticatedSettingsBillingRoute
+  '/_authenticated/settings/branding': typeof AuthenticatedSettingsBrandingRoute
   '/_authenticated/settings/lease': typeof AuthenticatedSettingsLeaseRoute
   '/_authenticated/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/settings/billing'
+    | '/settings/branding'
     | '/settings/lease'
     | '/settings/managers'
     | '/settings/notifications'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/settings/billing'
+    | '/settings/branding'
     | '/settings/lease'
     | '/settings/managers'
     | '/settings/notifications'
@@ -440,6 +452,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/settings/billing'
+    | '/_authenticated/settings/branding'
     | '/_authenticated/settings/lease'
     | '/_authenticated/settings/managers'
     | '/_authenticated/settings/notifications'
@@ -663,6 +676,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsLeaseRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/branding': {
+      id: '/_authenticated/settings/branding'
+      path: '/settings/branding'
+      fullPath: '/settings/branding'
+      preLoaderRoute: typeof AuthenticatedSettingsBrandingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/billing': {
       id: '/_authenticated/settings/billing'
       path: '/settings/billing'
@@ -736,6 +756,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTenantsRoute: typeof AuthenticatedTenantsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedSettingsBillingRoute: typeof AuthenticatedSettingsBillingRoute
+  AuthenticatedSettingsBrandingRoute: typeof AuthenticatedSettingsBrandingRoute
   AuthenticatedSettingsLeaseRoute: typeof AuthenticatedSettingsLeaseRoute
   AuthenticatedSettingsManagersRoute: typeof AuthenticatedSettingsManagersRoute
   AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
@@ -756,6 +777,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTenantsRoute: AuthenticatedTenantsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedSettingsBillingRoute: AuthenticatedSettingsBillingRoute,
+  AuthenticatedSettingsBrandingRoute: AuthenticatedSettingsBrandingRoute,
   AuthenticatedSettingsLeaseRoute: AuthenticatedSettingsLeaseRoute,
   AuthenticatedSettingsManagersRoute: AuthenticatedSettingsManagersRoute,
   AuthenticatedSettingsNotificationsRoute:
