@@ -244,6 +244,7 @@ function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
+      <SectionSwitcher items={ADMIN_TABS} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
