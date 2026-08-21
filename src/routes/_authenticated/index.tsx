@@ -196,7 +196,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("payments")
-        .select("id,invoice_id,amount_paid,payment_method,reference_no,payment_date,tenants(full_name)")
+        .select("id,invoice_id,tenant_id,amount_paid,payment_method,reference_no,payment_date,tenants(full_name)")
         .gte("payment_date", `${monthKey}-01`)
         .order("payment_date", { ascending: false });
       return data ?? [];
