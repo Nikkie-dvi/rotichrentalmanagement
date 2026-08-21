@@ -267,6 +267,68 @@ function Dashboard() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // One-tap reminders / receipts straight from the dashboard drill-downs.
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [notifyingAll, setNotifyingAll] = useState(false);
+
+  const remindOne = async (invoiceId: string) => {
+    setBusyId(invoiceId);
+    try {
+      await sendLateFeeNoticeSms({ data: { invoiceId } });
+      toast.success("Reminder texted to the tenant");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not send the reminder");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const remindAllArrears = async () => {
+    setNotifyingAll(true);
+    try {
+      const res: any = await notifyMyTenants({
+        data: {
+          title: "Rent arrears reminder",
+          body: "You have an outstanding rent balance. Kindly clear it as soon as possible to avoid a late fee.",
+          audience: "overdue",
+          push: true,
+          sms: true,
+        },
+      });
+      if (res.recipients === 0) toast.info("No tenants with arrears to notify");
+      else
+        toast.success(
+          `Notified ${res.recipients} tenant(s) — ${res.sent} app alert(s) + ${res.smsSent} SMS`,
+          { description: res.smsSkippedNoCredit ? `${res.smsSkippedNoCredit} skipped (no SMS credit)` : undefined },
+        );
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not notify tenants");
+    } finally {
+      setNotifyingAll(false);
+    }
+  };
+
+  const textReceipt = async (p: any) => {
+    setBusyId(p.id);
+    try {
+      await sendPaymentReceiptSms({
+        data: {
+          tenantId: p.tenant_id ?? p.tenants?.id,
+          amount: Number(p.amount_paid),
+          paymentDate: p.payment_date,
+          method: p.payment_method,
+          reference: p.reference_no ?? null,
+        },
+      });
+      toast.success("Receipt texted to the tenant");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not send the receipt");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+
   const drillTitle: Record<Exclude<DrillKey, null>, string> = {
     units: "All Units",
     occupancy: "Occupied Units",
