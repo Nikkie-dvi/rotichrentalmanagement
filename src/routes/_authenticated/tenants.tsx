@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
+import { TenantCreditDialog } from "@/components/tenant-credit-dialog";
+import { runCreditWatch } from "@/lib/credit.functions";
 import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
 import { createFirstRentInvoice } from "@/lib/first-invoice";
 import { SectionSwitcher, PEOPLE_TABS } from "@/components/section-switcher";
