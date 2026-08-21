@@ -572,10 +572,11 @@ function Dashboard() {
                   );
                 })}
                 {arrearsList && arrearsList.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No outstanding arrears.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">No outstanding arrears.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
+            </>
           )}
 
         </DialogContent>
