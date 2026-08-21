@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Users, Gauge, FileText, Bell, ClipboardCheck, Wrench, ShieldCheck, FileSignature, BarChart3, Wallet, UserCog, AlarmClock, ImageUp } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Gauge, FileText, Bell, Wrench, FileSignature, BarChart3, Wallet, UserCog, AlarmClock } from "lucide-react";
 import { useIsSuperAdmin, useIsPropertyManager } from "@/hooks/use-landlord-account";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { AppLogo } from "@/components/app-logo";
@@ -18,8 +18,7 @@ import {
 const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Properties & Units", url: "/properties", icon: Building2 },
-  { title: "Tenants", url: "/tenants", icon: Users },
-  { title: "Applications", url: "/applications", icon: ClipboardCheck },
+  { title: "Tenants & Applications", url: "/tenants", icon: Users },
   { title: "Leases & Template", url: "/leases", icon: FileSignature },
   { title: "Issues & Move-outs", url: "/maintenance", icon: Wrench },
   { title: "Meter Readings", url: "/meters", icon: Gauge },
@@ -39,10 +38,9 @@ export function AppSidebar() {
   const isManager = useIsPropertyManager();
   const counts = usePendingCounts();
   const badgeFor = (url: string) =>
-    url === "/applications" ? counts.applications
-    : url === "/maintenance" ? counts.issues
+    url === "/maintenance" ? counts.issues
     : url === "/billing" ? counts.unpaidInvoices + counts.overdueInvoices
-    : url === "/tenants" ? counts.moveOuts
+    : url === "/tenants" ? counts.moveOuts + counts.applications
     : 0;
   // Money in is good news — everything else is something to act on.
   const toneFor = (_url: string) => "bg-destructive text-destructive-foreground";
@@ -50,9 +48,7 @@ export function AppSidebar() {
   const menu = isSuper
     ? [
         ...base,
-        { title: "Landlord accounts", url: "/landlords", icon: ShieldCheck },
-        { title: "CEO Analytics", url: "/analytics", icon: BarChart3 },
-        { title: "App Branding", url: "/settings/branding", icon: ImageUp },
+        { title: "Analytics, Landlords & Branding", url: "/analytics", icon: BarChart3 },
       ]
     : base;
   return (
@@ -77,7 +73,11 @@ export function AppSidebar() {
                     ? ["/billing", "/payments", "/reports"]
                     : item.url === "/leases"
                       ? ["/leases", "/settings/lease"]
-                      : [item.url];
+                      : item.url === "/tenants"
+                        ? ["/tenants", "/applications"]
+                        : item.url === "/analytics"
+                          ? ["/analytics", "/landlords", "/settings/branding"]
+                          : [item.url];
                 const active = group.includes(pathname);
                 const count = badgeFor(item.url);
                 const tone = toneFor(item.url);

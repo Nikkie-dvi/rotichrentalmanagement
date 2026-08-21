@@ -14,6 +14,7 @@ import { money } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SmsRechargeAdmin } from "@/components/sms-recharge-admin";
 
+import { SectionSwitcher, ADMIN_TABS } from "@/components/section-switcher";
 import {
   useIsSuperAdmin,
   subscriptionState,
@@ -328,6 +329,7 @@ function LandlordsPage() {
 
   return (
     <div className="space-y-4">
+      <SectionSwitcher items={ADMIN_TABS} />
       <div>
         <h1 className="text-2xl font-semibold">Landlord accounts</h1>
         <p className="text-sm text-muted-foreground">
