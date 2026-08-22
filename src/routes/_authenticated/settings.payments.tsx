@@ -125,13 +125,12 @@ function RentPaymentSettingsPage() {
     qc.invalidateQueries({ queryKey: ["landlord-account"] });
 
     // Push + SMS the change to every tenant right away.
+    const details = `Pay rent via ${paymentMethodLabel(method)}${number.trim() ? ` to ${number.trim()}` : ""}.`;
     try {
       const res = await notifyMyTenants({
         data: {
           title: "Payment details updated",
-          body: note.trim()
-            ? note.trim()
-            : `Pay rent via ${paymentMethodLabel(method)}${number.trim() ? ` to ${number.trim()}` : ""}.`,
+          body: note.trim() ? `${details} ${note.trim()}` : details,
           tag: `pay-details-${Date.now()}`,
           push: viaPush,
           sms: viaSms,
