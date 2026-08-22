@@ -22,6 +22,7 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [notifySms, setNotifySms] = useState(true);
+  const [drafts, setDrafts] = useState<{ category: string; amount: number; description: string }[]>([]);
   const { data: items } = useInvoiceLineItems(invoice?.id);
 
   const refresh = () => {
