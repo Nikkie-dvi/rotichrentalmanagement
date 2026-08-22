@@ -35,8 +35,19 @@ export async function notifyTenantOfCharge(args: {
   const message = `Hi ${first}, ${args.label} of ${money(args.amount)} was added to your ${args.month} invoice.${detail} Your balance is now ${money(args.balance)}.`;
 
   const logs: any[] = [];
+  let smsSkippedNoCredit = false;
 
-  if ((settings as any)?.sms_enabled !== false) {
+  if ((settings as any)?.sms_enabled !== false && (tenant as any).phone_number) {
+    // Flat 1.2 KES per SMS from the landlord's wallet — no credit, no SMS.
+    const { data: walletBalance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
+      _owner: args.ownerId,
+      _count: 1,
+      _reason: "charge_alert",
+      _note: args.label,
+    } as never);
+    if (chargeErr || walletBalance === null) {
+      smsSkippedNoCredit = true;
+    } else {
     const res = await sendSms((tenant as any).phone_number, message);
     logs.push({
       owner_id: args.ownerId,
