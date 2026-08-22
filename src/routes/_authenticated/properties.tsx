@@ -426,3 +426,40 @@ function UnitForm({
     </form>
   );
 }
+
+/**
+ * Repricing helper: when a unit's base rent changes, every rent still owed on
+ * that unit must change with it. Only invoices that still carry the OLD rent
+ * and are not fully paid are touched, so history stays intact.
+ * Returns how many invoices were adjusted.
+ */
+async function repriceOpenInvoices(unitId: string, oldRent: number, newRent: number) {
+  const { data: tenants } = await supabase.from("tenants").select("id").eq("unit_id", unitId);
+  const ids = (tenants ?? []).map((t: any) => t.id);
+  if (ids.length === 0) return 0;
+
+  const { data: invoices } = await supabase
+    .from("invoices")
+    .select("id,base_rent,total_due,balance_remaining")
+    .in("tenant_id", ids)
+    .gt("balance_remaining", 0);
+
+  const delta = newRent - oldRent;
+  let count = 0;
+  for (const inv of invoices ?? []) {
+    if (Number((inv as any).base_rent) !== oldRent) continue;
+    const total = Math.max(0, Number((inv as any).total_due) + delta);
+    const balance = Math.max(0, Math.min(total, Number((inv as any).balance_remaining) + delta));
+    const { error } = await supabase
+      .from("invoices")
+      .update({
+        base_rent: newRent,
+        total_due: total,
+        balance_remaining: balance,
+        status: balance === 0 ? "paid" : balance < total ? "partial" : "unpaid",
+      })
+      .eq("id", (inv as any).id);
+    if (!error) count += 1;
+  }
+  return count;
+}
