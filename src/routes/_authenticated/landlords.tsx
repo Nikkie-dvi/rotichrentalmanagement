@@ -241,12 +241,14 @@ function LandlordsPage() {
 
 
   const Row = ({ row }: { row: LandlordAccount }) => {
-    const [expanded, setExpanded] = useState(false);
+    const expanded = expandedIds.includes(row.id);
+    const setExpanded = () =>
+      setExpandedIds((ids) => (ids.includes(row.id) ? ids.filter((i) => i !== row.id) : [...ids, row.id]));
     return (
       <div className="rounded-lg border">
         <button
           type="button"
-          onClick={() => setExpanded((v) => !v)}
+          onClick={setExpanded}
           aria-expanded={expanded}
           className="flex w-full items-center gap-2 p-3 text-left"
         >
