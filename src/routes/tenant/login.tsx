@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { PasswordField } from "@/components/password-field";
 import { toast } from "sonner";
 import { tenantSignInWithPhone } from "@/lib/tenant-auth.functions";
 import { lovable } from "@/integrations/lovable";
@@ -91,10 +92,7 @@ function TenantLoginPage() {
               />
               <p className="text-xs text-muted-foreground">Use the phone number your landlord has on file, or your email.</p>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
+            <PasswordField id="password" value={password} onChange={setPassword} required />
             <Button type="submit" disabled={loading} size="lg">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign in

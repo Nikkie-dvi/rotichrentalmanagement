@@ -59,6 +59,10 @@ function AuthPage() {
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && password !== confirmPassword) {
+      toast.error("Passwords don't match — check both boxes");
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "signup") {

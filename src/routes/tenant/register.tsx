@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle2, ChevronLeft, Search, AlertCircle, Home, RefreshCw } from "lucide-react";
+import { PasswordField } from "@/components/password-field";
 import { toast } from "sonner";
 import { SignaturePad, type SignatureValue } from "@/components/tenant/signature-pad";
 import { unitTypeLabel } from "@/lib/unit-types";
@@ -46,6 +47,7 @@ function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [unitId, setUnitId] = useState<string>("");
   const [signature, setSignature] = useState<SignatureValue | null>(null);
   const [agreed, setAgreed] = useState(false);
@@ -82,6 +84,7 @@ function RegisterPage() {
     if (!/^\+?[0-9 ()-]{7,20}$/.test(phone.trim())) return "Enter a valid phone number";
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return "Enter a valid email";
     if (password.length < 8) return "Password must be at least 8 characters";
+    if (password !== confirmPassword) return "Passwords don't match — check both boxes";
     return null;
   };
 
@@ -204,11 +207,18 @@ function RegisterPage() {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} autoComplete="email" required />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} autoComplete="new-password" required />
-              <p className="text-xs text-muted-foreground">At least 8 characters.</p>
-            </div>
+            <PasswordField
+              id="password"
+              value={password}
+              onChange={setPassword}
+              minLength={8}
+              autoComplete="new-password"
+              required
+              confirm
+              confirmValue={confirmPassword}
+              onConfirmChange={setConfirmPassword}
+              hint="At least 8 characters. Tap the eye to check what you typed."
+            />
             <Button size="lg" onClick={goNext}>Continue</Button>
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
