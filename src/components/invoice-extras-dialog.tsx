@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { money } from "@/lib/types";
 import { useInvoiceLineItems } from "@/components/invoice-charges";
-import { addInvoiceCharge, removeInvoiceCharge, waiveLateFee } from "@/lib/billing.functions";
+import { addInvoiceCharges, removeInvoiceCharge, waiveLateFee } from "@/lib/billing.functions";
 import { sendLateFeeNoticeSms } from "@/lib/receipts.functions";
 
 const PRESETS = ["Watchman fee", "Water bill", "Electricity", "Garbage collection", "Service charge", "Repairs"];
@@ -22,6 +22,7 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [notifySms, setNotifySms] = useState(true);
+  const [drafts, setDrafts] = useState<{ category: string; amount: number; description: string }[]>([]);
   const { data: items } = useInvoiceLineItems(invoice?.id);
 
   const refresh = () => {
@@ -30,17 +31,37 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
     qc.invalidateQueries();
   };
 
+  const stage = () => {
+    const amt = Number(amount);
+    if (!category.trim() || !(amt > 0)) return;
+    setDrafts((d) => [...d, { category: category.trim(), amount: Math.round(amt), description: description.trim() }]);
+    setCategory("");
+    setAmount("");
+    setDescription("");
+  };
+
   const add = useMutation({
-    mutationFn: async () =>
-      addInvoiceCharge({
-        data: { invoiceId: invoice.id, category, amount: Number(amount), description: description || undefined, notify: notifySms },
-      }),
-    onSuccess: () => {
+    mutationFn: async () => {
+      const amt = Number(amount);
+      const pending = [...drafts];
+      if (category.trim() && amt > 0) {
+        pending.push({ category: category.trim(), amount: Math.round(amt), description: description.trim() });
+      }
+      return addInvoiceCharges({ data: { invoiceId: invoice.id, items: pending, notify: notifySms } });
+    },
+    onSuccess: (r: any) => {
       setCategory("");
       setAmount("");
       setDescription("");
+      setDrafts([]);
       refresh();
-      toast.success(notifySms ? "Charge added — the tenant has been notified" : "Charge added (no message sent)");
+      if (notifySms && r?.smsSkippedNoCredit) {
+        toast.error("Charges added, but no SMS was sent — your SMS balance is empty. Request a recharge.");
+      } else {
+        toast.success(
+          `${r?.added ?? 1} charge${(r?.added ?? 1) > 1 ? "s" : ""} added${notifySms ? " — the tenant has been notified" : " (no message sent)"}`,
+        );
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -119,7 +140,29 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
           </div>
 
           <div className="grid gap-2 rounded-lg border p-3">
-            <Label>Add a charge</Label>
+            <Label>Add charges</Label>
+            {drafts.length > 0 && (
+              <div className="space-y-1">
+                {drafts.map((d, idx) => (
+                  <div key={`${d.category}-${idx}`} className="flex items-center gap-2 rounded-md bg-muted/50 px-2 py-1 text-sm">
+                    <span className="min-w-0 flex-1 truncate">{d.category}</span>
+                    <span>{money(d.amount)}</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      aria-label={`Remove ${d.category} from list`}
+                      onClick={() => setDrafts((list) => list.filter((_, i) => i !== idx))}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  {drafts.length} charge{drafts.length > 1 ? "s" : ""} ready — total {money(drafts.reduce((s, d) => s + d.amount, 0))}
+                </p>
+              </div>
+            )}
             <div className="flex flex-wrap gap-1">
               {PRESETS.map((p) => (
                 <Button key={p} type="button" size="sm" variant={category === p ? "default" : "outline"} onClick={() => setCategory(p)}>
@@ -130,18 +173,24 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
             <Input placeholder="Charge name" value={category} onChange={(e) => setCategory(e.target.value)} />
             <Input type="number" min="1" placeholder="Amount (KES)" value={amount} onChange={(e) => setAmount(e.target.value)} />
             <Input placeholder="Note shown to tenant (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Button type="button" variant="outline" onClick={stage} disabled={!category.trim() || !(Number(amount) > 0)}>
+              <Plus className="h-4 w-4" />Add another charge
+            </Button>
             <label className="flex items-start gap-2 rounded-lg border p-2 text-sm">
               <Checkbox checked={notifySms} onCheckedChange={(v) => setNotifySms(v === true)} className="mt-0.5" />
               <span>
-                Text the tenant about this charge
+                Text the tenant about these charges
                 <span className="block text-xs text-muted-foreground">
-                  The SMS names the charge and lists the full bill breakdown, including any late fee.
+                  One SMS lists every charge plus the full bill breakdown, including any late fee. Costs KES 1.20 from your SMS balance.
                 </span>
               </span>
             </label>
-            <Button onClick={() => add.mutate()} disabled={add.isPending || !category.trim() || !(Number(amount) > 0)}>
+            <Button
+              onClick={() => add.mutate()}
+              disabled={add.isPending || (drafts.length === 0 && (!category.trim() || !(Number(amount) > 0)))}
+            >
               {add.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              {notifySms ? "Add & notify tenant" : "Add charge"}
+              {notifySms ? "Save & notify tenant" : "Save charges"}
             </Button>
           </div>
 

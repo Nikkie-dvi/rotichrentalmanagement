@@ -52,9 +52,10 @@ export const addInvoiceCharge = createServerFn({ method: "POST" })
       .eq("id", invoice.id);
     if (upErr) throw new Error(upErr.message);
 
+    let smsSkippedNoCredit = false;
     if (data.notify) {
       const { notifyTenantOfCharge } = await import("@/lib/billing-notify.server");
-      await notifyTenantOfCharge({
+      const r = await notifyTenantOfCharge({
         ownerId: (invoice as any).owner_id,
         tenantId: (invoice as any).tenant_id,
         invoiceId: invoice.id,
@@ -63,9 +64,84 @@ export const addInvoiceCharge = createServerFn({ method: "POST" })
         balance: newBalance,
         month: (invoice as any).month_year,
       });
+      smsSkippedNoCredit = !!(r as any)?.smsSkippedNoCredit;
     }
 
-    return { ok: true, total: newTotal, balance: newBalance };
+    return { ok: true, total: newTotal, balance: newBalance, smsSkippedNoCredit };
+  });
+
+/** Adds several extra charges to one invoice at once, with a single tenant alert. */
+export const addInvoiceCharges = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: {
+    invoiceId: string;
+    items: { category: string; amount: number; description?: string }[];
+    notify?: boolean;
+  }) => {
+    if (!data?.invoiceId) throw new Error("Invoice is required");
+    const items = (data?.items ?? [])
+      .map((i) => ({
+        category: (i?.category ?? "").trim().slice(0, 60),
+        amount: Math.round(Number(i?.amount)),
+        description: (i?.description ?? "").trim().slice(0, 200) || null,
+      }))
+      .filter((i) => i.category && Number.isFinite(i.amount) && i.amount > 0);
+    if (items.length === 0) throw new Error("Add at least one charge with a name and amount");
+    return { invoiceId: data.invoiceId, items, notify: data.notify !== false };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: invoice, error } = await supabase
+      .from("invoices")
+      .select("id, owner_id, tenant_id, month_year, total_due, balance_remaining, other_amount")
+      .eq("id", data.invoiceId)
+      .maybeSingle();
+    if (error || !invoice) throw new Error(error?.message ?? "Invoice not found");
+
+    const sum = data.items.reduce((s, i) => s + i.amount, 0);
+
+    const { error: itemErr } = await supabase.from("invoice_line_items").insert(
+      data.items.map((i) => ({
+        invoice_id: invoice.id,
+        owner_id: (invoice as any).owner_id,
+        category: i.category,
+        amount: i.amount,
+        description: i.description,
+        kind: "extra",
+      })) as never,
+    );
+    if (itemErr) throw new Error(itemErr.message);
+
+    const newTotal = Number((invoice as any).total_due) + sum;
+    const newBalance = Number((invoice as any).balance_remaining) + sum;
+    const { error: upErr } = await supabase
+      .from("invoices")
+      .update({
+        total_due: newTotal,
+        balance_remaining: newBalance,
+        other_amount: Number((invoice as any).other_amount ?? 0) + sum,
+        status: newBalance > 0 ? "unpaid" : "paid",
+      })
+      .eq("id", invoice.id);
+    if (upErr) throw new Error(upErr.message);
+
+    let smsSkippedNoCredit = false;
+    if (data.notify) {
+      const { notifyTenantOfCharge } = await import("@/lib/billing-notify.server");
+      const label = data.items.map((i) => i.category).join(", ");
+      const r = await notifyTenantOfCharge({
+        ownerId: (invoice as any).owner_id,
+        tenantId: (invoice as any).tenant_id,
+        invoiceId: invoice.id,
+        label,
+        amount: sum,
+        balance: newBalance,
+        month: (invoice as any).month_year,
+      });
+      smsSkippedNoCredit = !!(r as any)?.smsSkippedNoCredit;
+    }
+
+    return { ok: true, added: data.items.length, total: newTotal, balance: newBalance, smsSkippedNoCredit };
   });
 
 /** Removes an extra charge and rolls the invoice totals back. */
