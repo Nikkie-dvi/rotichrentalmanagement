@@ -1,5 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { usePendingCounts } from "@/hooks/use-pending-counts";
 
 export type SwitcherItem = { label: string; url: string };
 
@@ -38,6 +39,27 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const index = items.findIndex((i) => i.url === pathname);
+  const counts = usePendingCounts();
+
+  /** How many items on each tab still need attention. */
+  const badgeFor = (url: string): number => {
+    switch (url) {
+      case "/billing":
+        return counts.overdueInvoices;
+      case "/payments":
+        return counts.recentPayments;
+      case "/leases":
+        return counts.unsignedLeases;
+      case "/tenants":
+        return counts.issues;
+      case "/applications":
+        return counts.applications;
+      case "/landlords":
+        return counts.pendingLandlords;
+      default:
+        return 0;
+    }
+  };
 
   const move = (dir: 1 | -1) => {
     if (index < 0) return;
@@ -82,6 +104,11 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
               >
                 {item.label}
               </motion.span>
+              {badgeFor(item.url) > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 z-20 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground shadow">
+                  {badgeFor(item.url) > 99 ? "99+" : badgeFor(item.url)}
+                </span>
+              )}
             </Link>
           );
         })}
