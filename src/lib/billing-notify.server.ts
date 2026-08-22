@@ -59,7 +59,9 @@ export async function notifyTenantOfCharge(args: {
       status: res.ok ? "delivered" : "failed",
       error: res.error ?? null,
     });
+    }
   }
+
 
   if ((settings as any)?.email_enabled !== false) {
     logs.push({
