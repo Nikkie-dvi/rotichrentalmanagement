@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Building2, User, LogIn, UserPlus } from "lucide-react";
+import { PasswordField } from "@/components/password-field";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -32,6 +33,7 @@ function AuthPage() {
   const redirected = useRef(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
 
@@ -57,6 +59,10 @@ function AuthPage() {
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && password !== confirmPassword) {
+      toast.error("Passwords don't match — check both boxes");
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -151,17 +157,19 @@ function AuthPage() {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">{isSignup ? "Choose a password" : "Password"}</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={isSignup ? 6 : undefined}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+            <PasswordField
+              id="password"
+              label={isSignup ? "Choose a password" : "Password"}
+              value={password}
+              onChange={setPassword}
+              required
+              minLength={isSignup ? 6 : undefined}
+              autoComplete={isSignup ? "new-password" : "current-password"}
+              confirm={isSignup}
+              confirmValue={confirmPassword}
+              onConfirmChange={setConfirmPassword}
+              hint={isSignup ? "At least 6 characters. Tap the eye to check what you typed." : undefined}
+            />
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSignup ? "Create my landlord account" : "Sign in"}

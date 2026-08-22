@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, KeyRound, MailCheck } from "lucide-react";
+import { PasswordField } from "@/components/password-field";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/reset-password")({
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPasswordPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [recovering, setRecovering] = useState(false);
@@ -62,6 +64,10 @@ function ResetPasswordPage() {
       toast.error("Use at least 8 characters");
       return;
     }
+    if (password !== confirmPassword) {
+      toast.error("Passwords don't match — check both boxes");
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
@@ -91,18 +97,20 @@ function ResetPasswordPage() {
         <CardContent className="space-y-4">
           {recovering ? (
             <form onSubmit={savePassword} className="grid gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="new-password">New password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  minLength={8}
-                  required
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+              <PasswordField
+                id="new-password"
+                label="New password"
+                value={password}
+                onChange={setPassword}
+                minLength={8}
+                autoComplete="new-password"
+                required
+                confirm
+                confirmValue={confirmPassword}
+                onConfirmChange={setConfirmPassword}
+                confirmLabel="Confirm new password"
+                hint="At least 8 characters. Tap the eye to check what you typed."
+              />
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save new password
               </Button>
