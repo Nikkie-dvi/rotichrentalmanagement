@@ -80,6 +80,7 @@ function statusBadge(status: string) {
 function DashboardPage() {
   const navigate = useNavigate();
   const [leaseOpen, setLeaseOpen] = useState(false);
+  const [mode, setMode] = useState<ModeKey>("details");
   const landlordInfoQuery = useQuery({
     queryKey: ["tenant", "landlord-info"],
     queryFn: () => getMyLandlordInfo(),
