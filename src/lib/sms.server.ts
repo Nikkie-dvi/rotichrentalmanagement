@@ -17,7 +17,9 @@ export function toKenyanMsisdn(raw: string | null | undefined): string | null {
 export async function sendSms(to: string, message: string): Promise<SmsResult> {
   const key = process.env["SMSLEOPARD_API_KEY"];
   const secret = process.env["SMSLEOPARD_API_SECRET"];
-  const sender = process.env["SMSLEOPARD_SENDER_ID"] || "SMS_TEST";
+  // Falling back to a sender ID the account does not own makes the provider
+  // reply "no valid recipients", so default to the live one.
+  const sender = process.env["SMSLEOPARD_SENDER_ID"] || "SMS_Leopard";
   if (!key || !secret) return { ok: false, status: "failed", error: "SMS Leopard credentials are not configured" };
 
   const destination = toKenyanMsisdn(to);
@@ -50,7 +52,11 @@ export async function sendSms(to: string, message: string): Promise<SmsResult> {
     if (body?.success === false) {
       return { ok: false, status: "failed", error: String(body?.message ?? text).slice(0, 300) };
     }
-    return { ok: true, status: "sent", id: body?.recipients?.[0]?.id ?? body?.id };
+    const recipient = body?.recipients?.[0];
+    if (recipient?.status === "failed") {
+      return { ok: false, status: "failed", error: `Delivery rejected for ${recipient.number ?? destination}` };
+    }
+    return { ok: true, status: recipient?.status ?? "sent", id: recipient?.id ?? body?.id };
   } catch (e: any) {
     return { ok: false, status: "failed", error: e?.message ?? "SMS request failed" };
   }
