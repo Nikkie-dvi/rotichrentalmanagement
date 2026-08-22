@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { getSmsWallet, requestSmsRecharge } from "@/lib/sms-wallet.functions";
+import { requestSmsRecharge } from "@/lib/sms-wallet.functions";
+import { fetchSmsWalletSafe } from "@/lib/sms-wallet-client";
 
 const ksh = (n: number) => `KES ${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 
@@ -21,7 +22,8 @@ export function SmsCreditCard() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["sms-wallet"],
-    queryFn: () => getSmsWallet(),
+    queryFn: fetchSmsWalletSafe,
+    retry: false,
     refetchOnWindowFocus: true,
   });
 

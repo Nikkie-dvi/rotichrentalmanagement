@@ -6,14 +6,15 @@ import { MessageSquare, Users, ClipboardList, Wrench, Settings, FileSignature, A
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getSmsWallet } from "@/lib/sms-wallet.functions";
+import { fetchSmsWalletSafe } from "@/lib/sms-wallet-client";
 
 const ksh = (n: number) => `KES ${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 
 export function SuggestedShortcuts() {
   const { data: wallet } = useQuery({
     queryKey: ["sms-wallet"],
-    queryFn: () => getSmsWallet(),
+    queryFn: fetchSmsWalletSafe,
+    retry: false,
     refetchOnWindowFocus: true,
   });
 
