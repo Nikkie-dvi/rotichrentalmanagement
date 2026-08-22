@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { money } from "@/lib/types";
 import { useInvoiceLineItems } from "@/components/invoice-charges";
-import { addInvoiceCharge, removeInvoiceCharge, waiveLateFee } from "@/lib/billing.functions";
+import { addInvoiceCharges, removeInvoiceCharge, waiveLateFee } from "@/lib/billing.functions";
 import { sendLateFeeNoticeSms } from "@/lib/receipts.functions";
 
 const PRESETS = ["Watchman fee", "Water bill", "Electricity", "Garbage collection", "Service charge", "Repairs"];
