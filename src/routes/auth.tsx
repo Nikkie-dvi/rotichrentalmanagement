@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Building2, User, LogIn, UserPlus } from "lucide-react";
+import { PasswordField } from "@/components/password-field";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -32,6 +33,7 @@ function AuthPage() {
   const redirected = useRef(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
 
