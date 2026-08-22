@@ -86,9 +86,18 @@ function PropertiesPage() {
   const saveUnit = useMutation({
     mutationFn: async ({ tenantId, ...v }: any) => {
       let unitId = editing?.id as string | undefined;
+      let repriced = 0;
       if (editing) {
         const { error } = await supabase.from("units").update(v).eq("id", editing.id);
         if (error) throw error;
+        // Changing the base rent must also reprice rent still owed, otherwise the
+        // landlord arrears (built from invoices) drifts from the tenant portal
+        // balance (built from the unit's current rent).
+        const oldRent = Number(editing.rent_amount ?? 0);
+        const newRent = Number(v.rent_amount ?? 0);
+        if (oldRent !== newRent) {
+          repriced = await repriceOpenInvoices(editing.id, oldRent, newRent);
+        }
       } else {
         const { data, error } = await supabase.from("units").insert(v).select("id").single();
         if (error) throw error;
@@ -104,19 +113,21 @@ function PropertiesPage() {
         const { error: sErr } = await supabase.from("units").update({ status: "occupied" }).eq("id", unitId);
         if (sErr) throw sErr;
       }
+      return { repriced };
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["units-full"] });
-      qc.invalidateQueries({ queryKey: ["tenants"] });
-      qc.invalidateQueries({ queryKey: ["assignable-tenants"] });
-      qc.invalidateQueries({ queryKey: ["summary"] });
-      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    onSuccess: (res) => {
+      qc.invalidateQueries();
       setUnitOpen(false);
       setEditing(null);
-      toast.success("Unit saved");
+      toast.success(
+        res?.repriced
+          ? `Unit saved — ${res.repriced} unpaid invoice(s) repriced to the new rent`
+          : "Unit saved",
+      );
     },
     onError: (e: any) => toast.error(e.message),
   });
+
 
   const deleteProperty = useMutation({
     mutationFn: async (id: string) => {
