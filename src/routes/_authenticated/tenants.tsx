@@ -16,6 +16,8 @@ import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
 import { TenantCreditDialog } from "@/components/tenant-credit-dialog";
 import { runCreditWatch } from "@/lib/credit.functions";
+import { accruedRent, buildLedger, type Ledger } from "@/lib/ledger";
+
 import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
 import { createFirstRentInvoice } from "@/lib/first-invoice";
 import { SectionSwitcher, PEOPLE_TABS } from "@/components/section-switcher";
@@ -105,35 +107,47 @@ function TenantsPage() {
   });
 
   /**
-   * Real account statement per tenant:
-   *  - arrears  = money still owed on issued invoices
-   *  - credit   = money paid over and above everything invoiced so far,
-   *               plus/minus any manual credit edits the landlord made
-   * A tenant can only be "paid ahead" when they have credit AND no arrears.
+   * Real account statement per tenant, built with the SAME shared helper the
+   * tenant portal uses, so the credit/arrears here is exactly the balance the
+   * tenant sees (including rent that has fallen due but is not invoiced yet).
    */
   const ledgers = useMemo(() => {
-    const map = new Map<string, { invoiced: number; paid: number; arrears: number; credit: number; adjustments: number }>();
+    const totals = new Map<string, { invoiced: number; paid: number; adjustments: number }>();
     const get = (id: string) => {
-      let l = map.get(id);
-      if (!l) map.set(id, (l = { invoiced: 0, paid: 0, arrears: 0, credit: 0, adjustments: 0 }));
+      let l = totals.get(id);
+      if (!l) totals.set(id, (l = { invoiced: 0, paid: 0, adjustments: 0 }));
       return l;
     };
-    for (const inv of unpaidInvoices ?? []) {
-      const l = get(inv.tenant_id);
-      l.invoiced += Number((inv as any).total_due ?? 0);
-      l.arrears += Math.max(0, Number(inv.balance_remaining));
-    }
+    for (const inv of unpaidInvoices ?? []) get((inv as any).tenant_id).invoiced += Number((inv as any).total_due ?? 0);
     for (const p of allPayments ?? []) get((p as any).tenant_id).paid += Number((p as any).amount_paid ?? 0);
     for (const a of creditAdjustments ?? []) get((a as any).tenant_id).adjustments += Number((a as any).delta ?? 0);
-    for (const l of map.values()) l.credit = Math.max(0, l.paid - l.invoiced + l.adjustments);
+
+    const map = new Map<string, Ledger>();
+    for (const t of (tenants ?? []) as any[]) {
+      const totalsFor = totals.get(t.id) ?? { invoiced: 0, paid: 0, adjustments: 0 };
+      map.set(
+        t.id,
+        buildLedger({
+          ...totalsFor,
+          accrued: t.active
+            ? accruedRent({
+                rentAmount: t.units?.rent_amount,
+                moveInDate: t.move_in_date,
+                rentDueDay: t.rent_due_day,
+              })
+            : 0,
+        }),
+      );
+    }
     return map;
-  }, [unpaidInvoices, allPayments, creditAdjustments]);
+  }, [tenants, unpaidInvoices, allPayments, creditAdjustments]);
 
   const balances = useMemo(() => {
     const map = new Map<string, number>();
-    for (const [id, l] of ledgers) map.set(id, l.arrears - l.credit);
+    for (const [id, l] of ledgers) map.set(id, -l.net);
     return map;
   }, [ledgers]);
+
 
 
   const { data: vacantUnits } = useQuery({
@@ -387,7 +401,7 @@ function TenantsPage() {
 
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
-          const ledger = ledgers.get(t.id) ?? { invoiced: 0, paid: 0, arrears: 0, credit: 0, adjustments: 0 };
+          const ledger = ledgers.get(t.id) ?? buildLedger({ invoiced: 0, paid: 0 });
           const balance = balances?.get(t.id) ?? 0;
           const risk: Risk = risks.get(t.id) ?? {
             level: balance > 0 ? "soon" : balance < 0 ? "credit" : "clear",
@@ -433,7 +447,7 @@ function TenantsPage() {
   );
 }
 
-type Ledger = { invoiced: number; paid: number; arrears: number; credit: number; adjustments?: number };
+
 
 function TenantCard({
   tenant: t,
@@ -507,7 +521,17 @@ function TenantCard({
           <div className="rounded-lg border bg-muted/30 p-3">
             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account statement</div>
             <Row label="Total invoiced" value={money(ledger.invoiced)} />
+            {ledger.uninvoiced > 0 && (
+              <div className="flex justify-between py-1">
+                <span className="text-muted-foreground">Rent due, not invoiced yet</span>
+                <span className="font-medium text-amber-600 dark:text-amber-400">{money(ledger.uninvoiced)}</span>
+              </div>
+            )}
+            <Row label="Total owed to date" value={money(ledger.owed)} />
             <Row label="Total paid" value={money(ledger.paid)} />
+            {ledger.adjustments !== 0 && (
+              <Row label="Credit edits by you" value={money(ledger.adjustments)} />
+            )}
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">Arrears still owed</span>
               <span className={ledger.arrears > 0 ? "font-semibold text-destructive" : "font-medium"}>
@@ -521,13 +545,16 @@ function TenantCard({
               </span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
+              This is exactly the balance the tenant sees on their portal
+              {ledger.uninvoiced > 0 ? ", including rent that has fallen due but has no invoice yet" : ""}.
               {ledger.credit > 0
-                ? "This credit is extra money already paid. It is deducted from the next invoice when it is generated — the tenant is not yet paid up for next month."
+                ? " The credit is extra money already paid and is deducted from the next invoice."
                 : ledger.arrears > 0
-                  ? "Amount still owed on invoices issued so far."
-                  : "Everything invoiced so far has been paid in full."}
+                  ? " The tenant is behind by this amount."
+                  : " The account is fully settled."}
             </p>
           </div>
+
 
           <Row label="Property" value={t.units?.properties?.name ?? "—"} />
           <Row label="Unit" value={t.units?.unit_number ?? "—"} />
