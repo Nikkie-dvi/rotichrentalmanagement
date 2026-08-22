@@ -190,6 +190,7 @@ function DashboardPage() {
 
 
   const rentSettled = net >= 0;
+  const openTickets = (ticketsQuery.data ?? []).filter((x: any) => x.status !== "resolved").length;
 
   useEffect(() => {
     // Subscribe to ticket, invoice and payment updates so changes appear live.
