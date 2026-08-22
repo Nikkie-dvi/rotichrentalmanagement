@@ -105,35 +105,47 @@ function TenantsPage() {
   });
 
   /**
-   * Real account statement per tenant:
-   *  - arrears  = money still owed on issued invoices
-   *  - credit   = money paid over and above everything invoiced so far,
-   *               plus/minus any manual credit edits the landlord made
-   * A tenant can only be "paid ahead" when they have credit AND no arrears.
+   * Real account statement per tenant, built with the SAME shared helper the
+   * tenant portal uses, so the credit/arrears here is exactly the balance the
+   * tenant sees (including rent that has fallen due but is not invoiced yet).
    */
   const ledgers = useMemo(() => {
-    const map = new Map<string, { invoiced: number; paid: number; arrears: number; credit: number; adjustments: number }>();
+    const totals = new Map<string, { invoiced: number; paid: number; adjustments: number }>();
     const get = (id: string) => {
-      let l = map.get(id);
-      if (!l) map.set(id, (l = { invoiced: 0, paid: 0, arrears: 0, credit: 0, adjustments: 0 }));
+      let l = totals.get(id);
+      if (!l) totals.set(id, (l = { invoiced: 0, paid: 0, adjustments: 0 }));
       return l;
     };
-    for (const inv of unpaidInvoices ?? []) {
-      const l = get(inv.tenant_id);
-      l.invoiced += Number((inv as any).total_due ?? 0);
-      l.arrears += Math.max(0, Number(inv.balance_remaining));
-    }
+    for (const inv of unpaidInvoices ?? []) get((inv as any).tenant_id).invoiced += Number((inv as any).total_due ?? 0);
     for (const p of allPayments ?? []) get((p as any).tenant_id).paid += Number((p as any).amount_paid ?? 0);
     for (const a of creditAdjustments ?? []) get((a as any).tenant_id).adjustments += Number((a as any).delta ?? 0);
-    for (const l of map.values()) l.credit = Math.max(0, l.paid - l.invoiced + l.adjustments);
+
+    const map = new Map<string, Ledger>();
+    for (const t of (tenants ?? []) as any[]) {
+      const totalsFor = totals.get(t.id) ?? { invoiced: 0, paid: 0, adjustments: 0 };
+      map.set(
+        t.id,
+        buildLedger({
+          ...totalsFor,
+          accrued: t.active
+            ? accruedRent({
+                rentAmount: t.units?.rent_amount,
+                moveInDate: t.move_in_date,
+                rentDueDay: t.rent_due_day,
+              })
+            : 0,
+        }),
+      );
+    }
     return map;
-  }, [unpaidInvoices, allPayments, creditAdjustments]);
+  }, [tenants, unpaidInvoices, allPayments, creditAdjustments]);
 
   const balances = useMemo(() => {
     const map = new Map<string, number>();
-    for (const [id, l] of ledgers) map.set(id, l.arrears - l.credit);
+    for (const [id, l] of ledgers) map.set(id, -l.net);
     return map;
   }, [ledgers]);
+
 
 
   const { data: vacantUnits } = useQuery({
