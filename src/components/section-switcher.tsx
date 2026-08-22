@@ -38,8 +38,13 @@ export const PEOPLE_TABS: SwitcherItem[] = [
 export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
-  const index = items.findIndex((i) => i.url === pathname);
   const counts = usePendingCounts();
+  /** Optimistic target so the pill slides instantly, before the route commits. */
+  const [pending, setPending] = useState<string | null>(null);
+  useEffect(() => setPending(null), [pathname]);
+  const current = pending ?? pathname;
+  const index = items.findIndex((i) => i.url === current);
+
 
   /** How many items on each tab still need attention. */
   const badgeFor = (url: string): number => {
