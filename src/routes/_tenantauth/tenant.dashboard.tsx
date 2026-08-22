@@ -307,7 +307,7 @@ function DashboardPage() {
       />
 
       {/* Same layout, glass-styled cards */}
-      <div className="mx-auto w-full max-w-3xl p-4 md:p-6">
+      <div className="mx-auto w-full max-w-3xl p-4 pb-32 md:p-6 md:pb-32">
       <TenantBackBar title="Tenant dashboard" />
 
       {/* Header */}
