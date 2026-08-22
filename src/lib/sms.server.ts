@@ -17,7 +17,9 @@ export function toKenyanMsisdn(raw: string | null | undefined): string | null {
 export async function sendSms(to: string, message: string): Promise<SmsResult> {
   const key = process.env["SMSLEOPARD_API_KEY"];
   const secret = process.env["SMSLEOPARD_API_SECRET"];
-  const sender = process.env["SMSLEOPARD_SENDER_ID"] || "SMS_TEST";
+  // Falling back to a sender ID the account does not own makes the provider
+  // reply "no valid recipients", so default to the live one.
+  const sender = process.env["SMSLEOPARD_SENDER_ID"] || "SMS_Leopard";
   if (!key || !secret) return { ok: false, status: "failed", error: "SMS Leopard credentials are not configured" };
 
   const destination = toKenyanMsisdn(to);
