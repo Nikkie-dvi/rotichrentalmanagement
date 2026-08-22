@@ -401,7 +401,7 @@ function TenantsPage() {
 
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
-          const ledger = ledgers.get(t.id) ?? { invoiced: 0, paid: 0, arrears: 0, credit: 0, adjustments: 0 };
+          const ledger = ledgers.get(t.id) ?? buildLedger({ invoiced: 0, paid: 0 });
           const balance = balances?.get(t.id) ?? 0;
           const risk: Risk = risks.get(t.id) ?? {
             level: balance > 0 ? "soon" : balance < 0 ? "credit" : "clear",
