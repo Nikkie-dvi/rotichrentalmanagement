@@ -1,4 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { motion } from "framer-motion";
 
 export type SwitcherItem = { label: string; url: string };
 
@@ -35,29 +36,56 @@ export const PEOPLE_TABS: SwitcherItem[] = [
  */
 export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const navigate = useNavigate();
+  const index = items.findIndex((i) => i.url === pathname);
+
+  const move = (dir: 1 | -1) => {
+    if (index < 0) return;
+    const next = items[Math.min(items.length - 1, Math.max(0, index + dir))];
+    if (next && next.url !== pathname) navigate({ to: next.url });
+  };
 
   return (
     <div className="sticky top-0 z-20 -mx-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <div className="mx-auto inline-flex min-w-full items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 shadow-sm ring-1 ring-inset ring-border/30 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-muted/30 sm:min-w-0">
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.15}
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -40) move(1);
+          else if (info.offset.x > 40) move(-1);
+        }}
+        className="mx-auto inline-flex min-w-full items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 shadow-sm ring-1 ring-inset ring-border/30 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-muted/30 sm:min-w-0"
+      >
         {items.map((item) => {
           const active = pathname === item.url;
           return (
             <Link
               key={item.url}
               to={item.url}
-              className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center text-sm font-semibold uppercase tracking-wide transition-all duration-300 ${
-                active
-                  ? "bg-card text-primary shadow-sm ring-1 ring-border/60 scale-[1.02]"
-                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
-              }`}
-
+              className="relative flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center text-sm font-semibold uppercase tracking-wide"
               aria-current={active ? "page" : undefined}
             >
-              {item.label}
+              {active && (
+                <motion.span
+                  layoutId="section-switcher-pill"
+                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  className="absolute inset-0 rounded-full bg-card shadow-sm ring-1 ring-border/60"
+                />
+              )}
+              <motion.span
+                animate={{ scale: active ? 1.02 : 1 }}
+                transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                className={`relative z-10 block transition-colors duration-300 ${
+                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {item.label}
+              </motion.span>
             </Link>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 }
