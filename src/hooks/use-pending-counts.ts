@@ -9,7 +9,7 @@ export function usePendingCounts() {
     refetchOnWindowFocus: true,
     queryFn: async () => {
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      const [apps, tickets, moveOuts, invoices, overdue, payments] = await Promise.all([
+      const [apps, tickets, moveOuts, invoices, overdue, payments, unsignedLeases, pendingLandlords] = await Promise.all([
         supabase.from("tenants").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
         // Anything the landlord still has to act on.
         supabase.from("maintenance_tickets").select("id", { count: "exact", head: true }).neq("status", "resolved"),
@@ -22,6 +22,15 @@ export function usePendingCounts() {
           .lt("due_date", new Date().toISOString().slice(0, 10)),
         // Money that came in over the last 24h — worth a look on the payments tab.
         supabase.from("payments").select("id", { count: "exact", head: true }).gte("payment_date", since),
+        // Approved tenants who still have not signed their lease.
+        supabase
+          .from("tenants")
+          .select("id", { count: "exact", head: true })
+          .eq("active", true)
+          .eq("approval_status", "approved")
+          .is("lease_signature", null),
+        // Landlord sign-ups waiting on review (super-admin view only; RLS returns 0 otherwise).
+        supabase.from("landlord_accounts").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ]);
       return {
         applications: apps.count ?? 0,
@@ -30,6 +39,8 @@ export function usePendingCounts() {
         unpaidInvoices: invoices.count ?? 0,
         overdueInvoices: overdue.count ?? 0,
         recentPayments: payments.count ?? 0,
+        unsignedLeases: unsignedLeases.count ?? 0,
+        pendingLandlords: pendingLandlords.count ?? 0,
       };
     },
   });
@@ -40,6 +51,8 @@ export function usePendingCounts() {
     unpaidInvoices: data?.unpaidInvoices ?? 0,
     overdueInvoices: data?.overdueInvoices ?? 0,
     recentPayments: data?.recentPayments ?? 0,
+    unsignedLeases: data?.unsignedLeases ?? 0,
+    pendingLandlords: data?.pendingLandlords ?? 0,
     issues: (data?.tickets ?? 0) + (data?.moveOuts ?? 0),
   };
 }
