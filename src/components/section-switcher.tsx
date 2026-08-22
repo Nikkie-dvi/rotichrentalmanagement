@@ -68,7 +68,7 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
   };
 
   return (
-    <div className="sticky top-0 z-20 -mx-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="sticky top-0 z-20 -mx-1 overflow-x-auto pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <motion.div
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
@@ -77,7 +77,7 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
           if (info.offset.x < -40) move(1);
           else if (info.offset.x > 40) move(-1);
         }}
-        className="mx-auto inline-flex min-w-full items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 shadow-sm ring-1 ring-inset ring-border/30 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-muted/30 sm:min-w-0"
+        className="mx-auto inline-flex min-w-full items-center justify-center gap-1 overflow-hidden rounded-full border border-border/50 bg-background/70 p-1 shadow-2xl ring-1 ring-inset ring-foreground/10 backdrop-blur-2xl backdrop-saturate-150 sm:min-w-0"
       >
         {items.map((item) => {
           const active = pathname === item.url;
@@ -85,25 +85,19 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
             <Link
               key={item.url}
               to={item.url}
-              className="relative flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center text-sm font-semibold uppercase tracking-wide"
+              className={`relative flex-1 shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider transition-colors duration-300 sm:text-sm ${
+                active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
               aria-current={active ? "page" : undefined}
             >
               {active && (
                 <motion.span
                   layoutId="section-switcher-pill"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                  className="absolute inset-0 rounded-full bg-card shadow-sm ring-1 ring-border/60"
+                  className="absolute inset-0 -z-10 rounded-full bg-primary shadow-lg"
                 />
               )}
-              <motion.span
-                animate={{ scale: active ? 1.02 : 1 }}
-                transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                className={`relative z-10 block transition-colors duration-300 ${
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {item.label}
-              </motion.span>
+              <span className="relative whitespace-nowrap">{item.label}</span>
               {badgeFor(item.url) > 0 && (
                 <span className="absolute -right-0.5 -top-0.5 z-20 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground shadow">
                   {badgeFor(item.url) > 99 ? "99+" : badgeFor(item.url)}
@@ -115,4 +109,5 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
       </motion.div>
     </div>
   );
+
 }
