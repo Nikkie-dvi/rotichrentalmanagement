@@ -18,6 +18,8 @@ import { LeaseDialog } from "@/components/lease-document";
 import { LeaseCopyActions } from "@/components/tenant/lease-copy-actions";
 import { toast } from "sonner";
 import { accruedRent, buildLedger } from "@/lib/ledger";
+import { AnimatePresence, motion } from "framer-motion";
+import { TenantModeSwitcher, type ModeKey } from "@/components/tenant/mode-switcher";
 
 
 export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
@@ -78,6 +80,7 @@ function statusBadge(status: string) {
 function DashboardPage() {
   const navigate = useNavigate();
   const [leaseOpen, setLeaseOpen] = useState(false);
+  const [mode, setMode] = useState<ModeKey>("details");
   const landlordInfoQuery = useQuery({
     queryKey: ["tenant", "landlord-info"],
     queryFn: () => getMyLandlordInfo(),
@@ -187,6 +190,7 @@ function DashboardPage() {
 
 
   const rentSettled = net >= 0;
+  const openTickets = (ticketsQuery.data ?? []).filter((x: any) => x.status !== "resolved").length;
 
   useEffect(() => {
     // Subscribe to ticket, invoice and payment updates so changes appear live.
@@ -303,7 +307,7 @@ function DashboardPage() {
       />
 
       {/* Same layout, glass-styled cards */}
-      <div className="mx-auto w-full max-w-3xl p-4 md:p-6">
+      <div className="mx-auto w-full max-w-3xl p-4 pb-32 md:p-6 md:pb-32">
       <TenantBackBar title="Tenant dashboard" />
 
       {/* Header */}
@@ -322,6 +326,9 @@ function DashboardPage() {
         </Button>
       </div>
 
+      <AnimatePresence mode="wait" initial={false}>
+      {mode === "details" && (
+      <motion.div key="details" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ type: "spring", stiffness: 320, damping: 32 }}>
       <LandlordMessageCard />
 
       {status === "pending" && (
@@ -530,19 +537,23 @@ function DashboardPage() {
         }}
       />
 
+      </motion.div>
+      )}
+
+      {mode === "pay" && (
+      <motion.div key="pay" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ type: "spring", stiffness: 320, damping: 32 }}>
       <LandlordPaymentCard />
 
       <RentRemindersCard />
+      </motion.div>
+      )}
 
-
+      {mode === "report" && (
+      <motion.div key="report" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ type: "spring", stiffness: 320, damping: 32 }}>
       {/* Report issue */}
       <div className="mb-4">
         <TicketModal tenantId={t.id} ownerId={t.owner_id} />
       </div>
-
-      <MoveOutCard tenantId={t.id} ownerId={t.owner_id} />
-
-
 
       {/* Tickets */}
       <Card className="glass-card">
@@ -593,7 +604,25 @@ function DashboardPage() {
           ))}
         </CardContent>
       </Card>
+
+      <div className="mt-4">
+        <MoveOutCard tenantId={t.id} ownerId={t.owner_id} />
       </div>
+      </motion.div>
+      )}
+      </AnimatePresence>
+      </div>
+
+      <TenantModeSwitcher
+        items={[
+          { key: "details", label: "My Details", badge: Boolean(landlordInfoQuery.data?.note) },
+          { key: "pay", label: "How to Pay" },
+          { key: "report", label: "Report Problem", badge: openTickets || undefined },
+        ]}
+        value={mode}
+        onChange={setMode}
+      />
+
     </div>
 
   );
