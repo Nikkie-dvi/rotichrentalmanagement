@@ -362,17 +362,14 @@ function DashboardPage() {
           <CardContent className="flex flex-wrap items-baseline justify-between gap-3">
             <div>
               <div className="text-2xl font-bold">{unit ? KES(Number(unit.rent_amount)) : "—"}</div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm transition-colors duration-500" style={{ color: urgency.text }}>
                 {nextDue ? nextDue.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "—"}
               </div>
             </div>
             <Badge
               variant="outline"
-              className={`text-sm backdrop-blur ${
-                rentSettled
-                  ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                  : "border-red-500/40 bg-red-500/15 text-red-700 dark:text-red-300"
-              }`}
+              className="text-sm backdrop-blur transition-colors duration-500"
+              style={{ color: urgency.text, backgroundColor: urgency.bg, borderColor: urgency.border }}
             >
               <Wallet className="mr-1 h-3.5 w-3.5" /> {nextDue?.label ?? "—"}
             </Badge>
