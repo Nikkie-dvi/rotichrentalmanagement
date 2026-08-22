@@ -173,18 +173,24 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
             <Input placeholder="Charge name" value={category} onChange={(e) => setCategory(e.target.value)} />
             <Input type="number" min="1" placeholder="Amount (KES)" value={amount} onChange={(e) => setAmount(e.target.value)} />
             <Input placeholder="Note shown to tenant (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Button type="button" variant="outline" onClick={stage} disabled={!category.trim() || !(Number(amount) > 0)}>
+              <Plus className="h-4 w-4" />Add another charge
+            </Button>
             <label className="flex items-start gap-2 rounded-lg border p-2 text-sm">
               <Checkbox checked={notifySms} onCheckedChange={(v) => setNotifySms(v === true)} className="mt-0.5" />
               <span>
-                Text the tenant about this charge
+                Text the tenant about these charges
                 <span className="block text-xs text-muted-foreground">
-                  The SMS names the charge and lists the full bill breakdown, including any late fee.
+                  One SMS lists every charge plus the full bill breakdown, including any late fee. Costs KES 1.20 from your SMS balance.
                 </span>
               </span>
             </label>
-            <Button onClick={() => add.mutate()} disabled={add.isPending || !category.trim() || !(Number(amount) > 0)}>
+            <Button
+              onClick={() => add.mutate()}
+              disabled={add.isPending || (drafts.length === 0 && (!category.trim() || !(Number(amount) > 0)))}
+            >
               {add.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              {notifySms ? "Add & notify tenant" : "Add charge"}
+              {notifySms ? "Save & notify tenant" : "Save charges"}
             </Button>
           </div>
 
