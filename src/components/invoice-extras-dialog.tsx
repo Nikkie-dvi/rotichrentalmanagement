@@ -140,7 +140,29 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
           </div>
 
           <div className="grid gap-2 rounded-lg border p-3">
-            <Label>Add a charge</Label>
+            <Label>Add charges</Label>
+            {drafts.length > 0 && (
+              <div className="space-y-1">
+                {drafts.map((d, idx) => (
+                  <div key={`${d.category}-${idx}`} className="flex items-center gap-2 rounded-md bg-muted/50 px-2 py-1 text-sm">
+                    <span className="min-w-0 flex-1 truncate">{d.category}</span>
+                    <span>{money(d.amount)}</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      aria-label={`Remove ${d.category} from list`}
+                      onClick={() => setDrafts((list) => list.filter((_, i) => i !== idx))}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  {drafts.length} charge{drafts.length > 1 ? "s" : ""} ready — total {money(drafts.reduce((s, d) => s + d.amount, 0))}
+                </p>
+              </div>
+            )}
             <div className="flex flex-wrap gap-1">
               {PRESETS.map((p) => (
                 <Button key={p} type="button" size="sm" variant={category === p ? "default" : "outline"} onClick={() => setCategory(p)}>
