@@ -17,6 +17,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 import { ThemeProvider } from "@/lib/theme";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { useRentReminders } from "@/hooks/use-rent-reminders";
 import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
@@ -198,7 +199,10 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         {isAuthRoute ? (
-          <Outlet />
+          <>
+            <ThemeToggle />
+            <Outlet />
+          </>
         ) : (
           <SidebarProvider>
             <AppSidebar />
