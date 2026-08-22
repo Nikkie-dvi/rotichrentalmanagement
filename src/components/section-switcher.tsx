@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
@@ -38,8 +39,13 @@ export const PEOPLE_TABS: SwitcherItem[] = [
 export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
-  const index = items.findIndex((i) => i.url === pathname);
   const counts = usePendingCounts();
+  /** Optimistic target so the pill slides instantly, before the route commits. */
+  const [pending, setPending] = useState<string | null>(null);
+  useEffect(() => setPending(null), [pathname]);
+  const current = pending ?? pathname;
+  const index = items.findIndex((i) => i.url === current);
+
 
   /** How many items on each tab still need attention. */
   const badgeFor = (url: string): number => {
@@ -61,10 +67,16 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
     }
   };
 
+  const go = (url: string) => {
+    if (url === current) return;
+    setPending(url);
+    navigate({ to: url });
+  };
+
   const move = (dir: 1 | -1) => {
     if (index < 0) return;
     const next = items[Math.min(items.length - 1, Math.max(0, index + dir))];
-    if (next && next.url !== pathname) navigate({ to: next.url });
+    if (next) go(next.url);
   };
 
   return (
@@ -80,16 +92,19 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
         className="mx-auto inline-flex min-w-full items-center justify-center gap-1 overflow-hidden rounded-full border border-border/50 bg-background/70 p-1 shadow-2xl ring-1 ring-inset ring-foreground/10 backdrop-blur-2xl backdrop-saturate-150 sm:min-w-0"
       >
         {items.map((item) => {
-          const active = pathname === item.url;
+          const active = current === item.url;
           return (
             <Link
               key={item.url}
               to={item.url}
+              preload="render"
+              onClick={() => setPending(item.url)}
               className={`relative flex-1 shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider transition-colors duration-300 sm:text-sm ${
                 active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
               aria-current={active ? "page" : undefined}
             >
+
               {active && (
                 <motion.span
                   layoutId="section-switcher-pill"
