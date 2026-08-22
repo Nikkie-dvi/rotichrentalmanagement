@@ -52,7 +52,11 @@ export async function sendSms(to: string, message: string): Promise<SmsResult> {
     if (body?.success === false) {
       return { ok: false, status: "failed", error: String(body?.message ?? text).slice(0, 300) };
     }
-    return { ok: true, status: "sent", id: body?.recipients?.[0]?.id ?? body?.id };
+    const recipient = body?.recipients?.[0];
+    if (recipient?.status === "failed") {
+      return { ok: false, status: "failed", error: `Delivery rejected for ${recipient.number ?? destination}` };
+    }
+    return { ok: true, status: recipient?.status ?? "sent", id: recipient?.id ?? body?.id };
   } catch (e: any) {
     return { ok: false, status: "failed", error: e?.message ?? "SMS request failed" };
   }
