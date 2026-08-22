@@ -42,9 +42,71 @@ function markDismissed(items: ReminderItem[]) {
   } catch {}
 }
 
+type PayInfo = { method: string | null; number: string | null; note: string | null };
+
+function payLine(p: PayInfo | null) {
+  if (!p?.number) return "";
+  const label =
+    p.method === "mpesa_paybill" ? "M-Pesa Paybill" :
+    p.method === "mpesa_till" ? "M-Pesa Till (Buy Goods)" :
+    p.method === "bank" ? "Bank" : "M-Pesa Send Money";
+  return ` Pay via ${label} ${p.number}.${p.note ? ` ${p.note}` : ""}`;
+}
+
 export function PaymentReminderPopup() {
   const [items, setItems] = useState<ReminderItem[]>([]);
   const [open, setOpen] = useState(false);
+  const [sending, setSending] = useState<string | null>(null);
+  const [sentKeys, setSentKeys] = useState<string[]>([]);
+  const [pay, setPay] = useState<PayInfo | null>(null);
+  const notify_ = useServerFn(notifyMyTenants);
+
+  useEffect(() => {
+    supabase
+      .from("landlord_accounts")
+      .select("rent_payment_method, rent_payment_number, rent_payment_note")
+      .maybeSingle()
+      .then(({ data }) =>
+        setPay(
+          data
+            ? {
+                method: (data as any).rent_payment_method ?? null,
+                number: (data as any).rent_payment_number ?? null,
+                note: (data as any).rent_payment_note ?? null,
+              }
+            : null,
+        ),
+      );
+  }, []);
+
+  async function sendReminder(i: ReminderItem) {
+    setSending(i.key);
+    try {
+      const first = i.tenantName.split(" ")[0];
+      const title = i.kind === "overdue" ? "Rent overdue" : "Rent reminder";
+      const body =
+        i.kind === "overdue"
+          ? `Hi ${first}, your rent of ${money(i.amount)} was due on day ${i.dueDay} and is still outstanding.${payLine(pay)} Kindly settle it now to avoid further late penalties.`
+          : `Hi ${first}, your rent of ${money(i.amount)} is due ${i.kind === "due-today" ? "today" : `in ${i.daysDiff} day(s)`} (day ${i.dueDay}).${payLine(pay)} Kindly pay on time — late payments attract penalties.`;
+
+      const res: any = await notify_({
+        data: { title, body, sms: true, push: true, tenantIds: [i.tenantId], url: "/tenant/dashboard" },
+      });
+      if (res?.smsSkippedNoCredit > 0 && res?.smsSent === 0) {
+        toast.error("Not enough SMS credit", { description: "Push alert sent, SMS skipped." });
+      } else {
+        toast.success(`Reminder sent to ${i.tenantName}`, {
+          description: `${res?.smsSent ?? 0} SMS · ${res?.sent ?? 0} app alert(s)`,
+        });
+      }
+      setSentKeys((k) => [...k, i.key]);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not send the reminder");
+    } finally {
+      setSending(null);
+    }
+  }
+
 
   useEffect(() => {
     let cancelled = false;
