@@ -149,23 +149,27 @@ function DashboardPage() {
 
   // Rent accrues automatically on every anniversary of the move-in / due day,
   // even before the landlord issues an invoice.
-  const accrued = useMemo(() => {
-    const rent = Number(unit?.rent_amount ?? 0);
-    const start = (t as any)?.move_in_date ? new Date((t as any).move_in_date) : null;
-    if (!rent || !start || Number.isNaN(start.getTime())) return 0;
-    const now = new Date();
-    let cycles = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()) + 1;
-    const dueDay = Math.max(1, Math.min(31, (t as any)?.rent_due_day ?? start.getDate()));
-    if (now.getDate() < Math.min(dueDay, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate())) cycles -= 1;
-    return Math.max(0, cycles) * rent;
-  }, [t, unit?.rent_amount]);
+  const accrued = useMemo(
+    () =>
+      accruedRent({
+        rentAmount: unit?.rent_amount,
+        moveInDate: (t as any)?.move_in_date ?? null,
+        rentDueDay: (t as any)?.rent_due_day ?? null,
+      }),
+    [t, unit?.rent_amount],
+  );
 
   const net = useMemo(() => {
     const d = accountQuery.data;
     if (!d) return 0;
-    const owed = Math.max(Number(d.totalInvoiced ?? 0), accrued);
-    return Number(d.totalPaid ?? 0) - owed + Number((d as any).adjustments ?? 0);
+    return buildLedger({
+      invoiced: d.totalInvoiced,
+      paid: d.totalPaid,
+      adjustments: (d as any).adjustments,
+      accrued,
+    }).net;
   }, [accountQuery.data, accrued]);
+
 
 
   const rentSettled = net >= 0;
