@@ -116,5 +116,5 @@ export async function notifyTenantOfCharge(args: {
   }
 
   if (logs.length) await supabaseAdmin.from("notification_logs").insert(logs);
-  return { ok: true };
+  return { ok: true, smsSkippedNoCredit };
 }
