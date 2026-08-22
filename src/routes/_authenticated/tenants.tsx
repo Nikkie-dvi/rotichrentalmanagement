@@ -521,7 +521,17 @@ function TenantCard({
           <div className="rounded-lg border bg-muted/30 p-3">
             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account statement</div>
             <Row label="Total invoiced" value={money(ledger.invoiced)} />
+            {ledger.uninvoiced > 0 && (
+              <div className="flex justify-between py-1">
+                <span className="text-muted-foreground">Rent due, not invoiced yet</span>
+                <span className="font-medium text-amber-600 dark:text-amber-400">{money(ledger.uninvoiced)}</span>
+              </div>
+            )}
+            <Row label="Total owed to date" value={money(ledger.owed)} />
             <Row label="Total paid" value={money(ledger.paid)} />
+            {ledger.adjustments !== 0 && (
+              <Row label="Credit edits by you" value={money(ledger.adjustments)} />
+            )}
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">Arrears still owed</span>
               <span className={ledger.arrears > 0 ? "font-semibold text-destructive" : "font-medium"}>
@@ -535,13 +545,16 @@ function TenantCard({
               </span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
+              This is exactly the balance the tenant sees on their portal
+              {ledger.uninvoiced > 0 ? ", including rent that has fallen due but has no invoice yet" : ""}.
               {ledger.credit > 0
-                ? "This credit is extra money already paid. It is deducted from the next invoice when it is generated — the tenant is not yet paid up for next month."
+                ? " The credit is extra money already paid and is deducted from the next invoice."
                 : ledger.arrears > 0
-                  ? "Amount still owed on invoices issued so far."
-                  : "Everything invoiced so far has been paid in full."}
+                  ? " The tenant is behind by this amount."
+                  : " The account is fully settled."}
             </p>
           </div>
+
 
           <Row label="Property" value={t.units?.properties?.name ?? "—"} />
           <Row label="Unit" value={t.units?.unit_number ?? "—"} />
