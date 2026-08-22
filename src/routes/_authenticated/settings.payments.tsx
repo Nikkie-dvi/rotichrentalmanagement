@@ -125,13 +125,12 @@ function RentPaymentSettingsPage() {
     qc.invalidateQueries({ queryKey: ["landlord-account"] });
 
     // Push + SMS the change to every tenant right away.
+    const details = `Pay rent via ${paymentMethodLabel(method)}${number.trim() ? ` to ${number.trim()}` : ""}.`;
     try {
       const res = await notifyMyTenants({
         data: {
           title: "Payment details updated",
-          body: note.trim()
-            ? note.trim()
-            : `Pay rent via ${paymentMethodLabel(method)}${number.trim() ? ` to ${number.trim()}` : ""}.`,
+          body: note.trim() ? `${details} ${note.trim()}` : details,
           tag: `pay-details-${Date.now()}`,
           push: viaPush,
           sms: viaSms,
@@ -250,8 +249,21 @@ function RentPaymentSettingsPage() {
           </div>
 
           <div className="rounded-lg border bg-muted/40 p-3">
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-              <Users className="h-4 w-4" /> Or pick specific tenants
+            <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
+              <span className="flex items-center gap-2">
+                <Users className="h-4 w-4" /> Or pick specific tenants
+              </span>
+              {(tenants ?? []).length > 0 && (
+                <label className="flex items-center gap-2 text-xs font-normal">
+                  <Checkbox
+                    checked={picked.length > 0 && picked.length === (tenants ?? []).length}
+                    onCheckedChange={(v) =>
+                      setPicked(v === true ? (tenants ?? []).map((t: any) => t.id) : [])
+                    }
+                  />
+                  Select all
+                </label>
+              )}
             </div>
             <div className="max-h-40 space-y-1.5 overflow-y-auto pr-1">
               {(tenants ?? []).map((t: any) => (
