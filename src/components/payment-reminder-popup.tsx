@@ -229,7 +229,23 @@ export function PaymentReminderPopup() {
                     {[i.property, i.unit].filter(Boolean).join(" · ") || "No unit assigned"}
                   </div>
                 </div>
-                <StatusBadge item={i} />
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <StatusBadge item={i} />
+                  <Button
+                    size="sm"
+                    variant={i.kind === "overdue" ? "destructive" : "default"}
+                    className="h-7 px-2 text-xs"
+                    disabled={sending === i.key || sentKeys.includes(i.key)}
+                    onClick={() => sendReminder(i)}
+                  >
+                    {sending === i.key ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5" />
+                    )}
+                    <span className="ml-1">{sentKeys.includes(i.key) ? "Sent" : "Remind"}</span>
+                  </Button>
+                </div>
               </div>
               <div className="mt-2 flex items-center justify-between text-sm">
                 <span className="flex items-center gap-1 text-muted-foreground">
