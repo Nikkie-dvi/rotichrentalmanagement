@@ -128,7 +128,7 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
             <Link
               key={item.url}
               to={item.url}
-              preload="render"
+              preload="intent"
               onClick={() => setPending(item.url)}
               className={`relative flex-1 shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider transition-colors duration-300 sm:text-sm ${
                 active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
