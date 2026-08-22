@@ -322,6 +322,9 @@ function DashboardPage() {
         </Button>
       </div>
 
+      <AnimatePresence mode="wait" initial={false}>
+      {mode === "details" && (
+      <motion.div key="details" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ type: "spring", stiffness: 320, damping: 32 }}>
       <LandlordMessageCard />
 
       {status === "pending" && (
