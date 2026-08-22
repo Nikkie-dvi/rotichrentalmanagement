@@ -30,17 +30,37 @@ export function InvoiceExtrasDialog({ invoice, onOpenChange }: { invoice: any | 
     qc.invalidateQueries();
   };
 
+  const stage = () => {
+    const amt = Number(amount);
+    if (!category.trim() || !(amt > 0)) return;
+    setDrafts((d) => [...d, { category: category.trim(), amount: Math.round(amt), description: description.trim() }]);
+    setCategory("");
+    setAmount("");
+    setDescription("");
+  };
+
   const add = useMutation({
-    mutationFn: async () =>
-      addInvoiceCharge({
-        data: { invoiceId: invoice.id, category, amount: Number(amount), description: description || undefined, notify: notifySms },
-      }),
-    onSuccess: () => {
+    mutationFn: async () => {
+      const amt = Number(amount);
+      const pending = [...drafts];
+      if (category.trim() && amt > 0) {
+        pending.push({ category: category.trim(), amount: Math.round(amt), description: description.trim() });
+      }
+      return addInvoiceCharges({ data: { invoiceId: invoice.id, items: pending, notify: notifySms } });
+    },
+    onSuccess: (r: any) => {
       setCategory("");
       setAmount("");
       setDescription("");
+      setDrafts([]);
       refresh();
-      toast.success(notifySms ? "Charge added — the tenant has been notified" : "Charge added (no message sent)");
+      if (notifySms && r?.smsSkippedNoCredit) {
+        toast.error("Charges added, but no SMS was sent — your SMS balance is empty. Request a recharge.");
+      } else {
+        toast.success(
+          `${r?.added ?? 1} charge${(r?.added ?? 1) > 1 ? "s" : ""} added${notifySms ? " — the tenant has been notified" : " (no message sent)"}`,
+        );
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
