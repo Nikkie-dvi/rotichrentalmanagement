@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
+import { useSeenBadges } from "@/hooks/use-seen-badges";
 
 export type SwitcherItem = { label: string; url: string };
 
@@ -40,15 +41,15 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const counts = usePendingCounts();
+  const { unseen, markSeen } = useSeenBadges();
   /** Optimistic target so the pill slides instantly, before the route commits. */
   const [pending, setPending] = useState<string | null>(null);
   useEffect(() => setPending(null), [pathname]);
   const current = pending ?? pathname;
   const index = items.findIndex((i) => i.url === current);
 
-
   /** How many items on each tab still need attention. */
-  const badgeFor = (url: string): number => {
+  const countFor = (url: string): number => {
     switch (url) {
       case "/billing":
         return counts.overdueInvoices;
@@ -66,6 +67,35 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
         return 0;
     }
   };
+
+  /** Plain-language description of what the badge on a tab refers to. */
+  const noteFor = (url: string, n: number): string | null => {
+    switch (url) {
+      case "/billing":
+        return `${n} overdue invoice${n === 1 ? "" : "s"} need attention`;
+      case "/payments":
+        return `${n} payment${n === 1 ? "" : "s"} received in the last 24 hours`;
+      case "/leases":
+        return `${n} lease${n === 1 ? "" : "s"} still unsigned`;
+      case "/tenants":
+        return `${n} open issue${n === 1 ? "" : "s"} from tenants`;
+      case "/applications":
+        return `${n} application${n === 1 ? "" : "s"} waiting for review`;
+      case "/landlords":
+        return `${n} landlord sign-up${n === 1 ? "" : "s"} pending approval`;
+      default:
+        return null;
+    }
+  };
+
+  // Clear the badge for the tab the landlord is actually looking at.
+  const activeCount = countFor(pathname);
+  useEffect(() => {
+    if (items.some((i) => i.url === pathname)) markSeen(pathname, activeCount);
+  }, [pathname, activeCount, items, markSeen]);
+
+  const activeNote = activeCount > 0 ? noteFor(pathname, activeCount) : null;
+
 
   const go = (url: string) => {
     if (url === current) return;
@@ -93,6 +123,7 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
       >
         {items.map((item) => {
           const active = current === item.url;
+          const badge = active ? 0 : unseen(item.url, countFor(item.url));
           return (
             <Link
               key={item.url}
@@ -104,7 +135,6 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
               }`}
               aria-current={active ? "page" : undefined}
             >
-
               {active && (
                 <motion.span
                   layoutId="section-switcher-pill"
@@ -113,16 +143,24 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
                 />
               )}
               <span className="relative whitespace-nowrap">{item.label}</span>
-              {badgeFor(item.url) > 0 && (
+              {badge > 0 && (
                 <span className="absolute -right-0.5 -top-0.5 z-20 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground shadow">
-                  {badgeFor(item.url) > 99 ? "99+" : badgeFor(item.url)}
+                  {badge > 99 ? "99+" : badge}
                 </span>
               )}
             </Link>
           );
         })}
       </motion.div>
+      {activeNote && (
+        <div className="mt-2 flex justify-center">
+          <span className="rounded-full border border-destructive/30 bg-destructive/10 px-3 py-1 text-[11px] font-medium text-destructive">
+            {activeNote}
+          </span>
+        </div>
+      )}
     </div>
   );
+
 
 }
