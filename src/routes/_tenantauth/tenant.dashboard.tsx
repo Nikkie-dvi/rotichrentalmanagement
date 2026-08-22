@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
 
 const KES = (n: number) => `KES ${Math.round(n).toLocaleString()}`;
 
-function nextDueDate(rentDueDay: number | null): { date: Date; label: string } {
+function nextDueDate(rentDueDay: number | null): { date: Date; label: string; diffDays: number } {
   const today = new Date();
   const day = Math.max(1, Math.min(31, rentDueDay ?? today.getDate()));
   const lastThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
@@ -51,7 +51,18 @@ function nextDueDate(rentDueDay: number | null): { date: Date; label: string } {
   }
   const diffDays = Math.ceil((due.getTime() - Date.now()) / 86400000);
   const label = diffDays <= 0 ? "Due today" : `In ${diffDays} day${diffDays === 1 ? "" : "s"}`;
-  return { date: due, label };
+  return { date: due, label, diffDays };
+}
+
+function dueUrgencyColor(daysToDue: number) {
+  const maxDays = 30;
+  const urgency = Math.max(0, Math.min(1, 1 - daysToDue / maxDays));
+  const hue = Math.round(140 - urgency * 140);
+  return {
+    text: `hsl(${hue}, 85%, 55%)`,
+    bg: `hsla(${hue}, 80%, 55%, 0.15)`,
+    border: `hsla(${hue}, 80%, 55%, 0.4)`,
+  };
 }
 
 function statusBadge(status: string) {
