@@ -24,14 +24,28 @@ const num = (v: any) => Number(v ?? 0);
 export async function computeOwnerCredits(ownerId: string): Promise<TenantCredit[]> {
   const [{ data: tenants }, { data: invoices }, { data: payments }, { data: events }] =
     await Promise.all([
-      supabaseAdmin.from("tenants").select("id, full_name, owner_id").eq("owner_id", ownerId),
+      supabaseAdmin
+        .from("tenants")
+        .select("id, full_name, owner_id, active, move_in_date, rent_due_day, units(rent_amount)")
+        .eq("owner_id", ownerId),
       supabaseAdmin.from("invoices").select("tenant_id, total_due, balance_remaining").eq("owner_id", ownerId),
       supabaseAdmin.from("payments").select("tenant_id, amount_paid").eq("owner_id", ownerId),
       supabaseAdmin.from("tenant_credit_events").select("tenant_id, delta").eq("owner_id", ownerId),
     ]);
 
+  const accrual = new Map<string, number>();
   const rows = new Map<string, TenantCredit>();
   for (const t of (tenants ?? []) as any[]) {
+    accrual.set(
+      t.id,
+      t.active
+        ? accruedRent({
+            rentAmount: t.units?.rent_amount,
+            moveInDate: t.move_in_date,
+            rentDueDay: t.rent_due_day,
+          })
+        : 0,
+    );
     rows.set(t.id, {
       tenantId: t.id,
       name: t.full_name,
@@ -47,7 +61,6 @@ export async function computeOwnerCredits(ownerId: string): Promise<TenantCredit
     const r = rows.get(inv.tenant_id);
     if (!r) continue;
     r.invoiced += num(inv.total_due);
-    r.arrears += Math.max(0, num(inv.balance_remaining));
   }
   for (const p of (payments ?? []) as any[]) {
     const r = rows.get(p.tenant_id);
@@ -58,10 +71,19 @@ export async function computeOwnerCredits(ownerId: string): Promise<TenantCredit
     if (r) r.adjustments += num(e.delta);
   }
   for (const r of rows.values()) {
-    r.credit = Math.round(Math.max(0, r.paid - r.invoiced + r.adjustments));
+    // Same shared ledger the landlord page and tenant portal use.
+    const l = buildLedger({
+      invoiced: r.invoiced,
+      paid: r.paid,
+      adjustments: r.adjustments,
+      accrued: accrual.get(r.tenantId) ?? 0,
+    });
+    r.credit = l.credit;
+    r.arrears = l.arrears;
   }
   return [...rows.values()];
 }
+
 
 export async function creditFor(ownerId: string, tenantId: string) {
   const all = await computeOwnerCredits(ownerId);
