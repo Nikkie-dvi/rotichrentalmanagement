@@ -159,6 +159,7 @@ function DashboardPage() {
   const unit = (t as any)?.units;
   const property = unit?.properties;
   const nextDue = useMemo(() => (t ? nextDueDate(t.rent_due_day ?? null) : null), [t]);
+  const urgency = useMemo(() => dueUrgencyColor(nextDue?.diffDays ?? 0), [nextDue]);
 
   // Rent accrues automatically on every anniversary of the move-in / due day,
   // even before the landlord issues an invoice.
