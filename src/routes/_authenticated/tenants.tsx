@@ -445,7 +445,7 @@ function TenantsPage() {
   );
 }
 
-type Ledger = { invoiced: number; paid: number; arrears: number; credit: number; adjustments?: number };
+
 
 function TenantCard({
   tenant: t,
