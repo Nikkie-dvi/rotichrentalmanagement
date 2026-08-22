@@ -3,6 +3,34 @@
 
 export type SmsResult = { ok: boolean; status: string; error?: string; id?: string };
 
+const GSM_BASIC = new Set(
+  "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà".split(""),
+);
+const GSM_EXTENDED = new Set("^{}\\[~]|€".split(""));
+
+/** SMS Leopard rejects a whole recipient as `failed` when text contains unsupported Unicode. */
+export function toSmsLeopardText(raw: string): string {
+  const punctuation: Record<string, string> = {
+    "—": "-",
+    "–": "-",
+    "−": "-",
+    "’": "'",
+    "‘": "'",
+    "“": '"',
+    "”": '"',
+    "…": "...",
+    "•": "-",
+    "\u00a0": " ",
+  };
+
+  return Array.from(raw.normalize("NFKD"))
+    .map((character) => punctuation[character] ?? character)
+    .filter((character) => GSM_BASIC.has(character) || GSM_EXTENDED.has(character))
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Normalises a Kenyan number to the 2547XXXXXXXX form SMS Leopard expects. */
 export function toKenyanMsisdn(raw: string | null | undefined): string | null {
   if (!raw) return null;
@@ -24,6 +52,8 @@ export async function sendSms(to: string, message: string): Promise<SmsResult> {
 
   const destination = toKenyanMsisdn(to);
   if (!destination) return { ok: false, status: "failed", error: "Tenant has no phone number" };
+  const safeMessage = toSmsLeopardText(message);
+  if (!safeMessage) return { ok: false, status: "failed", error: "SMS message has no supported characters" };
 
   try {
     const res = await fetch("https://api.smsleopard.com/v1/sms/send", {
@@ -34,7 +64,7 @@ export async function sendSms(to: string, message: string): Promise<SmsResult> {
       },
       body: JSON.stringify({
         source: sender,
-        message,
+        message: safeMessage,
         destination: [{ number: destination }],
       }),
     });
