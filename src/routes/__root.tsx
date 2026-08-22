@@ -198,7 +198,10 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         {isAuthRoute ? (
-          <Outlet />
+          <>
+            <ThemeToggle />
+            <Outlet />
+          </>
         ) : (
           <SidebarProvider>
             <AppSidebar />
