@@ -530,19 +530,23 @@ function DashboardPage() {
         }}
       />
 
+      </motion.div>
+      )}
+
+      {mode === "pay" && (
+      <motion.div key="pay" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ type: "spring", stiffness: 320, damping: 32 }}>
       <LandlordPaymentCard />
 
       <RentRemindersCard />
+      </motion.div>
+      )}
 
-
+      {mode === "report" && (
+      <motion.div key="report" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ type: "spring", stiffness: 320, damping: 32 }}>
       {/* Report issue */}
       <div className="mb-4">
         <TicketModal tenantId={t.id} ownerId={t.owner_id} />
       </div>
-
-      <MoveOutCard tenantId={t.id} ownerId={t.owner_id} />
-
-
 
       {/* Tickets */}
       <Card className="glass-card">
@@ -593,7 +597,25 @@ function DashboardPage() {
           ))}
         </CardContent>
       </Card>
+
+      <div className="mt-4">
+        <MoveOutCard tenantId={t.id} ownerId={t.owner_id} />
       </div>
+      </motion.div>
+      )}
+      </AnimatePresence>
+      </div>
+
+      <TenantModeSwitcher
+        items={[
+          { key: "details", label: "My Details", badge: Boolean(landlordInfoQuery.data?.note) },
+          { key: "pay", label: "How to Pay" },
+          { key: "report", label: "Report Problem", badge: openTickets || undefined },
+        ]}
+        value={mode}
+        onChange={setMode}
+      />
+
     </div>
 
   );
