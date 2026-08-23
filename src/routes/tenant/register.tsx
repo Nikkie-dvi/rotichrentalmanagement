@@ -262,6 +262,13 @@ function RegisterPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">Ask your landlord for their code — only their units will show.</p>
+              <p className="text-xs text-muted-foreground">
+                Already living in one of their units?{" "}
+                <Link to="/tenant/claim" className="font-medium text-primary underline">
+                  Link your existing unit instead
+                </Link>
+                .
+              </p>
             </div>
 
             {!searchCode && !vacantQuery.isLoading && (
