@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { UNIT_TYPES, unitTypeLabel } from "@/lib/unit-types";
 import { useIsPropertyManager } from "@/hooks/use-landlord-account";
+import { assignableTenantsQuery, propertiesQuery, unitsFullQuery } from "@/lib/property-queries";
 
 export const Route = createFileRoute("/_authenticated/properties")({
   head: () => ({
@@ -36,6 +37,12 @@ export const Route = createFileRoute("/_authenticated/properties")({
       { property: "og:description", content: "Manage buildings and rental units." },
     ],
   }),
+  // Warm the cache on hover/touch so the tab paints instantly when opened.
+  loader: ({ context }) => {
+    context.queryClient.prefetchQuery(propertiesQuery);
+    context.queryClient.prefetchQuery(unitsFullQuery);
+    context.queryClient.prefetchQuery(assignableTenantsQuery);
+  },
   component: PropertiesPage,
 });
 
@@ -47,28 +54,11 @@ function PropertiesPage() {
   // Property managers work read-only here: they cannot add, edit or delete stock.
   const isManager = useIsPropertyManager();
 
-  const { data: properties } = useQuery({
-    queryKey: ["properties"],
-    queryFn: async () => (await supabase.from("properties").select("*").order("name")).data ?? [],
-  });
-  const { data: units } = useQuery({
-    queryKey: ["units-full"],
-    queryFn: async () =>
-      (await supabase.from("units").select("*,properties(name)").order("unit_number")).data ?? [],
-  });
+  const { data: properties } = useQuery(propertiesQuery);
+  const { data: units } = useQuery(unitsFullQuery);
   // Tenants that can be moved into a unit (approved, no unit yet).
-  const { data: assignableTenants } = useQuery({
-    queryKey: ["assignable-tenants"],
-    queryFn: async () =>
-      (
-        await supabase
-          .from("tenants")
-          .select("id, full_name, phone_number, unit_id, approval_status")
-          .is("unit_id", null)
-          .neq("approval_status", "declined")
-          .order("full_name")
-      ).data ?? [],
-  });
+  const { data: assignableTenants } = useQuery(assignableTenantsQuery);
+
 
   const saveProperty = useMutation({
     mutationFn: async (v: { name: string; location: string }) => {
