@@ -60,6 +60,24 @@ export function LandlordGate({ children }: { children: ReactNode }) {
   const payNumber = account.payment_number?.trim() || PAYMENT_NUMBER;
   const payMethod = paymentMethodLabel(account.payment_method);
   const price = effectivePrice(account, pricing ?? DEFAULT_PRICING);
+  const trial = trialState(account);
+  const waLink = whatsappSupportLink(
+    `Hello, I am ${account.full_name ?? account.email ?? "a landlord"}${
+      account.landlord_code ? ` (code ${account.landlord_code})` : ""
+    }. I have paid ${money(price.dueNow)} for my subscription but my account has not been updated yet. Kindly confirm.`,
+  );
+  const WhatsAppButton = ({ full = false }: { full?: boolean }) => (
+    <Button
+      asChild
+      size="sm"
+      variant="outline"
+      className={full ? "w-full" : "ml-auto"}
+    >
+      <a href={waLink} target="_blank" rel="noreferrer">
+        <MessageCircle className="h-4 w-4" /> Paid already? WhatsApp us
+      </a>
+    </Button>
+  );
 
   if (account.status === "approved") {
     const sub = subscriptionState(account);
@@ -81,6 +99,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
             <Button size="sm" variant="ghost" className="ml-auto" onClick={() => copyText(payNumber)}>
               <Copy className="h-4 w-4" /> Copy number
             </Button>
+            <WhatsAppButton />
           </div>
         )}
         {children}
@@ -88,8 +107,29 @@ export function LandlordGate({ children }: { children: ReactNode }) {
     );
   }
 
-
   const declined = account.status === "declined";
+
+  // Free trial: a brand new landlord uses everything for two weeks before paying.
+  if (!declined && trial.active) {
+    return (
+      <>
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
+          <Gift className="h-4 w-4 shrink-0 text-primary" />
+          <span className="font-medium">
+            Free trial — {trial.daysLeft} day{trial.daysLeft === 1 ? "" : "s"} left.
+          </span>
+          <span className="text-muted-foreground">
+            After that, send {money(price.dueNow)} ({payMethod} {payNumber}) to keep your account active.
+          </span>
+          <Button size="sm" variant="ghost" onClick={() => copyText(payNumber)}>
+            <Copy className="h-4 w-4" /> Copy number
+          </Button>
+          <WhatsAppButton />
+        </div>
+        {children}
+      </>
+    );
+  }
 
   const signOut = async () => {
     await qc.cancelQueries();
@@ -99,6 +139,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
   };
 
   const copy = copyText;
+
 
   return (
     <div className="flex min-h-[70vh] items-start justify-center px-1 py-4">
