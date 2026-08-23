@@ -175,3 +175,119 @@ export const getMyLandlordInfo = createServerFn({ method: "GET" })
       leaseTemplate: resolveLeaseTemplate(landlord as any),
     };
   });
+
+
+/**
+ * Onboarding path for tenants who ALREADY live in a unit the landlord added
+ * manually: they look themselves up with the landlord's 4-digit code + the
+ * phone number on file, then claim that record as their login.
+ */
+async function phoneVariants(raw: string) {
+  const { toKenyanMsisdn } = await import("@/lib/sms.server");
+  const msisdn = toKenyanMsisdn(raw);
+  const list = [raw.trim()];
+  if (msisdn) list.push(msisdn, `+${msisdn}`, `0${msisdn.slice(3)}`);
+  return Array.from(new Set(list));
+}
+
+export const findMyTenantRecord = createServerFn({ method: "GET" })
+  .inputValidator((data: { code: string; phone: string }) => {
+    const code = (data?.code ?? "").trim();
+    const phone = (data?.phone ?? "").trim();
+    if (!/^\d{4}$/.test(code)) throw new Error("Enter the 4-digit landlord code");
+    if (!phone) throw new Error("Enter your phone number");
+    return { code, phone };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: landlord } = await supabaseAdmin
+      .from("landlord_accounts")
+      .select("user_id, full_name")
+      .eq("landlord_code", data.code)
+      .maybeSingle();
+    if (!landlord) throw new Error("No landlord found with that code");
+
+    const { data: rows } = await supabaseAdmin
+      .from("tenants")
+      .select("id, full_name, auth_user_id, unit_id, units(unit_number, properties(name))")
+      .eq("owner_id", landlord.user_id as string)
+      .in("phone_number", await phoneVariants(data.phone))
+      .limit(1);
+
+    const row = rows?.[0] as any;
+    if (!row) {
+      return {
+        found: false as const,
+        landlordName: (landlord.full_name as string) ?? null,
+      };
+    }
+    return {
+      found: true as const,
+      landlordName: (landlord.full_name as string) ?? null,
+      fullName: row.full_name as string,
+      unitNumber: (row.units?.unit_number as string) ?? null,
+      propertyName: (row.units?.properties?.name as string) ?? null,
+      alreadyLinked: Boolean(row.auth_user_id),
+    };
+  });
+
+export const claimTenantAccount = createServerFn({ method: "POST" })
+  .inputValidator((data: { authUserId: string; email: string; code: string; phone: string }) => {
+    const authUserId = (data?.authUserId ?? "").trim();
+    const email = (data?.email ?? "").trim().toLowerCase();
+    const code = (data?.code ?? "").trim();
+    const phone = (data?.phone ?? "").trim();
+    if (!authUserId) throw new Error("Missing auth user");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Invalid email");
+    if (!/^\d{4}$/.test(code)) throw new Error("Enter the 4-digit landlord code");
+    if (!phone) throw new Error("Enter your phone number");
+    return { authUserId, email, code, phone };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: userLookup, error: userErr } = await supabaseAdmin.auth.admin.getUserById(data.authUserId);
+    if (userErr || !userLookup?.user) throw new Error("Auth user not found");
+    if ((userLookup.user.email ?? "").toLowerCase() !== data.email) {
+      throw new Error("Email does not match account");
+    }
+
+    const { data: landlord } = await supabaseAdmin
+      .from("landlord_accounts")
+      .select("user_id")
+      .eq("landlord_code", data.code)
+      .maybeSingle();
+    if (!landlord) throw new Error("No landlord found with that code");
+
+    const { data: rows } = await supabaseAdmin
+      .from("tenants")
+      .select("id, auth_user_id, full_name, owner_id")
+      .eq("owner_id", landlord.user_id as string)
+      .in("phone_number", await phoneVariants(data.phone))
+      .limit(1);
+    const row = rows?.[0] as any;
+    if (!row) throw new Error("Your landlord has no tenant with that phone number. Ask them to add you first.");
+    if (row.auth_user_id && row.auth_user_id !== data.authUserId) {
+      throw new Error("This tenant record already has a login. Sign in with that account instead.");
+    }
+
+    const { error: upErr } = await supabaseAdmin
+      .from("tenants")
+      .update({ auth_user_id: data.authUserId, email: data.email })
+      .eq("id", row.id as string);
+    if (upErr) throw new Error(upErr.message);
+
+    try {
+      const { pushToUsers, landlordAudience } = await import("@/lib/push.server");
+      await pushToUsers(await landlordAudience(row.owner_id as string), {
+        title: "Tenant joined the portal",
+        body: `${row.full_name} created a login and linked it to their unit.`,
+        url: "/tenants",
+        tag: `tenant-claim-${row.id}`,
+      });
+    } catch {
+      /* never block onboarding on notifications */
+    }
+
+    return { tenantId: row.id as string };
+  });
