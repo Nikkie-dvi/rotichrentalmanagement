@@ -433,8 +433,10 @@ function RentPaymentSettingsPage() {
           </p>
         </CardContent>
       </Card>
-
-
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+
   );
 }
