@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+
 import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { useSeenBadges } from "@/hooks/use-seen-badges";
 
