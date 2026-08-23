@@ -14,9 +14,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { SmsCreditCard } from "@/components/sms-credit-card";
+import { ModeTabs } from "@/components/mode-tabs";
+import { AnimatePresence, motion } from "framer-motion";
 
+/** SMS Leopard messages are cut off past this length, so we stop typing there. */
+const SMS_LIMIT = 400;
+const SMS_SEGMENT = 160;
+const SMS_MULTI_SEGMENT = 153;
+
+const smsParts = (len: number) => (len <= SMS_SEGMENT ? (len === 0 ? 0 : 1) : Math.ceil(len / SMS_MULTI_SEGMENT));
 
 type Audience = "all" | "due" | "overdue";
+
 
 const SUGGESTIONS: { label: string; body: string; audience?: Audience }[] = [
   {
