@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
+import { DashboardFocus } from "@/components/dashboard-focus";
 import { sendLateFeeNoticeSms, sendPaymentReceiptSms } from "@/lib/receipts.functions";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 
