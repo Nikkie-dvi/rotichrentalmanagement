@@ -41,15 +41,33 @@ type Row = {
 };
 
 function PerformancePage() {
+  // Only the last 12 months are analysed — older rows never change the view
+  // but make the payload (and the page) heavy.
+  const since = useMemo(() => {
+    const d = new Date();
+    d.setUTCMonth(d.getUTCMonth() - 11, 1);
+    return d.toISOString().slice(0, 10);
+  }, []);
+
   const q = useQuery({
-    queryKey: ["unit-performance"],
+    queryKey: ["unit-performance", since],
+    staleTime: 60_000,
     queryFn: async () => {
       const [units, tenants, invoices, payments, tickets] = await Promise.all([
         supabase.from("units").select("id,unit_number,unit_type,rent_amount,status,property_id"),
         supabase.from("tenants").select("id,unit_id,full_name,active"),
-        supabase.from("invoices").select("id,tenant_id,total_due,balance_remaining,due_date,month_year"),
-        supabase.from("payments").select("id,tenant_id,invoice_id,amount_paid,payment_date"),
-        supabase.from("maintenance_tickets").select("id,tenant_id,category,status,created_at,updated_at"),
+        supabase
+          .from("invoices")
+          .select("id,tenant_id,total_due,balance_remaining,due_date,month_year")
+          .gte("month_year", since.slice(0, 7)),
+        supabase
+          .from("payments")
+          .select("id,tenant_id,invoice_id,amount_paid,payment_date")
+          .gte("payment_date", since),
+        supabase
+          .from("maintenance_tickets")
+          .select("id,tenant_id,category,status,created_at,updated_at")
+          .gte("created_at", since),
       ]);
       for (const r of [units, tenants, invoices, payments, tickets]) if (r.error) throw r.error;
       return {
