@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, ShieldCheck, Smartphone, Copy, LogOut, XCircle, CalendarClock } from "lucide-react";
+import { Loader2, ShieldCheck, Smartphone, Copy, LogOut, XCircle, CalendarClock, MessageCircle, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,11 @@ import {
   usePlatformPricing,
   effectivePrice,
   DEFAULT_PRICING,
+  trialState,
+  TRIAL_DAYS,
+  whatsappSupportLink,
 } from "@/hooks/use-landlord-account";
+
 
 async function copyText(value: string) {
   try {
