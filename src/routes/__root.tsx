@@ -23,6 +23,7 @@ import { useRentReminders } from "@/hooks/use-rent-reminders";
 import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 import { PaymentReminderPopup } from "@/components/payment-reminder-popup";
 import { supabase } from "@/integrations/supabase/client";
+import { OfflineBanner, useOfflineCache, useOnlineSync } from "@/components/offline-support";
 
 function NotFoundComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -195,11 +196,14 @@ function RootComponent() {
 
 function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAuthRoute: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useOfflineCache(queryClient);
+  useOnlineSync(queryClient);
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         {isAuthRoute ? (
           <>
+            <OfflineBanner />
             <ThemeToggle />
             <Outlet />
           </>
@@ -207,6 +211,7 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
           <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
+              <OfflineBanner />
               <AppHeader />
               <ReminderRunner />
               <main className="flex-1 p-4 md:p-6">
