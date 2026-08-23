@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, Clock, Wrench } from "lucide-react";
-import { SectionSwitcher, FINANCE_TABS } from "@/components/section-switcher";
+import { SectionSwitcher, SectionPanel, FINANCE_TABS } from "@/components/section-switcher";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -172,6 +172,7 @@ function PerformancePage() {
   return (
     <div className="space-y-6">
       <SectionSwitcher items={FINANCE_TABS} />
+      <SectionPanel items={FINANCE_TABS}>
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Unit Performance</h2>
         <p className="text-sm text-muted-foreground">
@@ -327,6 +328,7 @@ function PerformancePage() {
           </div>
         </CardContent>
       </Card>
+      </SectionPanel>
     </div>
   );
 }

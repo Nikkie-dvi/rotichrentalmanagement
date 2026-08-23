@@ -32,7 +32,7 @@ import { downloadCsv } from "@/lib/csv";
 import { useIsSuperAdmin } from "@/hooks/use-landlord-account";
 import { getCeoAnalytics } from "@/lib/analytics.functions";
 import { SubscriptionPricingPanel } from "@/components/subscription-pricing-panel";
-import { SectionSwitcher, ADMIN_TABS } from "@/components/section-switcher";
+import { SectionSwitcher, SectionPanel, ADMIN_TABS } from "@/components/section-switcher";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
@@ -246,6 +246,7 @@ function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <SectionSwitcher items={ADMIN_TABS} />
+      <SectionPanel items={ADMIN_TABS}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
@@ -464,6 +465,7 @@ function AnalyticsPage() {
           )}
         </DialogContent>
       </Dialog>
+      </SectionPanel>
     </div>
   );
 }
