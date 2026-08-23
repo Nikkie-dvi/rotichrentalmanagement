@@ -18,6 +18,7 @@ import { Route as TenantIndexRouteImport } from './routes/tenant/index'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as TenantRegisterRouteImport } from './routes/tenant/register'
 import { Route as TenantLoginRouteImport } from './routes/tenant/login'
+import { Route as TenantClaimRouteImport } from './routes/tenant/claim'
 import { Route as AuthenticatedTenantsRouteImport } from './routes/_authenticated/tenants'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPropertiesRouteImport } from './routes/_authenticated/properties'
@@ -90,6 +91,11 @@ const TenantRegisterRoute = TenantRegisterRouteImport.update({
 const TenantLoginRoute = TenantLoginRouteImport.update({
   id: '/tenant/login',
   path: '/tenant/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TenantClaimRoute = TenantClaimRouteImport.update({
+  id: '/tenant/claim',
+  path: '/tenant/claim',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTenantsRoute = AuthenticatedTenantsRouteImport.update({
@@ -281,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/properties': typeof AuthenticatedPropertiesRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/tenants': typeof AuthenticatedTenantsRoute
+  '/tenant/claim': typeof TenantClaimRoute
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
   '/tenant/': typeof TenantIndexRoute
@@ -320,6 +327,7 @@ export interface FileRoutesByTo {
   '/properties': typeof AuthenticatedPropertiesRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/tenants': typeof AuthenticatedTenantsRoute
+  '/tenant/claim': typeof TenantClaimRoute
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
   '/tenant': typeof TenantIndexRoute
@@ -361,6 +369,7 @@ export interface FileRoutesById {
   '/_authenticated/properties': typeof AuthenticatedPropertiesRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/tenants': typeof AuthenticatedTenantsRoute
+  '/tenant/claim': typeof TenantClaimRoute
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -403,6 +412,7 @@ export interface FileRouteTypes {
     | '/properties'
     | '/reports'
     | '/tenants'
+    | '/tenant/claim'
     | '/tenant/login'
     | '/tenant/register'
     | '/tenant/'
@@ -442,6 +452,7 @@ export interface FileRouteTypes {
     | '/properties'
     | '/reports'
     | '/tenants'
+    | '/tenant/claim'
     | '/tenant/login'
     | '/tenant/register'
     | '/tenant'
@@ -482,6 +493,7 @@ export interface FileRouteTypes {
     | '/_authenticated/properties'
     | '/_authenticated/reports'
     | '/_authenticated/tenants'
+    | '/tenant/claim'
     | '/tenant/login'
     | '/tenant/register'
     | '/_authenticated/'
@@ -512,6 +524,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  TenantClaimRoute: typeof TenantClaimRoute
   TenantLoginRoute: typeof TenantLoginRoute
   TenantRegisterRoute: typeof TenantRegisterRoute
   TenantIndexRoute: typeof TenantIndexRoute
@@ -589,6 +602,13 @@ declare module '@tanstack/react-router' {
       path: '/tenant/login'
       fullPath: '/tenant/login'
       preLoaderRoute: typeof TenantLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tenant/claim': {
+      id: '/tenant/claim'
+      path: '/tenant/claim'
+      fullPath: '/tenant/claim'
+      preLoaderRoute: typeof TenantClaimRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/tenants': {
@@ -873,6 +893,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  TenantClaimRoute: TenantClaimRoute,
   TenantLoginRoute: TenantLoginRoute,
   TenantRegisterRoute: TenantRegisterRoute,
   TenantIndexRoute: TenantIndexRoute,
