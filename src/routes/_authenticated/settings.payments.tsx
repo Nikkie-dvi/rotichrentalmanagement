@@ -372,9 +372,28 @@ function RentPaymentSettingsPage() {
           <Textarea
             rows={3}
             value={urgent}
-            onChange={(e) => setUrgent(e.target.value)}
+            maxLength={SMS_LIMIT}
+            onChange={(e) => {
+              const next = e.target.value.slice(0, SMS_LIMIT);
+              if (next.length >= SMS_LIMIT && urgent.length < SMS_LIMIT) {
+                toast.warning(`Message limit reached — ${SMS_LIMIT} characters is the most an SMS can carry.`);
+              }
+              setUrgent(next);
+            }}
             placeholder="e.g. Water will be off tomorrow from 8am to 2pm."
           />
+          <div className="flex items-center justify-between text-xs">
+            <span className={urgent.length >= SMS_LIMIT ? "font-medium text-destructive" : "text-muted-foreground"}>
+              {urgent.length}/{SMS_LIMIT} characters
+              {urgent.length >= SMS_LIMIT ? " — limit reached, the rest would be cut off" : ""}
+            </span>
+            {viaSms && urgent.length > 0 && (
+              <span className="text-muted-foreground">
+                {smsParts(urgent.length)} SMS part{smsParts(urgent.length) === 1 ? "" : "s"} per tenant
+              </span>
+            )}
+          </div>
+
           <Button
             variant="secondary"
             disabled={sending || urgent.trim().length < 3 || (!viaPush && !viaSms)}
