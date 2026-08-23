@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 
 import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { useSeenBadges } from "@/hooks/use-seen-badges";
@@ -171,14 +171,22 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
  * right depending on which way the landlord moved along the rail — the same
  * feel as flicking between modes in the iPhone camera.
  */
+/**
+ * Each tab is its own route, so the panel unmounts on navigation. Remember the
+ * last position outside React so the new page knows which way to slide in.
+ */
+let lastPanelIndex = -1;
+
 export function SectionPanel({ items, children }: { items: SwitcherItem[]; children: React.ReactNode }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const index = items.findIndex((i) => i.url === pathname);
-  const prev = useRef(index);
-  const dir = index >= 0 && index > prev.current ? 1 : index < prev.current ? -1 : 0;
+  // Direction is decided once, on mount, from where we came from.
+  const dir = useRef(
+    index < 0 || lastPanelIndex < 0 || lastPanelIndex === index ? 0 : index > lastPanelIndex ? 1 : -1,
+  ).current;
   useEffect(() => {
-    prev.current = index;
+    lastPanelIndex = index;
   }, [index]);
 
   /** Flick left/right anywhere on the page to move along the rail. */
@@ -191,23 +199,19 @@ export function SectionPanel({ items, children }: { items: SwitcherItem[]; child
   };
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={pathname}
-        drag="x"
-        dragDirectionLock
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.08}
-        onDragEnd={(_, info) => swipe(info.offset.x)}
-        initial={{ opacity: 0, x: dir === 0 ? 0 : dir * 40 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: dir === 0 ? 0 : dir * -40 }}
-        transition={{ type: "spring", stiffness: 420, damping: 36, mass: 0.6 }}
-        className="space-y-6"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      drag="x"
+      dragDirectionLock
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.08}
+      onDragEnd={(_, info) => swipe(info.offset.x)}
+      initial={{ opacity: 0, x: dir * 60 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.6 }}
+      className="space-y-6"
+    >
+      {children}
+    </motion.div>
   );
 }
 
