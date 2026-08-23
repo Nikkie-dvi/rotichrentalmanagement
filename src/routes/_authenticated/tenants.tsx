@@ -821,7 +821,6 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="flex justify-between">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium">{value}</span>
-      </SectionPanel>
     </div>
   );
 }
