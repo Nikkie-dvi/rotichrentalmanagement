@@ -152,17 +152,20 @@ export function LandlordGate({ children }: { children: ReactNode }) {
               <ShieldCheck className="h-6 w-6 text-primary" />
             )}
           </div>
-          <CardTitle>{declined ? "Account declined" : "Account awaiting approval"}</CardTitle>
+          <CardTitle>
+            {declined ? "Account declined" : trial.endsAt ? "Free trial ended" : "Account awaiting approval"}
+          </CardTitle>
           <CardDescription>
             {declined
               ? "Your landlord account was not approved."
-              : "Your landlord account has been created and is waiting for the main account to confirm it."}
+              : `Your ${TRIAL_DAYS}-day free trial is over and no payment has been received yet. Pay your subscription below and your account is switched back on as soon as it is recorded.`}
           </CardDescription>
           <div className="pt-2">
             <Badge variant={declined ? "destructive" : "secondary"}>
-              {declined ? "Declined" : "Pending confirmation"}
+              {declined ? "Declined" : "Payment not received"}
             </Badge>
           </div>
+
         </CardHeader>
 
         <CardContent className="space-y-4">
