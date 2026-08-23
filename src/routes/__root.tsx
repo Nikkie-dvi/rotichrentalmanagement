@@ -23,6 +23,7 @@ import { useRentReminders } from "@/hooks/use-rent-reminders";
 import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 import { PaymentReminderPopup } from "@/components/payment-reminder-popup";
 import { supabase } from "@/integrations/supabase/client";
+import { OfflineBanner, useOfflineCache, useOnlineSync } from "@/components/offline-support";
 
 function NotFoundComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
