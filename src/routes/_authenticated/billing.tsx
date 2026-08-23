@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { SectionSwitcher, FINANCE_TABS } from "@/components/section-switcher";
+import { SectionSwitcher, SectionPanel, FINANCE_TABS } from "@/components/section-switcher";
 import { useState } from "react";
 import { toast } from "sonner";
 import { FileText, Printer, UserPlus, Coins, Zap, Trash2, MessageSquare } from "lucide-react";
@@ -249,6 +249,7 @@ function BillingPage() {
   return (
     <div className="space-y-6">
       <SectionSwitcher items={FINANCE_TABS} />
+      <SectionPanel items={FINANCE_TABS}>
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Billing & Monthly Rent Roll</h2>
         <p className="text-sm text-muted-foreground">Generate invoices combining rent + utilities per month.</p>
@@ -479,6 +480,7 @@ function BillingPage() {
           )}
         </DialogContent>
       </Dialog>
+      </SectionPanel>
     </div>
   );
 }

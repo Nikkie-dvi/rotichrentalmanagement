@@ -20,7 +20,7 @@ import { accruedRent, buildLedger, type Ledger } from "@/lib/ledger";
 
 import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
 import { createFirstRentInvoice } from "@/lib/first-invoice";
-import { SectionSwitcher, PEOPLE_TABS } from "@/components/section-switcher";
+import { SectionSwitcher, SectionPanel, PEOPLE_TABS } from "@/components/section-switcher";
 
 export const Route = createFileRoute("/_authenticated/tenants")({
   head: () => ({
@@ -333,6 +333,7 @@ function TenantsPage() {
         </Button>
       </div>
       <SectionSwitcher items={PEOPLE_TABS} />
+      <SectionPanel items={PEOPLE_TABS}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Tenants</h2>
@@ -820,6 +821,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="flex justify-between">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium">{value}</span>
+      </SectionPanel>
     </div>
   );
 }

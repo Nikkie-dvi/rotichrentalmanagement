@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsSuperAdmin } from "@/hooks/use-landlord-account";
 import { useAppLogo, DEFAULT_LOGO_URL } from "@/hooks/use-branding";
-import { SectionSwitcher, ADMIN_TABS } from "@/components/section-switcher";
+import { SectionSwitcher, SectionPanel, ADMIN_TABS } from "@/components/section-switcher";
 
 export const Route = createFileRoute("/_authenticated/settings/branding")({
   head: () => ({
@@ -88,6 +88,7 @@ function BrandingPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <SectionSwitcher items={ADMIN_TABS} />
+      <SectionPanel items={ADMIN_TABS}>
       <div>
         <h1 className="text-2xl font-semibold">App branding</h1>
         <p className="text-sm text-muted-foreground">
@@ -152,6 +153,7 @@ function BrandingPage() {
           </div>
         </CardContent>
       </Card>
+      </SectionPanel>
     </div>
   );
 }

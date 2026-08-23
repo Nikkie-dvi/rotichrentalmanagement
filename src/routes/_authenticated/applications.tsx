@@ -15,7 +15,7 @@ import { LeaseDialog } from "@/components/lease-document";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { resolveLeaseTemplate } from "@/lib/lease-template";
 import { createFirstRentInvoice } from "@/lib/first-invoice";
-import { SectionSwitcher, PEOPLE_TABS } from "@/components/section-switcher";
+import { SectionSwitcher, SectionPanel, PEOPLE_TABS } from "@/components/section-switcher";
 
 export const Route = createFileRoute("/_authenticated/applications")({
   head: () => ({
@@ -193,6 +193,7 @@ function ApplicationsPage() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4">
       <SectionSwitcher items={PEOPLE_TABS} />
+      <SectionPanel items={PEOPLE_TABS}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Tenant Applications</h1>
@@ -340,6 +341,7 @@ function ApplicationsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </SectionPanel>
     </div>
   );
 }
