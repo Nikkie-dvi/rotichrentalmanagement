@@ -173,6 +173,7 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
  */
 export function SectionPanel({ items, children }: { items: SwitcherItem[]; children: React.ReactNode }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const navigate = useNavigate();
   const index = items.findIndex((i) => i.url === pathname);
   const prev = useRef(index);
   const dir = index >= 0 && index > prev.current ? 1 : index < prev.current ? -1 : 0;
@@ -180,10 +181,24 @@ export function SectionPanel({ items, children }: { items: SwitcherItem[]; child
     prev.current = index;
   }, [index]);
 
+  /** Flick left/right anywhere on the page to move along the rail. */
+  const swipe = (offset: number) => {
+    if (index < 0) return;
+    const step = offset < -60 ? 1 : offset > 60 ? -1 : 0;
+    if (!step) return;
+    const next = items[Math.min(items.length - 1, Math.max(0, index + step))];
+    if (next && next.url !== pathname) navigate({ to: next.url });
+  };
+
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={pathname}
+        drag="x"
+        dragDirectionLock
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.08}
+        onDragEnd={(_, info) => swipe(info.offset.x)}
         initial={{ opacity: 0, x: dir === 0 ? 0 : dir * 40 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: dir === 0 ? 0 : dir * -40 }}
