@@ -234,8 +234,12 @@ export function LandlordGate({ children }: { children: ReactNode }) {
 
           <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
             Signed in as <span className="font-medium text-foreground">{account.email ?? "your account"}</span>. Access
-            unlocks automatically the moment your account is confirmed.
+            unlocks automatically the moment your payment is recorded.
           </div>
+
+          <WhatsAppButton full />
+
+
 
           <div className="flex gap-2">
             <Button className="flex-1" onClick={() => refetch()} disabled={isRefetching}>
