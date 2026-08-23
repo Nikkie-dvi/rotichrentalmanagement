@@ -65,7 +65,7 @@ function TenantLanding() {
         <Card className="border-primary/15 bg-card/70 shadow-xl shadow-primary/5 backdrop-blur-xl">
           <CardHeader>
             <CardTitle className="text-lg">Welcome</CardTitle>
-            <CardDescription>Sign in to your unit, or register as a new tenant.</CardDescription>
+            <CardDescription>Sign in, link the unit you already rent, or apply for a vacant one.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             <Button asChild size="lg" className="shadow-lg shadow-primary/25 transition-transform active:scale-[0.98]">
@@ -77,7 +77,15 @@ function TenantLanding() {
               size="lg"
               className="border-primary/20 backdrop-blur-sm transition-transform active:scale-[0.98]"
             >
-              <Link to="/tenant/register">Register as new tenant</Link>
+              <Link to="/tenant/claim">I already rent here — link my unit</Link>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              size="lg"
+              className="transition-transform active:scale-[0.98]"
+            >
+              <Link to="/tenant/register">New tenant — apply for a vacant unit</Link>
             </Button>
           </CardContent>
         </Card>
