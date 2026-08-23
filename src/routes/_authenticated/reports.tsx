@@ -92,9 +92,7 @@ function ReportsPage() {
         if (li.error) throw li.error;
         lines = li.data ?? [];
       }
-      const arrears = invoices.filter(
-        (i: any) => Number(i.balance_remaining) > 0 && String(i.month_year) <= month,
-      );
+      const arrears: any[] = arrearsRes.data ?? [];
       return { payments: pay.data ?? [], monthInvoices, arrears, lines, tickets: tickets.data ?? [] };
     },
   });
