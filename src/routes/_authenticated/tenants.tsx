@@ -444,7 +444,9 @@ function TenantsPage() {
           </CardContent>
         </Card>
       )}
+      </SectionPanel>
     </div>
+
   );
 }
 
