@@ -412,6 +412,18 @@ function PaymentsPage() {
               )}
             </TableBody>
           </Table>
+          {(payments?.length ?? 0) >= pageSize && (
+            <div className="pt-3 text-center">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={paymentsFetching}
+                onClick={() => setPageSize((n) => n + 25)}
+              >
+                {paymentsFetching ? "Loading…" : "Load more payments"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
