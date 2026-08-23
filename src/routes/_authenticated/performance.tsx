@@ -59,7 +59,8 @@ function PerformancePage() {
         supabase
           .from("invoices")
           .select("id,tenant_id,total_due,balance_remaining,due_date,month_year")
-          .gte("month_year", since.slice(0, 7)),
+          // recent months, plus any older invoice still carrying arrears
+          .or(`month_year.gte.${since.slice(0, 7)},balance_remaining.gt.0`),
         supabase
           .from("payments")
           .select("id,tenant_id,invoice_id,amount_paid,payment_date")
