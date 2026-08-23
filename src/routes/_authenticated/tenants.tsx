@@ -21,6 +21,13 @@ import { accruedRent, buildLedger, type Ledger } from "@/lib/ledger";
 import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
 import { createFirstRentInvoice } from "@/lib/first-invoice";
 import { SectionSwitcher, SectionPanel, PEOPLE_TABS } from "@/components/section-switcher";
+import {
+  tenantsFullQuery,
+  tenantBalancesQuery,
+  tenantPaymentTotalsQuery,
+  tenantCreditAdjustmentsQuery,
+  vacantUnitsQuery,
+} from "@/lib/property-queries";
 
 export const Route = createFileRoute("/_authenticated/tenants")({
   head: () => ({
@@ -31,6 +38,13 @@ export const Route = createFileRoute("/_authenticated/tenants")({
       { property: "og:description", content: "Active tenants and their status." },
     ],
   }),
+  // Warm the cache on hover/touch so the tab paints instantly when opened.
+  loader: ({ context }) => {
+    context.queryClient.prefetchQuery(tenantsFullQuery);
+    context.queryClient.prefetchQuery(tenantBalancesQuery);
+    context.queryClient.prefetchQuery(tenantPaymentTotalsQuery);
+    context.queryClient.prefetchQuery(tenantCreditAdjustmentsQuery);
+  },
   component: TenantsPage,
 });
 
@@ -130,11 +144,7 @@ function TenantsPage() {
 
 
 
-  const { data: vacantUnits } = useQuery({
-    queryKey: ["vacant-units"],
-    queryFn: async () =>
-      (await supabase.from("units").select("id,unit_number,rent_amount,properties(name)").eq("status", "vacant")).data ?? [],
-  });
+  const { data: vacantUnits } = useQuery(vacantUnitsQuery);
 
   const assign = useMutation({
     mutationFn: async (v: any) => {
