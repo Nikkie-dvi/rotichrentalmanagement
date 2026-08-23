@@ -171,7 +171,28 @@ function RentPaymentSettingsPage() {
         </p>
       </div>
 
+      <ModeTabs
+        items={[
+          { key: "details", label: "Payment details" },
+          { key: "message", label: "SMS tenants" },
+        ]}
+        value={mode}
+        onChange={(k) => setMode(k as "details" | "message")}
+        layoutId="payments-mode-pill"
+      />
+
+      <AnimatePresence mode="wait" initial={false}>
+        {mode === "details" ? (
+          <motion.div
+            key="details"
+            initial={{ opacity: 0, x: 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -28 }}
+            transition={{ type: "spring", stiffness: 420, damping: 34 }}
+            className="space-y-4"
+          >
       <Card className="glass-card">
+
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Wallet className="h-4 w-4" /> How tenants pay you
