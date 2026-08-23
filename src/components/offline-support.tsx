@@ -24,7 +24,7 @@ export function useOfflineCache(queryClient: QueryClient) {
       const persister = createSyncStoragePersister({
         storage: window.localStorage,
         key: CACHE_KEY,
-        throttleTime: 1000,
+        throttleTime: 5000,
       });
 
       const [unsubscribe] = persistQueryClient({
