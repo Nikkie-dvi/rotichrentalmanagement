@@ -28,7 +28,8 @@ export function useOfflineCache(queryClient: QueryClient) {
       });
 
       const [unsubscribe] = persistQueryClient({
-        queryClient,
+        // Cast avoids a duplicate query-core type identity mismatch.
+        queryClient: queryClient as unknown as Parameters<typeof persistQueryClient>[0]["queryClient"],
         persister,
         maxAge: MAX_AGE,
         dehydrateOptions: {
