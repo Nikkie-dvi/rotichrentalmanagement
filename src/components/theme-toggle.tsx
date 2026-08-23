@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme";
@@ -5,6 +6,10 @@ import { useTheme } from "@/lib/theme";
 /** Floating light/dark switch for pages without the app header (auth + tenant portal). */
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const { theme, toggle } = useTheme();
+  // The resolved theme is only known in the browser, so wait for hydration.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
   return (
     <Button
       variant="outline"
