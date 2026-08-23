@@ -76,35 +76,15 @@ function TenantsPage() {
   const [query, setQuery] = useState("");
 
 
-  const { data: tenants } = useQuery({
-    queryKey: ["tenants-full"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("tenants")
-        .select("*,units(unit_number,rent_amount,properties(name))")
-        .order("created_at", { ascending: false });
-      return data ?? [];
-    },
-  });
+  const { data: tenants } = useQuery(tenantsFullQuery);
 
-  const { data: unpaidInvoices } = useQuery({
-    queryKey: ["tenant-balances"],
-    queryFn: async () => {
-      const { data } = await supabase.from("invoices").select("tenant_id,month_year,balance_remaining,total_due");
-      return data ?? [];
-    },
-  });
+  const { data: unpaidInvoices } = useQuery(tenantBalancesQuery);
 
-  const { data: allPayments } = useQuery({
-    queryKey: ["tenant-payment-totals"],
-    queryFn: async () => (await supabase.from("payments").select("tenant_id,amount_paid")).data ?? [],
-  });
+  const { data: allPayments } = useQuery(tenantPaymentTotalsQuery);
 
   // Manual credit edits (applied / written off / topped up) by the landlord.
-  const { data: creditAdjustments } = useQuery({
-    queryKey: ["tenant-credit-adjustments"],
-    queryFn: async () => (await supabase.from("tenant_credit_events").select("tenant_id,delta")).data ?? [],
-  });
+  const { data: creditAdjustments } = useQuery(tenantCreditAdjustmentsQuery);
+
 
   /**
    * Real account statement per tenant, built with the SAME shared helper the
