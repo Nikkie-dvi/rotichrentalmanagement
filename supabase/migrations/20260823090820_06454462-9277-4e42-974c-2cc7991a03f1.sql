@@ -1,0 +1,14 @@
+CREATE INDEX IF NOT EXISTS invoices_owner_month_idx ON public.invoices (owner_id, month_year);
+CREATE INDEX IF NOT EXISTS invoices_owner_balance_idx ON public.invoices (owner_id) WHERE balance_remaining > 0;
+CREATE INDEX IF NOT EXISTS invoices_tenant_idx ON public.invoices (tenant_id);
+CREATE INDEX IF NOT EXISTS payments_owner_date_idx ON public.payments (owner_id, payment_date DESC);
+CREATE INDEX IF NOT EXISTS payments_owner_created_idx ON public.payments (owner_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS payments_tenant_idx ON public.payments (tenant_id);
+CREATE INDEX IF NOT EXISTS payments_invoice_idx ON public.payments (invoice_id);
+CREATE INDEX IF NOT EXISTS invoice_line_items_invoice_idx ON public.invoice_line_items (invoice_id);
+CREATE INDEX IF NOT EXISTS tenants_owner_active_idx ON public.tenants (owner_id, active);
+CREATE INDEX IF NOT EXISTS tenants_unit_idx ON public.tenants (unit_id);
+CREATE INDEX IF NOT EXISTS units_owner_idx ON public.units (owner_id);
+CREATE INDEX IF NOT EXISTS units_property_idx ON public.units (property_id);
+CREATE INDEX IF NOT EXISTS utility_readings_tenant_date_idx ON public.utility_readings (tenant_id, reading_date);
+CREATE INDEX IF NOT EXISTS maintenance_tickets_owner_created_idx ON public.maintenance_tickets (owner_id, created_at DESC);
