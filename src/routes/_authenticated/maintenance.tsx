@@ -22,7 +22,33 @@ export const Route = createFileRoute("/_authenticated/maintenance")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  // Warm the cache on hover/touch so the tab paints instantly when opened.
+  loader: ({ context }) => {
+    context.queryClient.prefetchQuery({
+      queryKey: ["landlord", "tickets"],
+      queryFn: async () =>
+        (
+          await supabase
+            .from("maintenance_tickets")
+            .select("*, tenants(full_name, phone_number, units(unit_number, properties(name)))")
+            .order("created_at", { ascending: false })
+        ).data ?? [],
+      staleTime: 60_000,
+    });
+    context.queryClient.prefetchQuery({
+      queryKey: ["landlord", "move-outs"],
+      queryFn: async () =>
+        (
+          await (supabase as any)
+            .from("move_out_requests")
+            .select("*, tenants(full_name, phone_number, unit_id, units(unit_number, properties(name)))")
+            .order("created_at", { ascending: false })
+        ).data ?? [],
+      staleTime: 60_000,
+    });
+  },
   component: MaintenancePage,
+
 });
 
 function statusBadge(status: string) {
