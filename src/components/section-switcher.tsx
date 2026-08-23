@@ -164,3 +164,34 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
 
 
 }
+
+/**
+ * The page body that belongs to a switcher. It slides in from the left or the
+ * right depending on which way the landlord moved along the rail — the same
+ * feel as flicking between modes in the iPhone camera.
+ */
+export function SectionPanel({ items, children }: { items: SwitcherItem[]; children: React.ReactNode }) {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const index = items.findIndex((i) => i.url === pathname);
+  const prev = useRef(index);
+  const dir = index >= 0 && index > prev.current ? 1 : index < prev.current ? -1 : 0;
+  useEffect(() => {
+    prev.current = index;
+  }, [index]);
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={pathname}
+        initial={{ opacity: 0, x: dir === 0 ? 0 : dir * 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: dir === 0 ? 0 : dir * -40 }}
+        transition={{ type: "spring", stiffness: 420, damping: 36, mass: 0.6 }}
+        className="space-y-6"
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
