@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+import { activeTenantsQuery, readingsQuery } from "@/lib/property-queries";
 
 export const Route = createFileRoute("/_authenticated/meters")({
   head: () => ({
@@ -21,6 +22,10 @@ export const Route = createFileRoute("/_authenticated/meters")({
       { property: "og:description", content: "Log meter readings; auto-calc utility bills." },
     ],
   }),
+  loader: ({ context }) => {
+    context.queryClient.prefetchQuery(activeTenantsQuery);
+    context.queryClient.prefetchQuery(readingsQuery);
+  },
   component: MetersPage,
 });
 
@@ -31,17 +36,10 @@ function MetersPage() {
   const [rate, setRate] = useState<string>("");
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
 
-  const { data: tenants } = useQuery({
-    queryKey: ["active-tenants"],
-    queryFn: async () =>
-      (await supabase.from("tenants").select("id,full_name,units(unit_number)").eq("active", true).order("full_name")).data ?? [],
-  });
+  const { data: tenants } = useQuery(activeTenantsQuery);
 
-  const { data: readings } = useQuery({
-    queryKey: ["readings"],
-    queryFn: async () =>
-      (await supabase.from("utility_readings").select("*,tenants(full_name)").order("reading_date", { ascending: false }).limit(50)).data ?? [],
-  });
+  const { data: readings } = useQuery(readingsQuery);
+
 
   const previous = useMemo(() => {
     if (!tenantId) return 0;
