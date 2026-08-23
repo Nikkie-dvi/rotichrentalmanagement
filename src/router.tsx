@@ -5,7 +5,8 @@ import { routeTree } from "./routeTree.gen";
 export const getRouter = () => {
   const queryClient = new QueryClient({
     // Cached data renders instantly on return visits; refresh happens quietly.
-    defaultOptions: { queries: { staleTime: 30_000, gcTime: 5 * 60_000 } },
+    // gcTime is long so the persisted offline cache survives navigation/reloads.
+    defaultOptions: { queries: { staleTime: 30_000, gcTime: 24 * 60 * 60_000 } },
   });
 
   const router = createRouter({
