@@ -14,9 +14,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { SmsCreditCard } from "@/components/sms-credit-card";
+import { ModeTabs } from "@/components/mode-tabs";
+import { AnimatePresence, motion } from "framer-motion";
 
+/** SMS Leopard messages are cut off past this length, so we stop typing there. */
+const SMS_LIMIT = 400;
+const SMS_SEGMENT = 160;
+const SMS_MULTI_SEGMENT = 153;
+
+const smsParts = (len: number) => (len <= SMS_SEGMENT ? (len === 0 ? 0 : 1) : Math.ceil(len / SMS_MULTI_SEGMENT));
 
 type Audience = "all" | "due" | "overdue";
+
 
 const SUGGESTIONS: { label: string; body: string; audience?: Audience }[] = [
   {
@@ -77,6 +86,8 @@ function RentPaymentSettingsPage() {
   const [viaSms, setViaSms] = useState(true);
   const [audience, setAudience] = useState<Audience>("all");
   const [picked, setPicked] = useState<string[]>([]);
+  const [mode, setMode] = useState<"details" | "message">("details");
+
 
   const { data: tenants } = useQuery({
     queryKey: ["tenants", "message-picker"],
@@ -160,7 +171,28 @@ function RentPaymentSettingsPage() {
         </p>
       </div>
 
+      <ModeTabs
+        items={[
+          { key: "details", label: "Payment details" },
+          { key: "message", label: "SMS tenants" },
+        ]}
+        value={mode}
+        onChange={(k) => setMode(k as "details" | "message")}
+        layoutId="payments-mode-pill"
+      />
+
+      <AnimatePresence mode="wait" initial={false}>
+        {mode === "details" ? (
+          <motion.div
+            key="details"
+            initial={{ opacity: 0, x: 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -28 }}
+            transition={{ type: "spring", stiffness: 420, damping: 34 }}
+            className="space-y-4"
+          >
       <Card className="glass-card">
+
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Wallet className="h-4 w-4" /> How tenants pay you
@@ -209,10 +241,18 @@ function RentPaymentSettingsPage() {
       </Card>
 
       <SmsCreditCard />
-
-
-
+          </motion.div>
+        ) : (
+          <motion.div
+            key="message"
+            initial={{ opacity: 0, x: 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -28 }}
+            transition={{ type: "spring", stiffness: 420, damping: 34 }}
+            className="space-y-4"
+          >
       <Card className="glass-card border-primary/40 ring-1 ring-primary/20">
+
         <CardHeader className="rounded-t-xl border-b border-primary/20 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent">
           <CardTitle className="flex items-center gap-2 text-lg font-semibold">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-primary ring-1 ring-primary/30">
@@ -332,9 +372,28 @@ function RentPaymentSettingsPage() {
           <Textarea
             rows={3}
             value={urgent}
-            onChange={(e) => setUrgent(e.target.value)}
+            maxLength={SMS_LIMIT}
+            onChange={(e) => {
+              const next = e.target.value.slice(0, SMS_LIMIT);
+              if (next.length >= SMS_LIMIT && urgent.length < SMS_LIMIT) {
+                toast.warning(`Message limit reached — ${SMS_LIMIT} characters is the most an SMS can carry.`);
+              }
+              setUrgent(next);
+            }}
             placeholder="e.g. Water will be off tomorrow from 8am to 2pm."
           />
+          <div className="flex items-center justify-between text-xs">
+            <span className={urgent.length >= SMS_LIMIT ? "font-medium text-destructive" : "text-muted-foreground"}>
+              {urgent.length}/{SMS_LIMIT} characters
+              {urgent.length >= SMS_LIMIT ? " — limit reached, the rest would be cut off" : ""}
+            </span>
+            {viaSms && urgent.length > 0 && (
+              <span className="text-muted-foreground">
+                {smsParts(urgent.length)} SMS part{smsParts(urgent.length) === 1 ? "" : "s"} per tenant
+              </span>
+            )}
+          </div>
+
           <Button
             variant="secondary"
             disabled={sending || urgent.trim().length < 3 || (!viaPush && !viaSms)}
@@ -374,8 +433,10 @@ function RentPaymentSettingsPage() {
           </p>
         </CardContent>
       </Card>
-
-
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+
   );
 }
