@@ -48,8 +48,12 @@ function ReportsPage() {
 
   const report = useQuery({
     queryKey: ["monthly-report", month],
+    staleTime: 60_000,
+    placeholderData: (prev) => prev,
     queryFn: async () => {
-      const [pay, inv, tickets] = await Promise.all([
+      const invoiceCols =
+        "id,month_year,base_rent,utility_amount,water_amount,electricity_amount,garbage_amount,other_amount,other_label,late_penalty_amount,total_due,balance_remaining,status,due_date,created_at,tenants(full_name,phone_number,units(unit_number,properties(name)))";
+      const [pay, inv, arrearsRes, tickets] = await Promise.all([
         supabase
           .from("payments")
           .select(
@@ -58,11 +62,14 @@ function ReportsPage() {
           .gte("payment_date", start)
           .lt("payment_date", end)
           .order("payment_date", { ascending: true }),
+        // Only the selected month's invoices…
+        supabase.from("invoices").select(invoiceCols).eq("month_year", month),
+        // …plus unpaid ones up to that month, for the arrears file.
         supabase
           .from("invoices")
-          .select(
-            "id,month_year,base_rent,utility_amount,water_amount,electricity_amount,garbage_amount,other_amount,other_label,late_penalty_amount,total_due,balance_remaining,status,due_date,created_at,tenants(full_name,phone_number,units(unit_number,properties(name)))",
-          )
+          .select(invoiceCols)
+          .gt("balance_remaining", 0)
+          .lte("month_year", month)
           .order("month_year", { ascending: false }),
         supabase
           .from("maintenance_tickets")
@@ -72,9 +79,9 @@ function ReportsPage() {
       ]);
       if (pay.error) throw pay.error;
       if (inv.error) throw inv.error;
+      if (arrearsRes.error) throw arrearsRes.error;
 
-      const invoices = inv.data ?? [];
-      const monthInvoices = invoices.filter((i: any) => i.month_year === month);
+      const monthInvoices = inv.data ?? [];
       const ids = monthInvoices.map((i: any) => i.id);
       let lines: any[] = [];
       if (ids.length) {
