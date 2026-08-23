@@ -216,9 +216,15 @@ function Row({ row }: { row: LandlordAccount }) {
             <div className="text-xs font-mono tracking-widest text-muted-foreground">#{row.landlord_code}</div>
           )}
         </div>
+        {row.status === "pending" && trialState(row).active && (
+          <Badge variant="outline" className="shrink-0">
+            Trial · {trialState(row).daysLeft}d
+          </Badge>
+        )}
         <Badge variant={row.status === "approved" ? "default" : row.status === "declined" ? "destructive" : "secondary"}>
           {row.status}
         </Badge>
+
         <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
       </button>
 
