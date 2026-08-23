@@ -68,20 +68,28 @@ function PaymentsPage() {
     queryKey: ["active-tenants-min"],
     queryFn: async () =>
       (await supabase.from("tenants").select("id,full_name,units(unit_number)").eq("active", true).order("full_name")).data ?? [],
+    staleTime: 60_000,
   });
 
-  const { data: payments } = useQuery({
-    queryKey: ["payments-list"],
+  // Payments load in pages so the first paint stays light on big ledgers.
+  const [pageSize, setPageSize] = useState(25);
+  const { data: payments, isFetching: paymentsFetching } = useQuery({
+    queryKey: ["payments-list", pageSize],
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
     queryFn: async () =>
       (await supabase
         .from("payments")
-        .select("*,tenants(full_name,units(unit_number))")
+        .select(
+          "id,tenant_id,invoice_id,amount_paid,payment_method,reference_no,mpesa_receipt_no,payment_date,created_at,tenants(full_name,phone_number,units(unit_number))",
+        )
         .order("created_at", { ascending: false })
-        .limit(50)).data ?? [],
+        .limit(pageSize)).data ?? [],
   });
 
   const { data: outstandingByTenant } = useQuery({
     queryKey: ["outstanding-map"],
+    staleTime: 30_000,
     queryFn: async () => {
       const { data } = await supabase
         .from("invoices")
@@ -404,6 +412,18 @@ function PaymentsPage() {
               )}
             </TableBody>
           </Table>
+          {(payments?.length ?? 0) >= pageSize && (
+            <div className="pt-3 text-center">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={paymentsFetching}
+                onClick={() => setPageSize((n) => n + 25)}
+              >
+                {paymentsFetching ? "Loading…" : "Load more payments"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
