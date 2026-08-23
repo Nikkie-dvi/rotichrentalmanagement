@@ -31,8 +31,35 @@ export type LandlordAccount = {
   rent_payment_number?: string | null;
   rent_payment_method?: string | null;
   rent_payment_note?: string | null;
+  trial_ends_at?: string | null;
   created_at: string;
 };
+
+/** WhatsApp line landlords use when a payment was made but not yet recorded. */
+export const SUPPORT_WHATSAPP = "254706747498";
+
+/** Free trial length for new landlord accounts. */
+export const TRIAL_DAYS = 14;
+
+export type TrialState = { active: boolean; daysLeft: number; endsAt: Date | null };
+
+/** Where a landlord stands in their free trial. */
+export function trialState(
+  account: Pick<LandlordAccount, "trial_ends_at" | "created_at">,
+): TrialState {
+  const raw = account.trial_ends_at
+    ? new Date(account.trial_ends_at)
+    : new Date(new Date(account.created_at).getTime() + TRIAL_DAYS * 86400000);
+  if (Number.isNaN(raw.getTime())) return { active: false, daysLeft: 0, endsAt: null };
+  const daysLeft = Math.ceil((raw.getTime() - Date.now()) / 86400000);
+  return { active: daysLeft > 0, daysLeft: Math.max(0, daysLeft), endsAt: raw };
+}
+
+/** Opens WhatsApp with a ready-made "payment not received" message. */
+export function whatsappSupportLink(message: string) {
+  return `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(message)}`;
+}
+
 
 /** Platform-wide subscription pricing controlled by the main account. */
 export type PlatformPricing = {
