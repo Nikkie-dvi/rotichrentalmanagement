@@ -102,7 +102,7 @@ function ReportsPage() {
   const billed = (d?.monthInvoices ?? []).reduce((s, i: any) => s + Number(i.total_due), 0);
   const lateFees = (d?.monthInvoices ?? []).reduce((s, i: any) => s + Number(i.late_penalty_amount ?? 0), 0);
   const extras = (d?.lines ?? []).filter((l) => l.kind !== "penalty").reduce((s, l) => s + Number(l.amount), 0);
-  const outstanding = (d?.arrears ?? []).reduce((s, i: any) => s + Number(i.balance_remaining), 0);
+  const outstanding = (d?.arrears ?? []).reduce((s: number, i: any) => s + Number(i.balance_remaining), 0);
 
   const paymentRows = (): CsvRow[] =>
     (d?.payments ?? []).map((p: any) => ({
