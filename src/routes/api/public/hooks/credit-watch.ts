@@ -8,11 +8,14 @@ export const Route = createFileRoute("/api/public/hooks/credit-watch")({
     handlers: {
       POST: async () => {
         const { scanAllCredits } = await import("@/lib/credit.server");
+        const { auditAllLedgers } = await import("@/lib/ledger-audit.server");
         try {
           const res = await scanAllCredits();
-          return new Response(JSON.stringify({ ok: true, ...res }), {
+          const audit = await auditAllLedgers();
+          return new Response(JSON.stringify({ ok: true, ...res, audit }), {
             headers: { "content-type": "application/json" },
           });
+
         } catch (err: any) {
           return new Response(JSON.stringify({ error: err?.message ?? "failed" }), {
             status: 500,
