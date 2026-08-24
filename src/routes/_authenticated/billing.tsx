@@ -29,6 +29,7 @@ import { InvoiceCharges } from "@/components/invoice-charges";
 import { InvoiceExtrasDialog } from "@/components/invoice-extras-dialog";
 import { runLateFeesNow } from "@/lib/billing.functions";
 import { sendInvoiceSms, sendBulkOverdueNoticesSms } from "@/lib/receipts.functions";
+import { generateMonthFn, listIncorrectInvoicesFn, removeIncorrectInvoicesFn } from "@/lib/invoicing.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/billing")({
@@ -133,55 +134,38 @@ function BillingPage() {
   });
 
   const generate = useMutation({
-    mutationFn: async () => {
-      const { data: tenants } = await supabase
-        .from("tenants")
-        .select("id,units(rent_amount)")
-        .eq("active", true);
-      const [y, m] = month.split("-").map(Number);
-      const start = `${y}-${String(m).padStart(2, "0")}-01`;
-      const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
-      let created = 0;
-      for (const t of tenants ?? []) {
-        const rent = Number((t as any).units?.rent_amount ?? 0);
-        const { data: readings } = await supabase
-          .from("utility_readings")
-          .select("total_amount")
-          .eq("tenant_id", (t as any).id)
-          .gte("reading_date", start)
-          .lt("reading_date", end);
-        const util = (readings ?? []).reduce((s, r: any) => s + Number(r.total_amount), 0);
-        const total = rent + util;
-        const { data: paidRows } = await supabase
-          .from("payments")
-          .select("amount_paid")
-          .eq("tenant_id", (t as any).id);
-        // We only care to reconcile the invoice's own balance later; new invoice starts unpaid.
-        const { error } = await supabase.from("invoices").upsert(
-          {
-            tenant_id: (t as any).id,
-            month_year: month,
-            base_rent: rent,
-            utility_amount: util,
-            total_due: total,
-            balance_remaining: total,
-            status: total === 0 ? "paid" : "unpaid",
-          },
-          { onConflict: "tenant_id,month_year" },
-        );
-        if (error) throw error;
-        // Suppress unused warning
-        void paidRows;
-        created++;
-      }
-      return created;
-    },
-    onSuccess: (n) => {
+    mutationFn: async () => (generateMonthFn as any)({ data: { month } }),
+    onSuccess: (r: any) => {
       qc.invalidateQueries();
-      toast.success(`Generated ${n} invoice(s)`);
+      const bits = [
+        r?.creditApplied ? `${money(r.creditApplied)} of credit applied` : null,
+        r?.waiting?.length ? `${r.waiting.length} not due yet` : null,
+        r?.reconciled ? `${r.reconciled} balance(s) corrected` : null,
+      ].filter(Boolean);
+      toast.success(`Generated ${r?.created ?? 0} invoice(s) for ${month}`, {
+        description: bits.join(" · ") || undefined,
+      });
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const { data: badInvoices } = useQuery({
+    queryKey: ["incorrect-invoices"],
+    queryFn: async () => ((await (listIncorrectInvoicesFn as any)()) as any)?.invoices ?? [],
+    staleTime: 30_000,
+  });
+
+  const cleanup = useMutation({
+    mutationFn: async () => (removeIncorrectInvoicesFn as any)({ data: {} }),
+    onSuccess: (r: any) => {
+      qc.invalidateQueries();
+      toast.success(`Removed ${r?.removed ?? 0} incorrect invoice(s)`, {
+        description: r?.reconciled ? `${r.reconciled} tenant balance(s) corrected` : "Payment history was kept",
+      });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not clean up invoices"),
+  });
+
 
   const lateFees = useMutation({
     mutationFn: async () => (runLateFeesNow as any)(),
@@ -278,6 +262,38 @@ function BillingPage() {
 
         </CardContent>
       </Card>
+
+      {(badInvoices ?? []).length > 0 && (
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-base">
+              {(badInvoices ?? []).length} invoice(s) should not be in arrears
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="max-h-52 space-y-2 overflow-y-auto text-sm">
+              {(badInvoices ?? []).map((b: any) => (
+                <div key={b.id} className="flex items-center justify-between gap-3 rounded-md bg-muted/50 px-3 py-2">
+                  <div>
+                    <div className="font-medium">{b.tenantName} — {b.month}</div>
+                    <div className="text-xs text-muted-foreground">{b.reason}</div>
+                  </div>
+                  <span className="shrink-0 text-muted-foreground">{money(b.amount)}</span>
+                </div>
+              ))}
+            </div>
+            <Button variant="destructive" onClick={() => cleanup.mutate()} disabled={cleanup.isPending}>
+              <Trash2 className="h-4 w-4" />
+              {cleanup.isPending ? "Cleaning up…" : "Remove these and fix balances"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Payments are always kept. Rent that is not due yet is invoiced automatically on its due day.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+
 
       <Dialog open={singleOpen} onOpenChange={setSingleOpen}>
         <DialogContent className="max-w-md">
