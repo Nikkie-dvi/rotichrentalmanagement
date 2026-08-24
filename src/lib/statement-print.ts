@@ -113,10 +113,14 @@ export function buildStatementHtml(args: {
   ${body}
   <div class="summary">
     <span>Total billed: ${ksh(totals.billed)}</span>
+    <span>Total rent billed: ${ksh(totals.rent)}</span>
     <span>Total collected: ${ksh(totals.collected)}</span>
-    <span>Total utilities: ${ksh(totals.utilities)}</span>
+    <span>Total utilities billed: ${ksh(totals.utilities)}</span>
+    <span>Utilities collected: ${ksh(Math.max(0, totals.utilities - totals.utilDue))}</span>
+    <span>Utilities still owed: ${ksh(totals.utilDue)}</span>
     <span>Total outstanding: ${ksh(totals.out)}</span>
   </div>
+
   <footer>Generated ${esc(new Date().toLocaleString())} · Rotich Management Systems</footer>
   </body></html>`;
 }
