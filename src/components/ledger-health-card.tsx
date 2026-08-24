@@ -1,16 +1,27 @@
 // "Balance health check" — recomputes every tenant's account with the same
 // shared ledger the tenant portal uses and shows anything that does not line up
 // across the landlord pages, invoices and credit records.
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ShieldCheck, Loader2, Eraser } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { money } from "@/lib/types";
-import { runLedgerAudit } from "@/lib/ledger-audit.functions";
+import { runLedgerAudit, clearUninvoicedRentFn } from "@/lib/ledger-audit.functions";
 
 const LABELS: Record<string, string> = {
   invoice_balance_mismatch: "Invoice balance does not match payments",
@@ -23,6 +34,7 @@ const LABELS: Record<string, string> = {
 
 export function LedgerHealthCard() {
   const [result, setResult] = useState<any>(null);
+  const qc = useQueryClient();
 
   const check = useMutation({
     mutationFn: () => runLedgerAudit({ data: { notify: true } }),
@@ -35,25 +47,23 @@ export function LedgerHealthCard() {
   });
 
   const issues = (result?.issues ?? []) as any[];
+  const uninvoiced = issues.filter((i) => i.code === "uninvoiced_rent");
+  const uninvoicedTotal = uninvoiced.reduce((s, i) => s + Number(i.difference ?? 0), 0);
 
-  return (
-    <Card className="border-primary/20 bg-background/60 backdrop-blur-xl">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          Balance health check
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          Confirms every tenant&apos;s credit and arrears are the same on their portal, on this page and on their
-          invoices. You get an alert whenever something does not add up.
-        </p>
+  const clearUninvoiced = useMutation({
+    mutationFn: () => clearUninvoicedRentFn({ data: { tenantIds: uninvoiced.map((i) => i.tenantId) } }),
+    onSuccess: (res: any) => {
+      setResult(res.audit);
+      toast.success(
+        res.cleared
+          ? `Cleared ${money(res.total)} of uninvoiced rent for ${res.cleared} tenant${res.cleared === 1 ? "" : "s"}`
+          : "Nothing left to clear",
+      );
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not clear the uninvoiced rent"),
+  });
 
-        <Button onClick={() => check.mutate()} disabled={check.isPending} className="w-full sm:w-auto">
-          {check.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-          {check.isPending ? "Checking…" : "Run check"}
-        </Button>
 
         {result && (
           <div className="space-y-2">
