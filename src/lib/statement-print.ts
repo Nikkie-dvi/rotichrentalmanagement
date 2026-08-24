@@ -12,6 +12,8 @@ export type StatementSection = {
   billed: number;
   collected: number;
   outstanding: number;
+  /** Total utility charges (water, electricity, garbage, metered utilities) billed in this section. */
+  utilities: number;
 };
 
 const esc = (v: unknown) =>
