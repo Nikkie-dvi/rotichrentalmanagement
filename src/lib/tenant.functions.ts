@@ -209,7 +209,9 @@ export const findMyTenantRecord = createServerFn({ method: "GET" })
 
     const { data: rows } = await supabaseAdmin
       .from("tenants")
-      .select("id, full_name, auth_user_id, unit_id, units(unit_number, properties(name))")
+      .select(
+        "id, full_name, auth_user_id, unit_id, approval_status, declined_reason, rent_due_day, units(unit_number, rent_amount, properties(name, location))",
+      )
       .eq("owner_id", landlord.user_id as string)
       .in("phone_number", await phoneVariants(data.phone))
       .limit(1);
@@ -226,10 +228,16 @@ export const findMyTenantRecord = createServerFn({ method: "GET" })
       landlordName: (landlord.full_name as string) ?? null,
       fullName: row.full_name as string,
       unitNumber: (row.units?.unit_number as string) ?? null,
+      unitRent: Number(row.units?.rent_amount ?? 0) || 0,
       propertyName: (row.units?.properties?.name as string) ?? null,
+      propertyLocation: (row.units?.properties?.location as string) ?? null,
+      rentDueDay: (row.rent_due_day as number) ?? null,
+      approvalStatus: ((row.approval_status as string) ?? "approved") as "pending" | "approved" | "declined",
+      declinedReason: (row.declined_reason as string) ?? null,
       alreadyLinked: Boolean(row.auth_user_id),
     };
   });
+
 
 export const claimTenantAccount = createServerFn({ method: "POST" })
   .inputValidator((data: { authUserId: string; email: string; code: string; phone: string }) => {
