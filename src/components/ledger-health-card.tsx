@@ -64,6 +64,56 @@ export function LedgerHealthCard() {
     onError: (e: any) => toast.error(e?.message ?? "Could not clear the uninvoiced rent"),
   });
 
+  return (
+    <Card className="border-primary/20 bg-background/60 backdrop-blur-xl">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          Balance health check
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Confirms every tenant&apos;s credit and arrears are the same on their portal, on this page and on their
+          invoices. You get an alert whenever something does not add up.
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => check.mutate()} disabled={check.isPending} className="w-full sm:w-auto">
+            {check.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+            {check.isPending ? "Checking…" : "Run check"}
+          </Button>
+
+          {uninvoiced.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={clearUninvoiced.isPending} className="w-full sm:w-auto">
+                  {clearUninvoiced.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Eraser className="h-4 w-4" />
+                  )}
+                  Clear uninvoiced rent ({money(uninvoicedTotal)})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear rent due but not invoiced?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This removes {money(uninvoicedTotal)} of rent that fell due for {uninvoiced.length} tenant
+                    {uninvoiced.length === 1 ? "" : "s"} without ever being invoiced, so the warning clears. Existing
+                    invoices, payments and credit are not changed.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => clearUninvoiced.mutate()}>Clear it</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+
 
         {result && (
           <div className="space-y-2">
