@@ -41,7 +41,7 @@ async function loadOwnerData(ownerId: string) {
       .eq("owner_id", ownerId),
     supabaseAdmin
       .from("invoices")
-      .select("id, tenant_id, month_year, total_due, balance_remaining, due_date")
+      .select("id, tenant_id, month_year, total_due, balance_remaining, due_date, status")
       .eq("owner_id", ownerId),
     supabaseAdmin.from("payments").select("tenant_id, invoice_id, amount_paid").eq("owner_id", ownerId),
     supabaseAdmin.from("tenant_credit_events").select("tenant_id, delta").eq("owner_id", ownerId),
