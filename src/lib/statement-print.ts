@@ -30,8 +30,13 @@ export function buildStatementHtml(args: {
   sections: StatementSection[];
 }) {
   const totals = args.sections.reduce(
-    (a, s) => ({ billed: a.billed + s.billed, collected: a.collected + s.collected, out: a.out + s.outstanding }),
-    { billed: 0, collected: 0, out: 0 },
+    (a, s) => ({
+      billed: a.billed + s.billed,
+      collected: a.collected + s.collected,
+      out: a.out + s.outstanding,
+      utilities: a.utilities + s.utilities,
+    }),
+    { billed: 0, collected: 0, out: 0, utilities: 0 },
   );
 
   const body = args.sections
