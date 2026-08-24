@@ -14,7 +14,12 @@ export type StatementSection = {
   outstanding: number;
   /** Total utility charges (water, electricity, garbage, metered utilities) billed in this section. */
   utilities: number;
+  /** Utility charges still unpaid in this section. */
+  utilitiesDue?: number;
+  /** Base rent billed in this section. */
+  rentBilled?: number;
 };
+
 
 const esc = (v: unknown) =>
   String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
