@@ -273,6 +273,14 @@ function ReportsPage() {
       if (Math.abs(diff) > 0.5) lines.push({ date: when, description: `Adjustment (${i.month_year})`, charge: diff });
     }
 
+    // Unpaid balances carried in from earlier months, so the statement explains the full arrears.
+    const broughtForward = (dues as any[])
+      .filter((i) => i.month_year !== month)
+      .reduce((s, i) => s + Number(i.balance_remaining ?? 0), 0);
+    if (broughtForward > 0.5)
+      lines.push({ date: `${month}-01`, description: "Balance brought forward (earlier months)", charge: broughtForward });
+
+
     for (const p of pays as any[]) {
       lines.push({
         date: p.payment_date,
