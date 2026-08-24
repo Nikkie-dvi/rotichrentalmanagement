@@ -299,3 +299,179 @@ export const claimTenantAccount = createServerFn({ method: "POST" })
 
     return { tenantId: row.id as string };
   });
+
+/**
+ * Units a landlord has, for the "Request access" flow. Public read (by code)
+ * with only non-sensitive columns projected.
+ */
+export const getLandlordUnitsForRequest = createServerFn({ method: "GET" })
+  .inputValidator((data: { code: string }) => {
+    const code = (data?.code ?? "").trim();
+    if (!/^\d{4}$/.test(code)) throw new Error("Enter the 4-digit landlord code");
+    return { code };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: landlord } = await supabaseAdmin
+      .from("landlord_accounts")
+      .select("user_id, full_name, phone")
+      .eq("landlord_code", data.code)
+      .maybeSingle();
+    if (!landlord) throw new Error("No landlord found with that code");
+
+    const { data: units, error } = await supabaseAdmin
+      .from("units")
+      .select("id, unit_number, rent_amount, unit_type, status, properties(name, location)")
+      .eq("owner_id", landlord.user_id as string)
+      .order("unit_number", { ascending: true });
+    if (error) throw new Error(error.message);
+
+    return {
+      landlordName: (landlord.full_name as string) ?? null,
+      landlordPhone: (landlord.phone as string) ?? null,
+      units: (units ?? []).map((u: any) => ({
+        id: u.id as string,
+        unit_number: u.unit_number as string,
+        rent_amount: Number(u.rent_amount) || 0,
+        unit_type: (u.unit_type as string) ?? "other",
+        status: (u.status as string) ?? "vacant",
+        property_name: (u.properties?.name as string) ?? null,
+        property_location: (u.properties?.location as string) ?? null,
+      })),
+    };
+  });
+
+/**
+ * New tenant asks the landlord for access: creates a pending tenant record
+ * tied to the chosen unit. No lease signing here — the landlord approves first.
+ */
+export const submitAccessRequest = createServerFn({ method: "POST" })
+  .inputValidator((data: {
+    authUserId: string;
+    email: string;
+    code: string;
+    fullName: string;
+    phone: string;
+    unitId: string;
+    note?: string;
+  }) => {
+    const authUserId = (data?.authUserId ?? "").trim();
+    const email = (data?.email ?? "").trim().toLowerCase();
+    const code = (data?.code ?? "").trim();
+    const fullName = (data?.fullName ?? "").trim();
+    const phone = (data?.phone ?? "").trim();
+    const unitId = (data?.unitId ?? "").trim();
+    const note = (data?.note ?? "").trim().slice(0, 500);
+    if (!authUserId) throw new Error("Missing auth user");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Invalid email");
+    if (!/^\d{4}$/.test(code)) throw new Error("Enter the 4-digit landlord code");
+    if (!fullName || fullName.length > 100) throw new Error("Enter your full name");
+    if (!phone || phone.length > 32) throw new Error("Enter a valid phone number");
+    if (!unitId) throw new Error("Pick the unit you want");
+    return { authUserId, email, code, fullName, phone, unitId, note };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: userLookup, error: userErr } = await supabaseAdmin.auth.admin.getUserById(data.authUserId);
+    if (userErr || !userLookup?.user) throw new Error("Auth user not found");
+    if ((userLookup.user.email ?? "").toLowerCase() !== data.email) {
+      throw new Error("Email does not match account");
+    }
+
+    const { data: landlord } = await supabaseAdmin
+      .from("landlord_accounts")
+      .select("user_id")
+      .eq("landlord_code", data.code)
+      .maybeSingle();
+    if (!landlord) throw new Error("No landlord found with that code");
+
+    const { data: unit } = await supabaseAdmin
+      .from("units")
+      .select("id, owner_id, unit_number")
+      .eq("id", data.unitId)
+      .maybeSingle();
+    if (!unit || unit.owner_id !== landlord.user_id) throw new Error("That unit does not belong to this landlord");
+
+    const { data: existing } = await supabaseAdmin
+      .from("tenants")
+      .select("id, approval_status")
+      .eq("auth_user_id", data.authUserId)
+      .maybeSingle();
+    if (existing) {
+      return { tenantId: existing.id as string, alreadyExists: true };
+    }
+
+    const { data: inserted, error: iErr } = await supabaseAdmin
+      .from("tenants")
+      .insert({
+        owner_id: unit.owner_id,
+        unit_id: unit.id,
+        full_name: data.fullName,
+        phone_number: data.phone,
+        email: data.email,
+        auth_user_id: data.authUserId,
+        active: false,
+        deposit_paid: 0,
+        approval_status: "pending",
+      })
+      .select("id")
+      .single();
+    if (iErr) throw new Error(iErr.message);
+
+    try {
+      const { pushToUsers, landlordAudience } = await import("@/lib/push.server");
+      await pushToUsers(await landlordAudience(unit.owner_id as string), {
+        title: "New access request",
+        body: `${data.fullName} requested access to unit ${unit.unit_number}${data.note ? ` — ${data.note}` : ""}.`,
+        url: "/applications",
+        tag: `access-request-${inserted.id}`,
+      });
+    } catch {
+      /* never block onboarding on notifications */
+    }
+
+    return { tenantId: inserted.id as string, alreadyExists: false };
+  });
+
+/** Onboarding status for the signed-in tenant: pending / approved / declined. */
+export const getMyOnboardingStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: tenant } = await supabase
+      .from("tenants")
+      .select(
+        "id, full_name, phone_number, email, owner_id, approval_status, declined_reason, active, created_at, lease_signed_at, unit_id, units(unit_number, rent_amount, properties(name, location))",
+      )
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+    if (!tenant) return { hasRecord: false as const };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: landlord } = await supabaseAdmin
+      .from("landlord_accounts")
+      .select("full_name, phone, landlord_code")
+      .eq("user_id", tenant.owner_id as string)
+      .maybeSingle();
+
+    const t = tenant as any;
+    return {
+      hasRecord: true as const,
+      status: ((t.approval_status as string) ?? "pending") as "pending" | "approved" | "declined",
+      declinedReason: (t.declined_reason as string) ?? null,
+      fullName: t.full_name as string,
+      phone: (t.phone_number as string) ?? null,
+      email: (t.email as string) ?? null,
+      active: Boolean(t.active),
+      requestedAt: (t.created_at as string) ?? null,
+      leaseSignedAt: (t.lease_signed_at as string) ?? null,
+      unitNumber: (t.units?.unit_number as string) ?? null,
+      unitRent: Number(t.units?.rent_amount ?? 0) || 0,
+      propertyName: (t.units?.properties?.name as string) ?? null,
+      propertyLocation: (t.units?.properties?.location as string) ?? null,
+      landlordName: (landlord?.full_name as string) ?? null,
+      landlordPhone: (landlord?.phone as string) ?? null,
+      landlordCode: (landlord?.landlord_code as string) ?? null,
+    };
+  });
