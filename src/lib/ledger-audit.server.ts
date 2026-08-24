@@ -204,7 +204,89 @@ export async function notifyLedgerIssues(res: LedgerAuditResult) {
   return { notified: res.issues.length };
 }
 
+/**
+ * Clears "rent due but not invoiced" for a landlord's tenants by moving the
+ * rent start date forward to the point the invoices actually cover, so the
+ * ledger stops counting rent that was never billed. Nothing already invoiced,
+ * paid or credited is touched.
+ */
+export async function clearUninvoicedRent(ownerId: string, tenantIds?: string[]) {
+  const { data: tenants } = await supabaseAdmin
+    .from("tenants")
+    .select("id, full_name, active, move_in_date, rent_due_day, units(rent_amount)")
+    .eq("owner_id", ownerId);
+
+  const { data: invoices } = await supabaseAdmin
+    .from("invoices")
+    .select("tenant_id, total_due")
+    .eq("owner_id", ownerId);
+
+  const invoicedByTenant = new Map<string, number>();
+  for (const inv of (invoices ?? []) as any[]) {
+    invoicedByTenant.set(inv.tenant_id, (invoicedByTenant.get(inv.tenant_id) ?? 0) + num(inv.total_due));
+  }
+
+  const now = new Date();
+  const cleared: { tenantId: string; tenantName: string; amount: number; moveInDate: string }[] = [];
+
+  for (const t of (tenants ?? []) as any[]) {
+    if (tenantIds?.length && !tenantIds.includes(t.id)) continue;
+    if (!t.active || !t.move_in_date) continue;
+    const rent = num(t.units?.rent_amount);
+    if (rent <= 0) continue;
+
+    const invoiced = invoicedByTenant.get(t.id) ?? 0;
+    const accrued = accruedRent({
+      rentAmount: rent,
+      moveInDate: t.move_in_date,
+      rentDueDay: t.rent_due_day,
+    });
+    const uninvoiced = accrued - invoiced;
+    if (uninvoiced <= 1) continue;
+
+    // How many rent cycles the invoices actually cover.
+    const target = Math.floor(invoiced / rent);
+    const start = new Date(t.move_in_date);
+    const dueDay = Math.max(1, Math.min(31, t.rent_due_day ?? start.getDate()));
+    const lastDayThisMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const beforeDue = now.getDate() < Math.min(dueDay, lastDayThisMonth);
+
+    // accrued cycles = monthsBetween + 1 - (beforeDue ? 1 : 0) → solve for months.
+    const monthsBack = target <= 0 ? (beforeDue ? 0 : -1) : target - 1 + (beforeDue ? 1 : 0);
+    const target_month = new Date(now.getFullYear(), now.getMonth() - monthsBack, 1);
+    const lastDay = new Date(target_month.getFullYear(), target_month.getMonth() + 1, 0).getDate();
+    const newStart = new Date(
+      Date.UTC(target_month.getFullYear(), target_month.getMonth(), Math.min(dueDay, lastDay)),
+    );
+    const iso = newStart.toISOString().slice(0, 10);
+
+    await supabaseAdmin.from("tenants").update({ move_in_date: iso }).eq("id", t.id).eq("owner_id", ownerId);
+    cleared.push({
+      tenantId: t.id,
+      tenantName: t.full_name ?? "Tenant",
+      amount: Math.round(uninvoiced),
+      moveInDate: iso,
+    });
+  }
+
+  if (cleared.length) {
+    const total = cleared.reduce((s, c) => s + c.amount, 0);
+    await supabaseAdmin.from("notification_logs").insert({
+      owner_id: ownerId,
+      channel: "push",
+      subject: "Uninvoiced rent cleared",
+      message: `Cleared ${Math.round(total)} of rent that had fallen due without an invoice for ${cleared.length} tenant${
+        cleared.length === 1 ? "" : "s"
+      }.`,
+      status: "sent",
+    });
+  }
+
+  return { cleared: cleared.length, total: cleared.reduce((s, c) => s + c.amount, 0), details: cleared };
+}
+
 /** Runs the balance check for every landlord that has tenants. */
+
 export async function auditAllLedgers() {
   const { data: owners } = await supabaseAdmin.from("tenants").select("owner_id").eq("active", true);
   const ids = Array.from(new Set(((owners ?? []) as any[]).map((o) => o.owner_id).filter(Boolean)));
