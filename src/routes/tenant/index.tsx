@@ -81,11 +81,22 @@ function TenantLanding() {
             </Button>
             <Button
               asChild
+              variant="outline"
+              size="lg"
+              className="border-primary/20 backdrop-blur-sm transition-transform active:scale-[0.98]"
+            >
+              <Link to="/tenant/request-access">New tenant — request access</Link>
+            </Button>
+            <Button
+              asChild
               variant="ghost"
               size="lg"
               className="transition-transform active:scale-[0.98]"
             >
-              <Link to="/tenant/register">New tenant — apply for a vacant unit</Link>
+              <Link to="/tenant/register">Apply for a vacant unit &amp; sign lease</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+              <Link to="/tenant/status">Check my onboarding status</Link>
             </Button>
           </CardContent>
         </Card>
