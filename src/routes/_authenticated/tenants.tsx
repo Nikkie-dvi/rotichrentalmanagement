@@ -390,6 +390,10 @@ function TenantsPage() {
         </div>
       )}
 
+      <LedgerHealthCard />
+
+
+
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.map((t: any) => {
           const ledger = ledgers.get(t.id) ?? buildLedger({ invoiced: 0, paid: 0 });
