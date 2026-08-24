@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
 import { TenantCreditDialog } from "@/components/tenant-credit-dialog";
+import { LedgerHealthCard } from "@/components/ledger-health-card";
+
 import { runCreditWatch } from "@/lib/credit.functions";
 import { accruedRent, buildLedger, type Ledger } from "@/lib/ledger";
 
