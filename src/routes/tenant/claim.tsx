@@ -203,13 +203,60 @@ function ClaimPage() {
           </CardContent>
         </Card>
 
-        {canClaim && (
+        {canClaim && !verified && (
           <Card className="mt-4 border-primary/15 bg-card/80 shadow-xl backdrop-blur-xl">
             <CardHeader>
-              <CardTitle className="text-base">Step 2 — create your login</CardTitle>
+              <CardTitle className="text-base">Step 2 — confirm this is you</CardTitle>
+              <CardDescription>
+                Check the unit and landlord below. If anything is wrong, stop here and call your landlord.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 text-sm">
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                <VerifyRow label="Name" value={match.fullName} />
+                <VerifyRow label="Phone" value={phone} />
+                <VerifyRow label="Property" value={match.propertyName ?? "—"} />
+                <VerifyRow label="Unit" value={match.unitNumber ? `Unit ${match.unitNumber}` : "Not assigned yet"} />
+                <VerifyRow
+                  label="Rent"
+                  value={
+                    match.unitRent
+                      ? `KES ${match.unitRent.toLocaleString("en-KE", { maximumFractionDigits: 0 })}`
+                      : "—"
+                  }
+                />
+                <VerifyRow label="Rent due day" value={match.rentDueDay ? `${match.rentDueDay}` : "—"} />
+                <VerifyRow label="Landlord" value={match.landlordName ?? "—"} />
+                <VerifyRow label="Landlord code" value={code} />
+                <VerifyRow label="Account status" value={match.approvalStatus} />
+              </div>
+              <div className="grid gap-2">
+                <Button type="button" onClick={() => setVerified(true)}>
+                  <CheckCircle2 className="mr-2 h-4 w-4" /> Yes, these details are correct
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setMatch(null);
+                    setVerified(false);
+                  }}
+                >
+                  No — search again
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {canClaim && verified && (
+          <Card className="mt-4 border-primary/15 bg-card/80 shadow-xl backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="text-base">Step 3 — create your login</CardTitle>
               <CardDescription>You'll use this email and password to open your tenant dashboard.</CardDescription>
             </CardHeader>
             <CardContent>
+
               <form onSubmit={submit} className="grid gap-3">
                 <div className="grid gap-2">
                   <Label htmlFor="claim-email">Email</Label>
