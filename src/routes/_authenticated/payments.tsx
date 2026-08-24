@@ -87,7 +87,9 @@ function PaymentsPage() {
         .limit(pageSize)).data ?? [],
   });
 
-  const { data: outstandingByTenant } = useQuery({
+  // NOTE: keep this query's result JSON-safe (a plain array). The offline cache
+  // is serialised to storage, and a Map would come back as {} and crash the page.
+  const { data: outstandingInvoices } = useQuery({
     queryKey: ["outstanding-map"],
     staleTime: 30_000,
     queryFn: async () => {
@@ -96,20 +98,25 @@ function PaymentsPage() {
         .select("id,tenant_id,balance_remaining,month_year")
         .gt("balance_remaining", 0)
         .order("month_year");
-      const map = new Map<string, any[]>();
-      for (const inv of data ?? []) {
-        const arr = map.get(inv.tenant_id) ?? [];
-        arr.push(inv);
-        map.set(inv.tenant_id, arr);
-      }
-      return map;
+      return data ?? [];
     },
   });
 
+  const outstandingByTenant = useMemo(() => {
+    const map = new Map<string, any[]>();
+    for (const inv of outstandingInvoices ?? []) {
+      const arr = map.get(inv.tenant_id) ?? [];
+      arr.push(inv);
+      map.set(inv.tenant_id, arr);
+    }
+    return map;
+  }, [outstandingInvoices]);
+
   const dueForTenant = useMemo(
-    () => (outstandingByTenant?.get(tenantId) ?? []).reduce((s, i) => s + Number(i.balance_remaining), 0),
+    () => (outstandingByTenant.get(tenantId) ?? []).reduce((s, i) => s + Number(i.balance_remaining), 0),
     [outstandingByTenant, tenantId],
   );
+
 
   const log = useMutation({
     mutationFn: async () => {
