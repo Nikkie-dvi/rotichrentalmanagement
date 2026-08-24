@@ -235,13 +235,31 @@ function ReportsPage() {
 
     const lines: { date: string; description: string; charge?: number; paid?: number }[] = [];
     for (const i of invs as any[]) {
+      const n = (v: any) => Number(v ?? 0) || 0;
+      const items = (d?.lines ?? []).filter((l: any) => l.invoice_id === i.id);
+      const extraItems = items.filter((l: any) => l.kind !== "penalty");
+      const penaltyItems = items.filter((l: any) => l.kind === "penalty");
+      const extrasTotal = extraItems.reduce((s: number, l: any) => s + n(l.amount), 0);
+
+      const water = n(i.water_amount);
+      const power = n(i.electricity_amount);
+      const garbage = n(i.garbage_amount);
+      const other = n(i.other_amount);
+      // Whatever the utility total carries beyond the named buckets comes from meter readings.
+      const metered = Math.max(0, n(i.utility_amount) - (water + power + garbage + other));
+
       const parts: [string, number][] = [
-        ["Base rent", Number(i.base_rent ?? 0)],
-        ["Water", Number(i.water_amount ?? 0)],
-        ["Electricity", Number(i.electricity_amount ?? 0)],
-        ["Garbage", Number(i.garbage_amount ?? 0)],
-        [i.other_label || "Other charges", Number(i.other_amount ?? 0)],
-        ["Late payment fee", Number(i.late_penalty_amount ?? 0)],
+        ["Base rent", n(i.base_rent)],
+        ["Water", water],
+        ["Electricity", power],
+        ["Garbage / service", garbage],
+        ["Metered utilities", metered],
+        // Itemised extra charges (watchman, repairs, …) instead of one lumped "Other".
+        ...extraItems.map((l: any) => [String(l.category || "Extra charge"), n(l.amount)] as [string, number]),
+        [i.other_label || "Other charges", Math.max(0, other - extrasTotal)],
+        ...(penaltyItems.length
+          ? penaltyItems.map((l: any) => [String(l.category || "Late payment fee"), n(l.amount)] as [string, number])
+          : ([["Late payment fee", n(i.late_penalty_amount)]] as [string, number][])),
       ];
       const when = i.due_date ?? String(i.created_at ?? "").slice(0, 10);
       let sum = 0;
@@ -251,9 +269,18 @@ function ReportsPage() {
           sum += amt;
         }
       }
-      const diff = Number(i.total_due ?? 0) - sum;
+      const diff = n(i.total_due) - sum;
       if (Math.abs(diff) > 0.5) lines.push({ date: when, description: `Adjustment (${i.month_year})`, charge: diff });
     }
+
+    // Unpaid balances carried in from earlier months, so the statement explains the full arrears.
+    const broughtForward = (dues as any[])
+      .filter((i) => i.month_year !== month)
+      .reduce((s, i) => s + Number(i.balance_remaining ?? 0), 0);
+    if (broughtForward > 0.5)
+      lines.push({ date: `${month}-01`, description: "Balance brought forward (earlier months)", charge: broughtForward });
+
+
     for (const p of pays as any[]) {
       lines.push({
         date: p.payment_date,
@@ -269,7 +296,7 @@ function ReportsPage() {
       heading: `Unit ${g.unit} — ${g.tenant}`,
       subheading: g.property,
       lines,
-      billed: (invs as any[]).reduce((s, i) => s + Number(i.total_due ?? 0), 0),
+      billed: (invs as any[]).reduce((s, i) => s + Number(i.total_due ?? 0), 0) + Math.max(0, broughtForward),
       collected: (pays as any[]).reduce((s, p) => s + Number(p.amount_paid ?? 0), 0),
       outstanding: (dues as any[]).reduce((s, i) => s + Number(i.balance_remaining ?? 0), 0),
     };
