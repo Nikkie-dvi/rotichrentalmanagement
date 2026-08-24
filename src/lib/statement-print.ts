@@ -71,8 +71,11 @@ export function buildStatementHtml(args: {
           </tbody>
           <tfoot>
             <tr><th colspan="2">Totals</th><th class="r">${ksh(s.billed)}</th><th class="r">${ksh(s.collected)}</th></tr>
-            <tr><td colspan="2" class="muted">of which utilities</td><td class="r muted">${ksh(s.utilities)}</td><td class="r muted">—</td></tr>
+            <tr><td colspan="2" class="muted">of which rent</td><td class="r muted">${ksh(s.rentBilled ?? 0)}</td><td class="r muted">—</td></tr>
+            <tr><td colspan="2" class="muted">of which utilities</td><td class="r muted">${ksh(s.utilities)}</td><td class="r muted">${ksh(Math.max(0, s.utilities - (s.utilitiesDue ?? 0)))}</td></tr>
+            <tr><td colspan="2" class="muted">utilities still owed</td><td class="r muted">${ksh(s.utilitiesDue ?? 0)}</td><td class="r muted">—</td></tr>
           </tfoot>
+
         </table>
         <p class="bal ${s.outstanding > 0 ? "due" : "clear"}">
           ${s.outstanding > 0 ? `Outstanding balance: ${ksh(s.outstanding)}` : s.outstanding < 0 ? `Credit in hand: ${ksh(Math.abs(s.outstanding))}` : "Fully settled"}
