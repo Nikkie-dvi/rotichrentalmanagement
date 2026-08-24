@@ -296,7 +296,7 @@ function ReportsPage() {
       heading: `Unit ${g.unit} — ${g.tenant}`,
       subheading: g.property,
       lines,
-      billed: (invs as any[]).reduce((s, i) => s + Number(i.total_due ?? 0), 0),
+      billed: (invs as any[]).reduce((s, i) => s + Number(i.total_due ?? 0), 0) + Math.max(0, broughtForward),
       collected: (pays as any[]).reduce((s, p) => s + Number(p.amount_paid ?? 0), 0),
       outstanding: (dues as any[]).reduce((s, i) => s + Number(i.balance_remaining ?? 0), 0),
     };
