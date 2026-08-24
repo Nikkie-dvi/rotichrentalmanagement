@@ -3,6 +3,8 @@ import type { QueryClient } from "@tanstack/react-query";
 import { WifiOff } from "lucide-react";
 
 const CACHE_KEY = "rms-query-cache";
+/** Bump when a cached query shape changes so stale entries are discarded. */
+const CACHE_BUSTER = "v2";
 const MAX_AGE = 1000 * 60 * 60 * 24 * 7; // keep offline data for a week
 
 /**
@@ -32,6 +34,7 @@ export function useOfflineCache(queryClient: QueryClient) {
         queryClient: queryClient as unknown as Parameters<typeof persistQueryClient>[0]["queryClient"],
         persister,
         maxAge: MAX_AGE,
+        buster: CACHE_BUSTER,
         dehydrateOptions: {
           // Never persist errored/empty queries.
           shouldDehydrateQuery: (query) =>
