@@ -37,6 +37,7 @@ function DefaultsCard({ pricing }: { pricing: PlatformPricing }) {
         loyalty_discount_percent: Number(form.loyalty_discount_percent) || 0,
         annual_discount_percent: Number(form.annual_discount_percent) || 0,
         offer_note: form.offer_note?.trim() || null,
+        support_whatsapp: (form.support_whatsapp ?? "").replace(/[^0-9]/g, "") || null,
       })
       .eq("id", "default");
     setSaving(false);
@@ -67,6 +68,15 @@ function DefaultsCard({ pricing }: { pricing: PlatformPricing }) {
               type="number"
               value={form.base_monthly}
               onChange={(e) => setForm({ ...form, base_monthly: Number(e.target.value) })}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Support WhatsApp number</Label>
+            <Input
+              inputMode="numeric"
+              placeholder="254706747498"
+              value={form.support_whatsapp ?? ""}
+              onChange={(e) => setForm({ ...form, support_whatsapp: e.target.value })}
             />
           </div>
           <div>
