@@ -104,7 +104,9 @@ function PaymentsPage() {
 
   const outstandingByTenant = useMemo(() => {
     const map = new Map<string, any[]>();
-    for (const inv of outstandingInvoices ?? []) {
+    // Older app versions cached this as a Map, which restores from storage as {}.
+    const rows: any[] = Array.isArray(outstandingInvoices) ? outstandingInvoices : [];
+    for (const inv of rows) {
       const arr = map.get(inv.tenant_id) ?? [];
       arr.push(inv);
       map.set(inv.tenant_id, arr);
