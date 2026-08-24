@@ -251,6 +251,8 @@ function ReportsPage() {
       // Whatever the utility total carries beyond the named buckets comes from meter readings.
       const metered = Math.max(0, n(i.utility_amount) - (water + power + garbage + other));
       utilities += water + power + garbage + metered;
+      rentBilled += n(i.base_rent);
+
 
       const parts: [string, number][] = [
         ["Base rent", n(i.base_rent)],
