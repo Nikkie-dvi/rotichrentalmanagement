@@ -42,6 +42,7 @@ function ClaimPage() {
   const [match, setMatch] = useState<Match | null>(null);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,6 +58,7 @@ function ClaimPage() {
   const runLookup = async () => {
     setError(null);
     setMatch(null);
+    setVerified(false);
     if (!/^\d{4}$/.test(code)) return toast.error("Enter your landlord's 4-digit code");
     if (!phone.trim()) return toast.error("Enter your phone number");
     setSearching(true);
@@ -129,6 +131,7 @@ function ClaimPage() {
                 onChange={(e) => {
                   setCode(e.target.value.replace(/\D/g, "").slice(0, 4));
                   setMatch(null);
+                  setVerified(false);
                 }}
                 className="text-center font-semibold tracking-[0.4em]"
               />
@@ -144,6 +147,7 @@ function ClaimPage() {
                 onChange={(e) => {
                   setPhone(e.target.value);
                   setMatch(null);
+                  setVerified(false);
                 }}
               />
             </div>
@@ -203,13 +207,60 @@ function ClaimPage() {
           </CardContent>
         </Card>
 
-        {canClaim && (
+        {canClaim && !verified && (
           <Card className="mt-4 border-primary/15 bg-card/80 shadow-xl backdrop-blur-xl">
             <CardHeader>
-              <CardTitle className="text-base">Step 2 — create your login</CardTitle>
+              <CardTitle className="text-base">Step 2 — confirm this is you</CardTitle>
+              <CardDescription>
+                Check the unit and landlord below. If anything is wrong, stop here and call your landlord.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 text-sm">
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                <VerifyRow label="Name" value={match.fullName} />
+                <VerifyRow label="Phone" value={phone} />
+                <VerifyRow label="Property" value={match.propertyName ?? "—"} />
+                <VerifyRow label="Unit" value={match.unitNumber ? `Unit ${match.unitNumber}` : "Not assigned yet"} />
+                <VerifyRow
+                  label="Rent"
+                  value={
+                    match.unitRent
+                      ? `KES ${match.unitRent.toLocaleString("en-KE", { maximumFractionDigits: 0 })}`
+                      : "—"
+                  }
+                />
+                <VerifyRow label="Rent due day" value={match.rentDueDay ? `${match.rentDueDay}` : "—"} />
+                <VerifyRow label="Landlord" value={match.landlordName ?? "—"} />
+                <VerifyRow label="Landlord code" value={code} />
+                <VerifyRow label="Account status" value={match.approvalStatus} />
+              </div>
+              <div className="grid gap-2">
+                <Button type="button" onClick={() => setVerified(true)}>
+                  <CheckCircle2 className="mr-2 h-4 w-4" /> Yes, these details are correct
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setMatch(null);
+                    setVerified(false);
+                  }}
+                >
+                  No — search again
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {canClaim && verified && (
+          <Card className="mt-4 border-primary/15 bg-card/80 shadow-xl backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="text-base">Step 3 — create your login</CardTitle>
               <CardDescription>You'll use this email and password to open your tenant dashboard.</CardDescription>
             </CardHeader>
             <CardContent>
+
               <form onSubmit={submit} className="grid gap-3">
                 <div className="grid gap-2">
                   <Label htmlFor="claim-email">Email</Label>
@@ -250,6 +301,15 @@ function ClaimPage() {
           </Link>
         </p>
       </div>
+    </div>
+  );
+}
+
+function VerifyRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-right font-medium capitalize">{value}</span>
     </div>
   );
 }

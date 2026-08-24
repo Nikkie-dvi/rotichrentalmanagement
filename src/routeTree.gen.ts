@@ -16,6 +16,8 @@ import { Route as TenantauthRouteRouteImport } from './routes/_tenantauth/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as TenantIndexRouteImport } from './routes/tenant/index'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as TenantStatusRouteImport } from './routes/tenant/status'
+import { Route as TenantRequestAccessRouteImport } from './routes/tenant/request-access'
 import { Route as TenantRegisterRouteImport } from './routes/tenant/register'
 import { Route as TenantLoginRouteImport } from './routes/tenant/login'
 import { Route as TenantClaimRouteImport } from './routes/tenant/claim'
@@ -82,6 +84,16 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const TenantStatusRoute = TenantStatusRouteImport.update({
+  id: '/tenant/status',
+  path: '/tenant/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TenantRequestAccessRoute = TenantRequestAccessRouteImport.update({
+  id: '/tenant/request-access',
+  path: '/tenant/request-access',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const TenantRegisterRoute = TenantRegisterRouteImport.update({
   id: '/tenant/register',
@@ -290,6 +302,8 @@ export interface FileRoutesByFullPath {
   '/tenant/claim': typeof TenantClaimRoute
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
+  '/tenant/request-access': typeof TenantRequestAccessRoute
+  '/tenant/status': typeof TenantStatusRoute
   '/tenant/': typeof TenantIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -330,6 +344,8 @@ export interface FileRoutesByTo {
   '/tenant/claim': typeof TenantClaimRoute
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
+  '/tenant/request-access': typeof TenantRequestAccessRoute
+  '/tenant/status': typeof TenantStatusRoute
   '/tenant': typeof TenantIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -372,6 +388,8 @@ export interface FileRoutesById {
   '/tenant/claim': typeof TenantClaimRoute
   '/tenant/login': typeof TenantLoginRoute
   '/tenant/register': typeof TenantRegisterRoute
+  '/tenant/request-access': typeof TenantRequestAccessRoute
+  '/tenant/status': typeof TenantStatusRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/tenant/': typeof TenantIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -415,6 +433,8 @@ export interface FileRouteTypes {
     | '/tenant/claim'
     | '/tenant/login'
     | '/tenant/register'
+    | '/tenant/request-access'
+    | '/tenant/status'
     | '/tenant/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -455,6 +475,8 @@ export interface FileRouteTypes {
     | '/tenant/claim'
     | '/tenant/login'
     | '/tenant/register'
+    | '/tenant/request-access'
+    | '/tenant/status'
     | '/tenant'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -496,6 +518,8 @@ export interface FileRouteTypes {
     | '/tenant/claim'
     | '/tenant/login'
     | '/tenant/register'
+    | '/tenant/request-access'
+    | '/tenant/status'
     | '/_authenticated/'
     | '/tenant/'
     | '/.lovable/oauth/consent'
@@ -527,6 +551,8 @@ export interface RootRouteChildren {
   TenantClaimRoute: typeof TenantClaimRoute
   TenantLoginRoute: typeof TenantLoginRoute
   TenantRegisterRoute: typeof TenantRegisterRoute
+  TenantRequestAccessRoute: typeof TenantRequestAccessRoute
+  TenantStatusRoute: typeof TenantStatusRoute
   TenantIndexRoute: typeof TenantIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -589,6 +615,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/tenant/status': {
+      id: '/tenant/status'
+      path: '/tenant/status'
+      fullPath: '/tenant/status'
+      preLoaderRoute: typeof TenantStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tenant/request-access': {
+      id: '/tenant/request-access'
+      path: '/tenant/request-access'
+      fullPath: '/tenant/request-access'
+      preLoaderRoute: typeof TenantRequestAccessRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/tenant/register': {
       id: '/tenant/register'
@@ -896,6 +936,8 @@ const rootRouteChildren: RootRouteChildren = {
   TenantClaimRoute: TenantClaimRoute,
   TenantLoginRoute: TenantLoginRoute,
   TenantRegisterRoute: TenantRegisterRoute,
+  TenantRequestAccessRoute: TenantRequestAccessRoute,
+  TenantStatusRoute: TenantStatusRoute,
   TenantIndexRoute: TenantIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
