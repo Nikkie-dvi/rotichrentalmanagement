@@ -42,6 +42,7 @@ function ClaimPage() {
   const [match, setMatch] = useState<Match | null>(null);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,6 +58,7 @@ function ClaimPage() {
   const runLookup = async () => {
     setError(null);
     setMatch(null);
+    setVerified(false);
     if (!/^\d{4}$/.test(code)) return toast.error("Enter your landlord's 4-digit code");
     if (!phone.trim()) return toast.error("Enter your phone number");
     setSearching(true);
@@ -129,6 +131,7 @@ function ClaimPage() {
                 onChange={(e) => {
                   setCode(e.target.value.replace(/\D/g, "").slice(0, 4));
                   setMatch(null);
+                  setVerified(false);
                 }}
                 className="text-center font-semibold tracking-[0.4em]"
               />
@@ -144,6 +147,7 @@ function ClaimPage() {
                 onChange={(e) => {
                   setPhone(e.target.value);
                   setMatch(null);
+                  setVerified(false);
                 }}
               />
             </div>
@@ -297,6 +301,15 @@ function ClaimPage() {
           </Link>
         </p>
       </div>
+    </div>
+  );
+}
+
+function VerifyRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-right font-medium capitalize">{value}</span>
     </div>
   );
 }
