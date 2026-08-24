@@ -390,6 +390,55 @@ function ReportsPage() {
 
       <Card className="glass-card">
         <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText className="h-4 w-4" />Individual statement (PDF)
+          </CardTitle>
+          <CardDescription>
+            A proper printed statement for one property or a single unit — pick “Save as PDF” in the print dialog.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label>Property</Label>
+              <Select
+                value={activeProperty}
+                onValueChange={(v) => { setStmtProperty(v); setStmtUnit("all"); }}
+                disabled={!properties.length}
+              >
+                <SelectTrigger><SelectValue placeholder="Select property" /></SelectTrigger>
+                <SelectContent>
+                  {properties.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Unit</Label>
+              <Select value={stmtUnit} onValueChange={setStmtUnit} disabled={!unitsForProperty.length}>
+                <SelectTrigger><SelectValue placeholder="All units" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All units in this property</SelectItem>
+                  {unitsForProperty.map((g) => (
+                    <SelectItem key={g.key} value={g.unit}>Unit {g.unit} — {g.tenant}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button className="justify-start" disabled={report.isLoading || !activeProperty} onClick={printStatement}>
+            <FileText className="h-4 w-4" />
+            {stmtUnit === "all" ? `Statement for ${activeProperty || "property"}` : `Statement for unit ${stmtUnit}`}
+          </Button>
+          {!properties.length && !report.isLoading && (
+            <p className="text-xs text-muted-foreground">No invoices or payments in {label(month)} yet.</p>
+          )}
+        </CardContent>
+      </Card>
+
+
+
+      <Card className="glass-card">
+        <CardHeader className="pb-3">
           <CardTitle className="text-base">Transactions in {label(month)}</CardTitle>
           <CardDescription>Preview of what the payments file contains.</CardDescription>
         </CardHeader>
