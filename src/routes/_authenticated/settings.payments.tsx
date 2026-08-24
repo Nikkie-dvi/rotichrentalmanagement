@@ -86,7 +86,10 @@ function RentPaymentSettingsPage() {
   const [viaSms, setViaSms] = useState(true);
   const [audience, setAudience] = useState<Audience>("all");
   const [picked, setPicked] = useState<string[]>([]);
-  const [mode, setMode] = useState<"details" | "message">("details");
+  const [mode, setMode] = useState<"details" | "message">(
+    typeof window !== "undefined" && window.location.hash === "#sms-tenants" ? "message" : "details",
+  );
+
 
 
   const { data: tenants } = useQuery({

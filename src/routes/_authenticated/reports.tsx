@@ -3,16 +3,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SectionSwitcher, SectionPanel, FINANCE_TABS } from "@/components/section-switcher";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Download, FileSpreadsheet, Printer, TrendingUp } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Printer, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { downloadCsv, toCsv, downloadText, type CsvRow } from "@/lib/csv";
+import { buildStatementHtml, printHtml, type StatementSection } from "@/lib/statement-print";
+
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
@@ -199,6 +202,101 @@ function ReportsPage() {
     toast.success(`Full ${label(month)} statement downloaded`);
   };
 
+  // ---- Individual PDF statements, per property / per unit -------------------
+  type Group = { key: string; property: string; unit: string; tenant: string };
+
+  const groupOf = (row: any): Group => {
+    const property = row?.tenants?.units?.properties?.name ?? "Unassigned property";
+    const unit = row?.tenants?.units?.unit_number ?? "No unit";
+    return { key: `${property}||${unit}`, property, unit, tenant: row?.tenants?.full_name ?? "—" };
+  };
+
+  const groups = useMemo(() => {
+    const map = new Map<string, Group>();
+    for (const r of [...(d?.monthInvoices ?? []), ...(d?.payments ?? []), ...(d?.arrears ?? [])]) {
+      const g = groupOf(r);
+      if (!map.has(g.key)) map.set(g.key, g);
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      a.property === b.property ? a.unit.localeCompare(b.unit) : a.property.localeCompare(b.property),
+    );
+  }, [d]);
+
+  const properties = useMemo(() => Array.from(new Set(groups.map((g) => g.property))), [groups]);
+  const [stmtProperty, setStmtProperty] = useState<string>("");
+  const [stmtUnit, setStmtUnit] = useState<string>("all");
+  const activeProperty = stmtProperty || properties[0] || "";
+  const unitsForProperty = groups.filter((g) => g.property === activeProperty);
+
+  const sectionFor = (g: Group): StatementSection => {
+    const invs = (d?.monthInvoices ?? []).filter((i: any) => groupOf(i).key === g.key);
+    const pays = (d?.payments ?? []).filter((p: any) => groupOf(p).key === g.key);
+    const dues = (d?.arrears ?? []).filter((i: any) => groupOf(i).key === g.key);
+
+    const lines: { date: string; description: string; charge?: number; paid?: number }[] = [];
+    for (const i of invs as any[]) {
+      const parts: [string, number][] = [
+        ["Base rent", Number(i.base_rent ?? 0)],
+        ["Water", Number(i.water_amount ?? 0)],
+        ["Electricity", Number(i.electricity_amount ?? 0)],
+        ["Garbage", Number(i.garbage_amount ?? 0)],
+        [i.other_label || "Other charges", Number(i.other_amount ?? 0)],
+        ["Late payment fee", Number(i.late_penalty_amount ?? 0)],
+      ];
+      const when = i.due_date ?? String(i.created_at ?? "").slice(0, 10);
+      let sum = 0;
+      for (const [name, amt] of parts) {
+        if (amt > 0) {
+          lines.push({ date: when, description: `${name} (${i.month_year})`, charge: amt });
+          sum += amt;
+        }
+      }
+      const diff = Number(i.total_due ?? 0) - sum;
+      if (Math.abs(diff) > 0.5) lines.push({ date: when, description: `Adjustment (${i.month_year})`, charge: diff });
+    }
+    for (const p of pays as any[]) {
+      lines.push({
+        date: p.payment_date,
+        description: `Payment received — ${String(p.payment_method).replace("_", " ")}${
+          p.reference_no || p.mpesa_receipt_no ? ` · ref ${p.reference_no ?? p.mpesa_receipt_no}` : ""
+        }`,
+        paid: Number(p.amount_paid),
+      });
+    }
+    lines.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+    return {
+      heading: `Unit ${g.unit} — ${g.tenant}`,
+      subheading: g.property,
+      lines,
+      billed: (invs as any[]).reduce((s, i) => s + Number(i.total_due ?? 0), 0),
+      collected: (pays as any[]).reduce((s, p) => s + Number(p.amount_paid ?? 0), 0),
+      outstanding: (dues as any[]).reduce((s, i) => s + Number(i.balance_remaining ?? 0), 0),
+    };
+  };
+
+  const printStatement = () => {
+    if (!d || !activeProperty) {
+      toast.error("No records to build a statement from");
+      return;
+    }
+    const targets = stmtUnit === "all" ? unitsForProperty : unitsForProperty.filter((g) => g.unit === stmtUnit);
+    if (!targets.length) {
+      toast.error("Nothing to include in this statement");
+      return;
+    }
+    printHtml(
+      buildStatementHtml({
+        title: stmtUnit === "all" ? `Property statement — ${activeProperty}` : `Unit ${stmtUnit} statement`,
+        propertyName: activeProperty,
+        monthLabel: label(month),
+        sections: targets.map(sectionFor),
+      }),
+    );
+    toast.success("Statement ready — choose “Save as PDF” in the print dialog");
+  };
+
+
   const kpis = [
     { label: "Collected", value: money(collected), sub: `${d?.payments.length ?? 0} payments`, glow: "glow-green" },
     { label: "Billed", value: money(billed), sub: `${d?.monthInvoices.length ?? 0} invoices`, glow: "" },
@@ -289,6 +387,55 @@ function ReportsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      <Card className="glass-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText className="h-4 w-4" />Individual statement (PDF)
+          </CardTitle>
+          <CardDescription>
+            A proper printed statement for one property or a single unit — pick “Save as PDF” in the print dialog.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label>Property</Label>
+              <Select
+                value={activeProperty}
+                onValueChange={(v) => { setStmtProperty(v); setStmtUnit("all"); }}
+                disabled={!properties.length}
+              >
+                <SelectTrigger><SelectValue placeholder="Select property" /></SelectTrigger>
+                <SelectContent>
+                  {properties.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Unit</Label>
+              <Select value={stmtUnit} onValueChange={setStmtUnit} disabled={!unitsForProperty.length}>
+                <SelectTrigger><SelectValue placeholder="All units" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All units in this property</SelectItem>
+                  {unitsForProperty.map((g) => (
+                    <SelectItem key={g.key} value={g.unit}>Unit {g.unit} — {g.tenant}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button className="justify-start" disabled={report.isLoading || !activeProperty} onClick={printStatement}>
+            <FileText className="h-4 w-4" />
+            {stmtUnit === "all" ? `Statement for ${activeProperty || "property"}` : `Statement for unit ${stmtUnit}`}
+          </Button>
+          {!properties.length && !report.isLoading && (
+            <p className="text-xs text-muted-foreground">No invoices or payments in {label(month)} yet.</p>
+          )}
+        </CardContent>
+      </Card>
+
+
 
       <Card className="glass-card">
         <CardHeader className="pb-3">
