@@ -235,6 +235,8 @@ function ReportsPage() {
 
     const lines: { date: string; description: string; charge?: number; paid?: number }[] = [];
     let utilities = 0;
+    let rentBilled = 0;
+
     for (const i of invs as any[]) {
       const n = (v: any) => Number(v ?? 0) || 0;
       const items = (d?.lines ?? []).filter((l: any) => l.invoice_id === i.id);
