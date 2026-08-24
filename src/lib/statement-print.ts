@@ -14,7 +14,12 @@ export type StatementSection = {
   outstanding: number;
   /** Total utility charges (water, electricity, garbage, metered utilities) billed in this section. */
   utilities: number;
+  /** Utility charges still unpaid in this section. */
+  utilitiesDue?: number;
+  /** Base rent billed in this section. */
+  rentBilled?: number;
 };
+
 
 const esc = (v: unknown) =>
   String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
@@ -35,9 +40,12 @@ export function buildStatementHtml(args: {
       collected: a.collected + s.collected,
       out: a.out + s.outstanding,
       utilities: a.utilities + s.utilities,
+      utilDue: a.utilDue + (s.utilitiesDue ?? 0),
+      rent: a.rent + (s.rentBilled ?? 0),
     }),
-    { billed: 0, collected: 0, out: 0, utilities: 0 },
+    { billed: 0, collected: 0, out: 0, utilities: 0, utilDue: 0, rent: 0 },
   );
+
 
   const body = args.sections
     .map(
@@ -63,8 +71,11 @@ export function buildStatementHtml(args: {
           </tbody>
           <tfoot>
             <tr><th colspan="2">Totals</th><th class="r">${ksh(s.billed)}</th><th class="r">${ksh(s.collected)}</th></tr>
-            <tr><td colspan="2" class="muted">of which utilities</td><td class="r muted">${ksh(s.utilities)}</td><td class="r muted">—</td></tr>
+            <tr><td colspan="2" class="muted">of which rent</td><td class="r muted">${ksh(s.rentBilled ?? 0)}</td><td class="r muted">—</td></tr>
+            <tr><td colspan="2" class="muted">of which utilities</td><td class="r muted">${ksh(s.utilities)}</td><td class="r muted">${ksh(Math.max(0, s.utilities - (s.utilitiesDue ?? 0)))}</td></tr>
+            <tr><td colspan="2" class="muted">utilities still owed</td><td class="r muted">${ksh(s.utilitiesDue ?? 0)}</td><td class="r muted">—</td></tr>
           </tfoot>
+
         </table>
         <p class="bal ${s.outstanding > 0 ? "due" : "clear"}">
           ${s.outstanding > 0 ? `Outstanding balance: ${ksh(s.outstanding)}` : s.outstanding < 0 ? `Credit in hand: ${ksh(Math.abs(s.outstanding))}` : "Fully settled"}
@@ -102,10 +113,14 @@ export function buildStatementHtml(args: {
   ${body}
   <div class="summary">
     <span>Total billed: ${ksh(totals.billed)}</span>
+    <span>Total rent billed: ${ksh(totals.rent)}</span>
     <span>Total collected: ${ksh(totals.collected)}</span>
-    <span>Total utilities: ${ksh(totals.utilities)}</span>
+    <span>Total utilities billed: ${ksh(totals.utilities)}</span>
+    <span>Utilities collected: ${ksh(Math.max(0, totals.utilities - totals.utilDue))}</span>
+    <span>Utilities still owed: ${ksh(totals.utilDue)}</span>
     <span>Total outstanding: ${ksh(totals.out)}</span>
   </div>
+
   <footer>Generated ${esc(new Date().toLocaleString())} · Rotich Management Systems</footer>
   </body></html>`;
 }

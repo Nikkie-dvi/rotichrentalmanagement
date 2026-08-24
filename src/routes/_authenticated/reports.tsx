@@ -235,6 +235,8 @@ function ReportsPage() {
 
     const lines: { date: string; description: string; charge?: number; paid?: number }[] = [];
     let utilities = 0;
+    let rentBilled = 0;
+
     for (const i of invs as any[]) {
       const n = (v: any) => Number(v ?? 0) || 0;
       const items = (d?.lines ?? []).filter((l: any) => l.invoice_id === i.id);
@@ -249,6 +251,8 @@ function ReportsPage() {
       // Whatever the utility total carries beyond the named buckets comes from meter readings.
       const metered = Math.max(0, n(i.utility_amount) - (water + power + garbage + other));
       utilities += water + power + garbage + metered;
+      rentBilled += n(i.base_rent);
+
 
       const parts: [string, number][] = [
         ["Base rent", n(i.base_rent)],
@@ -294,6 +298,21 @@ function ReportsPage() {
     }
     lines.sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
+    // Utilities still owed: the unpaid share of each invoice's utility charges.
+    const utilitiesDue = (dues as any[]).reduce((s, i) => {
+      const n = (v: any) => Number(v ?? 0) || 0;
+      const other = n(i.other_amount);
+      const util =
+        n(i.water_amount) +
+        n(i.electricity_amount) +
+        n(i.garbage_amount) +
+        Math.max(0, n(i.utility_amount) - (n(i.water_amount) + n(i.electricity_amount) + n(i.garbage_amount) + other));
+      const total = n(i.total_due);
+      const bal = Math.max(0, n(i.balance_remaining));
+      if (util <= 0 || total <= 0) return s;
+      return s + Math.min(util, (util / total) * bal);
+    }, 0);
+
     return {
       heading: `Unit ${g.unit} — ${g.tenant}`,
       subheading: g.property,
@@ -302,7 +321,10 @@ function ReportsPage() {
       collected: (pays as any[]).reduce((s, p) => s + Number(p.amount_paid ?? 0), 0),
       outstanding: (dues as any[]).reduce((s, i) => s + Number(i.balance_remaining ?? 0), 0),
       utilities,
+      utilitiesDue,
+      rentBilled,
     };
+
   };
 
   const printStatement = () => {
