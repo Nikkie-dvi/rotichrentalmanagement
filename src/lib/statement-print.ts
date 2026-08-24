@@ -40,9 +40,12 @@ export function buildStatementHtml(args: {
       collected: a.collected + s.collected,
       out: a.out + s.outstanding,
       utilities: a.utilities + s.utilities,
+      utilDue: a.utilDue + (s.utilitiesDue ?? 0),
+      rent: a.rent + (s.rentBilled ?? 0),
     }),
-    { billed: 0, collected: 0, out: 0, utilities: 0 },
+    { billed: 0, collected: 0, out: 0, utilities: 0, utilDue: 0, rent: 0 },
   );
+
 
   const body = args.sections
     .map(
