@@ -234,6 +234,7 @@ function ReportsPage() {
     const dues = (d?.arrears ?? []).filter((i: any) => groupOf(i).key === g.key);
 
     const lines: { date: string; description: string; charge?: number; paid?: number }[] = [];
+    let utilities = 0;
     for (const i of invs as any[]) {
       const n = (v: any) => Number(v ?? 0) || 0;
       const items = (d?.lines ?? []).filter((l: any) => l.invoice_id === i.id);
@@ -247,6 +248,7 @@ function ReportsPage() {
       const other = n(i.other_amount);
       // Whatever the utility total carries beyond the named buckets comes from meter readings.
       const metered = Math.max(0, n(i.utility_amount) - (water + power + garbage + other));
+      utilities += water + power + garbage + metered;
 
       const parts: [string, number][] = [
         ["Base rent", n(i.base_rent)],
@@ -299,6 +301,7 @@ function ReportsPage() {
       billed: (invs as any[]).reduce((s, i) => s + Number(i.total_due ?? 0), 0) + Math.max(0, broughtForward),
       collected: (pays as any[]).reduce((s, p) => s + Number(p.amount_paid ?? 0), 0),
       outstanding: (dues as any[]).reduce((s, i) => s + Number(i.balance_remaining ?? 0), 0),
+      utilities,
     };
   };
 

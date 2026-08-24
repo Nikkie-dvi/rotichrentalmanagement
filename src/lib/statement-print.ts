@@ -12,6 +12,8 @@ export type StatementSection = {
   billed: number;
   collected: number;
   outstanding: number;
+  /** Total utility charges (water, electricity, garbage, metered utilities) billed in this section. */
+  utilities: number;
 };
 
 const esc = (v: unknown) =>
@@ -28,8 +30,13 @@ export function buildStatementHtml(args: {
   sections: StatementSection[];
 }) {
   const totals = args.sections.reduce(
-    (a, s) => ({ billed: a.billed + s.billed, collected: a.collected + s.collected, out: a.out + s.outstanding }),
-    { billed: 0, collected: 0, out: 0 },
+    (a, s) => ({
+      billed: a.billed + s.billed,
+      collected: a.collected + s.collected,
+      out: a.out + s.outstanding,
+      utilities: a.utilities + s.utilities,
+    }),
+    { billed: 0, collected: 0, out: 0, utilities: 0 },
   );
 
   const body = args.sections
@@ -56,6 +63,7 @@ export function buildStatementHtml(args: {
           </tbody>
           <tfoot>
             <tr><th colspan="2">Totals</th><th class="r">${ksh(s.billed)}</th><th class="r">${ksh(s.collected)}</th></tr>
+            <tr><td colspan="2" class="muted">of which utilities</td><td class="r muted">${ksh(s.utilities)}</td><td class="r muted">—</td></tr>
           </tfoot>
         </table>
         <p class="bal ${s.outstanding > 0 ? "due" : "clear"}">
@@ -95,6 +103,7 @@ export function buildStatementHtml(args: {
   <div class="summary">
     <span>Total billed: ${ksh(totals.billed)}</span>
     <span>Total collected: ${ksh(totals.collected)}</span>
+    <span>Total utilities: ${ksh(totals.utilities)}</span>
     <span>Total outstanding: ${ksh(totals.out)}</span>
   </div>
   <footer>Generated ${esc(new Date().toLocaleString())} · Rotich Management Systems</footer>
