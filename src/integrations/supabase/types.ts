@@ -35,6 +35,7 @@ export type Database = {
       billing_settings: {
         Row: {
           auto_penalties_enabled: boolean
+          auto_reconcile_enabled: boolean
           default_due_day: number
           email_enabled: boolean
           email_subject: string
@@ -57,6 +58,7 @@ export type Database = {
         }
         Insert: {
           auto_penalties_enabled?: boolean
+          auto_reconcile_enabled?: boolean
           default_due_day?: number
           email_enabled?: boolean
           email_subject?: string
@@ -79,6 +81,7 @@ export type Database = {
         }
         Update: {
           auto_penalties_enabled?: boolean
+          auto_reconcile_enabled?: boolean
           default_due_day?: number
           email_enabled?: boolean
           email_subject?: string
@@ -656,6 +659,7 @@ export type Database = {
           loyalty_after_months: number
           loyalty_discount_percent: number
           offer_note: string | null
+          support_whatsapp: string | null
           updated_at: string
         }
         Insert: {
@@ -665,6 +669,7 @@ export type Database = {
           loyalty_after_months?: number
           loyalty_discount_percent?: number
           offer_note?: string | null
+          support_whatsapp?: string | null
           updated_at?: string
         }
         Update: {
@@ -674,6 +679,7 @@ export type Database = {
           loyalty_after_months?: number
           loyalty_discount_percent?: number
           offer_note?: string | null
+          support_whatsapp?: string | null
           updated_at?: string
         }
         Relationships: []

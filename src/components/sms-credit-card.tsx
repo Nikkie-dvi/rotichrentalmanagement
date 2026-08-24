@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MessageSquare, Loader2, Send } from "lucide-react";
+import { MessageSquare, Loader2, Send, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { requestSmsRecharge } from "@/lib/sms-wallet.functions";
 import { fetchSmsWalletSafe } from "@/lib/sms-wallet-client";
+import { usePlatformPricing, whatsappSupportLink, useLandlordAccount } from "@/hooks/use-landlord-account";
 
 const ksh = (n: number) => `KES ${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 
@@ -26,6 +27,9 @@ export function SmsCreditCard() {
     retry: false,
     refetchOnWindowFocus: true,
   });
+
+  const { data: pricing } = usePlatformPricing();
+  const { data: account } = useLandlordAccount();
 
   const pending = (data?.requests ?? []).find((r: any) => r.status === "pending");
   const low = (data?.messagesLeft ?? 0) < 10;
@@ -120,6 +124,25 @@ export function SmsCreditCard() {
                 </Button>
               </div>
             )}
+
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+              <a
+                href={whatsappSupportLink(
+                  `Hello, I need help with my SMS recharge.\n\nLandlord: ${account?.full_name ?? ""}${
+                    account?.landlord_code ? ` (code #${account.landlord_code})` : ""
+                  }\nPhone: ${account?.phone ?? ""}\nSMS balance: ${ksh(data?.balance ?? 0)} (${data?.messagesLeft ?? 0} messages left)\n${
+                    pending
+                      ? `I requested a recharge of ${ksh(pending.amount)} on ${new Date(pending.created_at).toLocaleString()} and it has not been approved yet.`
+                      : "My recharge has not reflected on my account."
+                  }\n\nKindly assist.`,
+                  pricing?.support_whatsapp,
+                )}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MessageCircle className="h-4 w-4" /> Problem with your recharge? WhatsApp us
+              </a>
+            </Button>
 
             {(data?.ledger ?? []).length > 0 && (
               <div className="rounded-md border">

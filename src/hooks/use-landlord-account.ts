@@ -56,8 +56,9 @@ export function trialState(
 }
 
 /** Opens WhatsApp with a ready-made "payment not received" message. */
-export function whatsappSupportLink(message: string) {
-  return `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(message)}`;
+export function whatsappSupportLink(message: string, number?: string | null) {
+  const line = String(number ?? SUPPORT_WHATSAPP).replace(/[^0-9]/g, "") || SUPPORT_WHATSAPP;
+  return `https://wa.me/${line}?text=${encodeURIComponent(message)}`;
 }
 
 
@@ -69,6 +70,7 @@ export type PlatformPricing = {
   loyalty_discount_percent: number;
   annual_discount_percent: number;
   offer_note: string | null;
+  support_whatsapp?: string | null;
 };
 
 export const DEFAULT_PRICING: PlatformPricing = {
@@ -78,6 +80,7 @@ export const DEFAULT_PRICING: PlatformPricing = {
   loyalty_discount_percent: 10,
   annual_discount_percent: 20,
   offer_note: null,
+  support_whatsapp: SUPPORT_WHATSAPP,
 };
 
 /** Loads the platform pricing settings (readable by any signed-in user). */

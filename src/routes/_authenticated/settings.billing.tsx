@@ -36,6 +36,7 @@ const DEFAULTS = {
   penalty_value: 500,
   penalty_max: "",
   auto_penalties_enabled: true,
+  auto_reconcile_enabled: true,
   sms_enabled: true,
   email_enabled: false,
   rent_reminders_enabled: true,
@@ -97,6 +98,7 @@ function BillingSettingsPage() {
       penalty_value: Math.max(0, Number(f.penalty_value) || 0),
       penalty_max: f.penalty_max === "" ? null : Number(f.penalty_max),
       auto_penalties_enabled: !!f.auto_penalties_enabled,
+      auto_reconcile_enabled: !!f.auto_reconcile_enabled,
       sms_enabled: !!f.sms_enabled,
       email_enabled: false,
       sms_template: f.sms_template,
@@ -190,6 +192,20 @@ function BillingSettingsPage() {
               <div className="text-xs text-muted-foreground">Turn off to add penalties manually only.</div>
             </div>
             <Switch checked={!!form.auto_penalties_enabled} onCheckedChange={(v) => toggle("auto_penalties_enabled", v, "Automatic late fees")} />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <div className="font-medium text-sm">Daily automatic invoicing &amp; clean-up</div>
+              <div className="text-xs text-muted-foreground">
+                Each night the system raises rent only for tenants whose due day has arrived, re-applies any credit and
+                removes invoices that should not exist. Turn off to do all invoicing by hand.
+              </div>
+            </div>
+            <Switch
+              checked={!!form.auto_reconcile_enabled}
+              onCheckedChange={(v) => toggle("auto_reconcile_enabled", v, "Daily automatic invoicing")}
+            />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
