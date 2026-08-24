@@ -34,6 +34,7 @@ export function useOfflineCache(queryClient: QueryClient) {
         queryClient: queryClient as unknown as Parameters<typeof persistQueryClient>[0]["queryClient"],
         persister,
         maxAge: MAX_AGE,
+        buster: CACHE_BUSTER,
         dehydrateOptions: {
           // Never persist errored/empty queries.
           shouldDehydrateQuery: (query) =>
