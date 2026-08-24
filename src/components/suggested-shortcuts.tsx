@@ -55,10 +55,16 @@ export function SuggestedShortcuts() {
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           <Button asChild variant="outline" size="sm" className="glass-btn justify-start">
+            <Link to="/settings/payments" hash="sms-tenants">
+              <MessageSquare className="h-4 w-4" /> SMS tenants
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="glass-btn justify-start">
             <Link to="/applications">
               <ClipboardList className="h-4 w-4" /> Applications
             </Link>
           </Button>
+
           <Button asChild variant="outline" size="sm" className="glass-btn justify-start">
             <Link to="/tenants">
               <Users className="h-4 w-4" /> Tenants
