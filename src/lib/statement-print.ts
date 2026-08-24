@@ -63,6 +63,7 @@ export function buildStatementHtml(args: {
           </tbody>
           <tfoot>
             <tr><th colspan="2">Totals</th><th class="r">${ksh(s.billed)}</th><th class="r">${ksh(s.collected)}</th></tr>
+            <tr><td colspan="2" class="muted">of which utilities</td><td class="r muted">${ksh(s.utilities)}</td><td class="r muted">—</td></tr>
           </tfoot>
         </table>
         <p class="bal ${s.outstanding > 0 ? "due" : "clear"}">
