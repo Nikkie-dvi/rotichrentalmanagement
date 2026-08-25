@@ -191,8 +191,8 @@ function Dashboard() {
         .select("id,month_year,balance_remaining,total_due,status,due_date,tenants(full_name,rent_due_day,move_in_date,units(unit_number,properties(name,location)))")
         .gt("balance_remaining", 0)
         .order("month_year", { ascending: false });
-      // Hide invoices whose due date hasn't been reached yet — they aren't arrears.
-      return (data ?? []).filter((i: any) => isDue(i.month_year, i.tenants?.rent_due_day, i.tenants?.move_in_date, i.due_date));
+      // Every invoice with a balance is arrears — same rule as everywhere else.
+      return data ?? [];
     },
   });
 
