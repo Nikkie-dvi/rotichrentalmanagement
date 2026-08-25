@@ -249,6 +249,11 @@ function BillingPage() {
           <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
             <FileText className="h-4 w-4" />Generate Bills for {month}
           </Button>
+          <Button variant="outline" onClick={() => dueToday.mutate()} disabled={dueToday.isPending}>
+            <FileText className="h-4 w-4" />
+            {dueToday.isPending ? "Raising invoices…" : "Invoice rent due today"}
+          </Button>
+
           <Button variant="outline" onClick={() => setSingleOpen(true)}>
             <UserPlus className="h-4 w-4" />Invoice one tenant
           </Button>
