@@ -232,15 +232,36 @@ function Dashboard() {
     queryKey: ["drill-arrears"],
     enabled: drill === "arrears",
     queryFn: async () => {
-      const { data } = await supabase
-        .from("invoices")
-        .select("id,month_year,balance_remaining,total_due,status,due_date,tenants(full_name,rent_due_day,move_in_date,units(unit_number,properties(name,location)))")
-        .gt("balance_remaining", 0)
-        .order("month_year", { ascending: false });
-      // Every invoice with a balance is arrears — same rule as everywhere else.
-      return data ?? [];
+      const [{ data }, ledgers] = await Promise.all([
+        supabase
+          .from("invoices")
+          .select("id,tenant_id,month_year,balance_remaining,total_due,status,due_date,tenants(full_name,rent_due_day,move_in_date,units(unit_number,properties(name,location)))")
+          .gt("balance_remaining", 0)
+          .order("month_year", { ascending: false }),
+        loadTenantLedgers(),
+      ]);
+      const rows: any[] = data ?? [];
+
+      // Any tenant whose ledger says they owe more than their open invoices
+      // (rent due but never invoiced, or credit edits) still belongs here, so
+      // the arrears page matches the Tenants page exactly.
+      for (const { tenant, ledger, openInvoiceBalance } of ledgers) {
+        const extra = Math.round(ledger.arrears - openInvoiceBalance);
+        if (extra <= 1) continue;
+        rows.push({
+          id: `unbilled-${tenant.id}`,
+          unbilled: true,
+          tenant_id: tenant.id,
+          month_year: "Not invoiced yet",
+          balance_remaining: extra,
+          total_due: extra,
+          tenants: tenant,
+        });
+      }
+      return rows;
     },
   });
+
 
 
   const qc = useQueryClient();
