@@ -101,9 +101,7 @@ function Dashboard() {
       const collected =
         payments?.filter((p: any) => (p.payment_date ?? "").startsWith(monthKey)).reduce((s: number, p: any) => s + Number(p.amount_paid), 0) ?? 0;
       const arrears =
-        invoices
-          ?.filter((i: any) => isDue(i.month_year, i.tenants?.rent_due_day, i.tenants?.move_in_date, i.due_date))
-          .reduce((s: number, i: any) => s + Number(i.balance_remaining), 0) ?? 0;
+        invoices?.reduce((s: number, i: any) => s + Number(i.balance_remaining), 0) ?? 0;
       return { totalUnits, occupied, occupancy, collected, arrears };
     },
   });
