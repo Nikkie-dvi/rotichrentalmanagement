@@ -289,7 +289,52 @@ function BillingPage() {
         </CardContent>
       </Card>
 
+      {(() => {
+        const due = (invoices ?? []).filter(
+          (i: any) =>
+            Number(i.balance_remaining) > 0 &&
+            (!i.due_date || String(i.due_date).slice(0, 10) <= todayIso),
+        );
+        if (!due.length) return null;
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Due now — counting as arrears ({due.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {due.map((i: any) => (
+                <div key={i.id} className="flex items-center justify-between gap-3 rounded-md bg-muted/50 px-3 py-2 text-sm">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{i.tenants?.full_name ?? "Tenant"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {i.tenants?.units?.unit_number ? `Unit ${i.tenants.units.unit_number} · ` : ""}
+                      Due {i.due_date ? String(i.due_date).slice(0, 10) : i.month_year}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="font-medium text-destructive">{money(Number(i.balance_remaining))}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Delete invoice for ${i.tenants?.full_name ?? "tenant"}`}
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setInvoiceToDelete(i)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground">
+                Delete any invoice here if it was raised in error — payments are always kept.
+              </p>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {(badInvoices ?? []).length > 0 && (
+
         <Card className="border-destructive/40">
           <CardHeader>
             <CardTitle className="text-base">
