@@ -576,14 +576,19 @@ function Dashboard() {
                     <TableRow key={i.id}>
                       <TableCell className="font-medium">{i.tenants?.full_name ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{area}{unit ? ` · ${unit}` : ""}</TableCell>
-                      <TableCell>{i.month_year}</TableCell>
+                      <TableCell>
+                        {i.month_year}
+                        {i.unbilled && (
+                          <Badge variant="outline" className="ml-2 text-[10px]">Not invoiced</Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right font-semibold text-destructive">{money(Number(i.balance_remaining))}</TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
                           variant="outline"
                           className="glass-btn glow-amber h-8 gap-1 px-2 text-xs"
-                          disabled={busyId === i.id}
+                          disabled={busyId === i.id || i.unbilled}
                           onClick={() => remindOne(i.id)}
                         >
                           {busyId === i.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellRing className="h-3.5 w-3.5" />}
@@ -591,6 +596,9 @@ function Dashboard() {
                         </Button>
                       </TableCell>
                       <TableCell className="text-right">
+                        {i.unbilled ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" aria-label="Delete invoice">
@@ -615,7 +623,9 @@ function Dashboard() {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
+                        )}
                       </TableCell>
+
                     </TableRow>
                   );
                 })}
