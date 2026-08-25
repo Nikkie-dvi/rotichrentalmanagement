@@ -66,6 +66,30 @@ export function LedgerHealthCard() {
     onError: (e: any) => toast.error(e?.message ?? "Could not clear the uninvoiced rent"),
   });
 
+  // Invoices the system considers wrong (empty, future, outside the tenancy).
+  const bad = useQuery({
+    queryKey: ["incorrect-invoices"],
+    queryFn: () => listIncorrectInvoicesFn(),
+    staleTime: 30_000,
+  });
+  const badList = ((bad.data as any)?.invoices ?? []) as any[];
+  const badTotal = badList.reduce((s, i) => s + Number(i.total_due ?? 0), 0);
+
+  const writeOff = useMutation({
+    mutationFn: () => removeIncorrectInvoicesFn({ data: {} }),
+    onSuccess: (res: any) => {
+      toast.success(
+        res?.removed
+          ? `Wrote off ${res.removed} incorrect invoice${res.removed === 1 ? "" : "s"}`
+          : "No incorrect invoices left",
+      );
+      qc.invalidateQueries();
+      check.mutate();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not write off the invoices"),
+  });
+
+
   return (
     <Card className="border-primary/20 bg-background/60 backdrop-blur-xl">
       <CardHeader className="pb-2">
