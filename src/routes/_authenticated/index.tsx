@@ -79,30 +79,10 @@ export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
 });
 
-// An invoice counts as arrears from its due date onwards — including the day it falls due.
-function startOfToday() {
-  const n = new Date();
-  return new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
-}
-function isDue(
-  monthYear: string,
-  dueDay: number | null | undefined,
-  moveIn?: string | null,
-  dueDate?: string | null,
-) {
-  if (dueDate) {
-    const [dy, dm, dd] = dueDate.split("-").map(Number);
-    if (dy && dm && dd) return startOfToday() >= new Date(dy, dm - 1, dd).getTime();
-  }
-  if (!monthYear) return true;
-  const [y, m] = monthYear.split("-").map(Number);
-  if (!y || !m) return true;
-  const day = Number(dueDay) || (moveIn ? new Date(moveIn).getUTCDate() : 0) || 1;
-  const lastDay = new Date(y, m, 0).getDate();
-  // Due at the start of the due day, so rent due today already shows in arrears.
-  const due = new Date(y, m - 1, Math.min(day, lastDay));
-  return startOfToday() >= due.getTime();
-}
+// One rule everywhere: if an invoice exists and still has a balance, it is
+// arrears. No extra due-date filtering here, otherwise the dashboard, the
+// Tenants page and the tenant portal disagree with each other.
+
 
 
 function Dashboard() {
@@ -121,9 +101,7 @@ function Dashboard() {
       const collected =
         payments?.filter((p: any) => (p.payment_date ?? "").startsWith(monthKey)).reduce((s: number, p: any) => s + Number(p.amount_paid), 0) ?? 0;
       const arrears =
-        invoices
-          ?.filter((i: any) => isDue(i.month_year, i.tenants?.rent_due_day, i.tenants?.move_in_date, i.due_date))
-          .reduce((s: number, i: any) => s + Number(i.balance_remaining), 0) ?? 0;
+        invoices?.reduce((s: number, i: any) => s + Number(i.balance_remaining), 0) ?? 0;
       return { totalUnits, occupied, occupancy, collected, arrears };
     },
   });
@@ -213,8 +191,8 @@ function Dashboard() {
         .select("id,month_year,balance_remaining,total_due,status,due_date,tenants(full_name,rent_due_day,move_in_date,units(unit_number,properties(name,location)))")
         .gt("balance_remaining", 0)
         .order("month_year", { ascending: false });
-      // Hide invoices whose due date hasn't been reached yet — they aren't arrears.
-      return (data ?? []).filter((i: any) => isDue(i.month_year, i.tenants?.rent_due_day, i.tenants?.move_in_date, i.due_date));
+      // Every invoice with a balance is arrears — same rule as everywhere else.
+      return data ?? [];
     },
   });
 

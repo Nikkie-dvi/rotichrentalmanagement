@@ -215,15 +215,10 @@ export async function findIncorrectInvoices(ownerId: string): Promise<BadInvoice
       bad.push({ id: inv.id, tenantName: name, month: inv.month_year, amount, reason: "After the tenant moved out" });
       continue;
     }
-    if (due && due > today) {
-      bad.push({
-        id: inv.id,
-        tenantName: name,
-        month: inv.month_year,
-        amount,
-        reason: `Rent is not due until ${due}`,
-      });
-    }
+    // Note: an invoice raised before its due day is NOT "incorrect" — it simply
+    // counts as arrears from the moment it exists. Deleting those was the cause
+    // of invoices disappearing from the arrears list.
+
   }
   return bad;
 }
