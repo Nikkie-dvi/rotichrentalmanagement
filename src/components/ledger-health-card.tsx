@@ -1,10 +1,10 @@
 // "Balance health check" — recomputes every tenant's account with the same
 // shared ledger the tenant portal uses and shows anything that does not line up
 // across the landlord pages, invoices and credit records.
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, ShieldCheck, Loader2, Eraser } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ShieldCheck, Loader2, Eraser, FileX2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { money } from "@/lib/types";
 import { runLedgerAudit, clearUninvoicedRentFn } from "@/lib/ledger-audit.functions";
+import { listIncorrectInvoicesFn, removeIncorrectInvoicesFn } from "@/lib/invoicing.functions";
+
 
 const LABELS: Record<string, string> = {
   invoice_balance_mismatch: "Invoice balance does not match payments",
@@ -63,6 +65,30 @@ export function LedgerHealthCard() {
     },
     onError: (e: any) => toast.error(e?.message ?? "Could not clear the uninvoiced rent"),
   });
+
+  // Invoices the system considers wrong (empty, future, outside the tenancy).
+  const bad = useQuery({
+    queryKey: ["incorrect-invoices"],
+    queryFn: () => listIncorrectInvoicesFn(),
+    staleTime: 30_000,
+  });
+  const badList = ((bad.data as any)?.invoices ?? []) as any[];
+  const badTotal = badList.reduce((s, i) => s + Number(i.total_due ?? 0), 0);
+
+  const writeOff = useMutation({
+    mutationFn: () => removeIncorrectInvoicesFn({ data: {} }),
+    onSuccess: (res: any) => {
+      toast.success(
+        res?.removed
+          ? `Wrote off ${res.removed} incorrect invoice${res.removed === 1 ? "" : "s"}`
+          : "No incorrect invoices left",
+      );
+      qc.invalidateQueries();
+      check.mutate();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not write off the invoices"),
+  });
+
 
   return (
     <Card className="border-primary/20 bg-background/60 backdrop-blur-xl">
@@ -112,7 +138,40 @@ export function LedgerHealthCard() {
               </AlertDialogContent>
             </AlertDialog>
           )}
+
+          {badList.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={writeOff.isPending} className="w-full sm:w-auto">
+                  {writeOff.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileX2 className="h-4 w-4" />}
+                  Write off wrong invoices ({badList.length})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Write off {badList.length} incorrect invoice{badList.length === 1 ? "" : "s"}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Removes {money(badTotal)} of invoices that should never have been raised (no charges, a future
+                    month, or outside the tenancy) and rebalances every remaining account. Payments are kept.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="max-h-44 space-y-1 overflow-y-auto text-xs">
+                  {badList.slice(0, 25).map((i) => (
+                    <div key={i.id} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                      <span className="truncate">{i.tenantName} · {i.month}</span>
+                      <span className="shrink-0 text-muted-foreground">{money(Number(i.amount ?? 0))} · {i.reason}</span>
+                    </div>
+                  ))}
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => writeOff.mutate()}>Write them off</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
+
 
 
         {result && (

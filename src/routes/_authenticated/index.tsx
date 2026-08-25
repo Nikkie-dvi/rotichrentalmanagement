@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+import { accruedRent, buildLedger } from "@/lib/ledger";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
 import { DashboardFocus } from "@/components/dashboard-focus";
@@ -85,26 +86,71 @@ export const Route = createFileRoute("/_authenticated/")({
 
 
 
+/**
+ * Rebuilds every active tenant's balance with the shared ledger, so the
+ * dashboard arrears total is exactly what the Tenants page and the tenant
+ * portal show (including rent that fell due but was never invoiced).
+ */
+async function loadTenantLedgers() {
+  const [{ data: tenants }, { data: invoices }, { data: payments }, { data: events }] = await Promise.all([
+    supabase
+      .from("tenants")
+      .select("id,full_name,active,move_in_date,rent_due_day,units(unit_number,rent_amount,properties(name,location))"),
+    supabase.from("invoices").select("id,tenant_id,total_due,balance_remaining,month_year"),
+    supabase.from("payments").select("tenant_id,amount_paid"),
+    supabase.from("tenant_credit_events").select("tenant_id,delta"),
+  ]);
+
+  const sum = (rows: any[] | null, key: string, field: string) => {
+    const m = new Map<string, number>();
+    for (const r of rows ?? []) m.set(r[key], (m.get(r[key]) ?? 0) + Number(r[field] ?? 0));
+    return m;
+  };
+  const invoicedBy = sum(invoices as any[], "tenant_id", "total_due");
+  const paidBy = sum(payments as any[], "tenant_id", "amount_paid");
+  const adjBy = sum(events as any[], "tenant_id", "delta");
+
+  const openBy = new Map<string, number>();
+  for (const i of (invoices ?? []) as any[]) {
+    const bal = Math.max(0, Number(i.balance_remaining ?? 0));
+    if (bal > 0) openBy.set(i.tenant_id, (openBy.get(i.tenant_id) ?? 0) + bal);
+  }
+
+  return ((tenants ?? []) as any[]).map((t) => {
+    const accrued = t.active
+      ? accruedRent({ rentAmount: t.units?.rent_amount, moveInDate: t.move_in_date, rentDueDay: t.rent_due_day })
+      : 0;
+    const ledger = buildLedger({
+      invoiced: invoicedBy.get(t.id) ?? 0,
+      paid: paidBy.get(t.id) ?? 0,
+      adjustments: adjBy.get(t.id) ?? 0,
+      accrued,
+    });
+    return { tenant: t, ledger, openInvoiceBalance: openBy.get(t.id) ?? 0 };
+  });
+}
+
 function Dashboard() {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const monthKey = new Date().toISOString().slice(0, 7);
-      const [{ data: units }, { data: invoices }, { data: payments }] = await Promise.all([
+      const [{ data: units }, { data: payments }, ledgers] = await Promise.all([
         supabase.from("units").select("id,status"),
-        supabase.from("invoices").select("balance_remaining,total_due,month_year,due_date,tenants(rent_due_day,move_in_date)"),
         supabase.from("payments").select("amount_paid,payment_date"),
+        loadTenantLedgers(),
       ]);
       const totalUnits = units?.length ?? 0;
       const occupied = units?.filter((u: any) => u.status === "occupied").length ?? 0;
       const occupancy = totalUnits ? Math.round((occupied / totalUnits) * 100) : 0;
       const collected =
         payments?.filter((p: any) => (p.payment_date ?? "").startsWith(monthKey)).reduce((s: number, p: any) => s + Number(p.amount_paid), 0) ?? 0;
-      const arrears =
-        invoices?.reduce((s: number, i: any) => s + Number(i.balance_remaining), 0) ?? 0;
+      // Same rule as the Tenants page and tenant portal.
+      const arrears = ledgers.reduce((s, l) => s + l.ledger.arrears, 0);
       return { totalUnits, occupied, occupancy, collected, arrears };
     },
   });
+
 
 
   const { data: recent } = useQuery({
@@ -186,15 +232,36 @@ function Dashboard() {
     queryKey: ["drill-arrears"],
     enabled: drill === "arrears",
     queryFn: async () => {
-      const { data } = await supabase
-        .from("invoices")
-        .select("id,month_year,balance_remaining,total_due,status,due_date,tenants(full_name,rent_due_day,move_in_date,units(unit_number,properties(name,location)))")
-        .gt("balance_remaining", 0)
-        .order("month_year", { ascending: false });
-      // Every invoice with a balance is arrears — same rule as everywhere else.
-      return data ?? [];
+      const [{ data }, ledgers] = await Promise.all([
+        supabase
+          .from("invoices")
+          .select("id,tenant_id,month_year,balance_remaining,total_due,status,due_date,tenants(full_name,rent_due_day,move_in_date,units(unit_number,properties(name,location)))")
+          .gt("balance_remaining", 0)
+          .order("month_year", { ascending: false }),
+        loadTenantLedgers(),
+      ]);
+      const rows: any[] = data ?? [];
+
+      // Any tenant whose ledger says they owe more than their open invoices
+      // (rent due but never invoiced, or credit edits) still belongs here, so
+      // the arrears page matches the Tenants page exactly.
+      for (const { tenant, ledger, openInvoiceBalance } of ledgers) {
+        const extra = Math.round(ledger.arrears - openInvoiceBalance);
+        if (extra <= 1) continue;
+        rows.push({
+          id: `unbilled-${tenant.id}`,
+          unbilled: true,
+          tenant_id: tenant.id,
+          month_year: "Not invoiced yet",
+          balance_remaining: extra,
+          total_due: extra,
+          tenants: tenant,
+        });
+      }
+      return rows;
     },
   });
+
 
 
   const qc = useQueryClient();
@@ -509,14 +576,19 @@ function Dashboard() {
                     <TableRow key={i.id}>
                       <TableCell className="font-medium">{i.tenants?.full_name ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{area}{unit ? ` · ${unit}` : ""}</TableCell>
-                      <TableCell>{i.month_year}</TableCell>
+                      <TableCell>
+                        {i.month_year}
+                        {i.unbilled && (
+                          <Badge variant="outline" className="ml-2 text-[10px]">Not invoiced</Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right font-semibold text-destructive">{money(Number(i.balance_remaining))}</TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
                           variant="outline"
                           className="glass-btn glow-amber h-8 gap-1 px-2 text-xs"
-                          disabled={busyId === i.id}
+                          disabled={busyId === i.id || i.unbilled}
                           onClick={() => remindOne(i.id)}
                         >
                           {busyId === i.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellRing className="h-3.5 w-3.5" />}
@@ -524,6 +596,9 @@ function Dashboard() {
                         </Button>
                       </TableCell>
                       <TableCell className="text-right">
+                        {i.unbilled ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" aria-label="Delete invoice">
@@ -548,7 +623,9 @@ function Dashboard() {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
+                        )}
                       </TableCell>
+
                     </TableRow>
                   );
                 })}
