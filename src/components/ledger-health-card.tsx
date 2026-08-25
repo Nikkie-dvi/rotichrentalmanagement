@@ -1,10 +1,10 @@
 // "Balance health check" — recomputes every tenant's account with the same
 // shared ledger the tenant portal uses and shows anything that does not line up
 // across the landlord pages, invoices and credit records.
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, ShieldCheck, Loader2, Eraser } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ShieldCheck, Loader2, Eraser, FileX2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { money } from "@/lib/types";
 import { runLedgerAudit, clearUninvoicedRentFn } from "@/lib/ledger-audit.functions";
+import { listIncorrectInvoicesFn, removeIncorrectInvoicesFn } from "@/lib/invoicing.functions";
+
 
 const LABELS: Record<string, string> = {
   invoice_balance_mismatch: "Invoice balance does not match payments",
