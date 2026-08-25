@@ -133,7 +133,28 @@ function BillingPage() {
     },
   });
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const thisMonth = todayIso.slice(0, 7);
+
+  // Raises any rent that falls due today (and re-checks credits) without waiting
+  // for the overnight job, so it lands in arrears immediately.
+  const dueToday = useMutation({
+    mutationFn: async () => (generateMonthFn as any)({ data: { month: thisMonth } }),
+    onSuccess: (r: any) => {
+      qc.invalidateQueries();
+      setMonth(thisMonth);
+      toast.success(`${r?.created ?? 0} invoice(s) raised for ${thisMonth}`, {
+        description: [
+          r?.creditApplied ? `${money(r.creditApplied)} of credit applied` : null,
+          r?.waiting?.length ? `${r.waiting.length} not due yet` : null,
+        ].filter(Boolean).join(" · ") || "Anything already due now counts as arrears.",
+      });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not raise today's invoices"),
+  });
+
   const generate = useMutation({
+
     mutationFn: async () => (generateMonthFn as any)({ data: { month } }),
     onSuccess: (r: any) => {
       qc.invalidateQueries();
