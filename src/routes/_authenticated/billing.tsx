@@ -133,7 +133,28 @@ function BillingPage() {
     },
   });
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const thisMonth = todayIso.slice(0, 7);
+
+  // Raises any rent that falls due today (and re-checks credits) without waiting
+  // for the overnight job, so it lands in arrears immediately.
+  const dueToday = useMutation({
+    mutationFn: async () => (generateMonthFn as any)({ data: { month: thisMonth } }),
+    onSuccess: (r: any) => {
+      qc.invalidateQueries();
+      setMonth(thisMonth);
+      toast.success(`${r?.created ?? 0} invoice(s) raised for ${thisMonth}`, {
+        description: [
+          r?.creditApplied ? `${money(r.creditApplied)} of credit applied` : null,
+          r?.waiting?.length ? `${r.waiting.length} not due yet` : null,
+        ].filter(Boolean).join(" · ") || "Anything already due now counts as arrears.",
+      });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not raise today's invoices"),
+  });
+
   const generate = useMutation({
+
     mutationFn: async () => (generateMonthFn as any)({ data: { month } }),
     onSuccess: (r: any) => {
       qc.invalidateQueries();
@@ -249,6 +270,11 @@ function BillingPage() {
           <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
             <FileText className="h-4 w-4" />Generate Bills for {month}
           </Button>
+          <Button variant="outline" onClick={() => dueToday.mutate()} disabled={dueToday.isPending}>
+            <FileText className="h-4 w-4" />
+            {dueToday.isPending ? "Raising invoices…" : "Invoice rent due today"}
+          </Button>
+
           <Button variant="outline" onClick={() => setSingleOpen(true)}>
             <UserPlus className="h-4 w-4" />Invoice one tenant
           </Button>
@@ -263,7 +289,52 @@ function BillingPage() {
         </CardContent>
       </Card>
 
+      {(() => {
+        const due = (invoices ?? []).filter(
+          (i: any) =>
+            Number(i.balance_remaining) > 0 &&
+            (!i.due_date || String(i.due_date).slice(0, 10) <= todayIso),
+        );
+        if (!due.length) return null;
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Due now — counting as arrears ({due.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {due.map((i: any) => (
+                <div key={i.id} className="flex items-center justify-between gap-3 rounded-md bg-muted/50 px-3 py-2 text-sm">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{i.tenants?.full_name ?? "Tenant"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {i.tenants?.units?.unit_number ? `Unit ${i.tenants.units.unit_number} · ` : ""}
+                      Due {i.due_date ? String(i.due_date).slice(0, 10) : i.month_year}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="font-medium text-destructive">{money(Number(i.balance_remaining))}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Delete invoice for ${i.tenants?.full_name ?? "tenant"}`}
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setInvoiceToDelete(i)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground">
+                Delete any invoice here if it was raised in error — payments are always kept.
+              </p>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {(badInvoices ?? []).length > 0 && (
+
         <Card className="border-destructive/40">
           <CardHeader>
             <CardTitle className="text-base">
