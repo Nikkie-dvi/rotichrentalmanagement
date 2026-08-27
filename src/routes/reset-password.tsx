@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPasswordPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -33,12 +34,59 @@ function ResetPasswordPage() {
   const [sent, setSent] = useState(false);
   const [recovering, setRecovering] = useState(false);
 
+  // The reset link can arrive in three shapes depending on how the mail client
+  // opens it: PKCE (?code=), token hash (?token_hash=&type=recovery) or the
+  // legacy hash fragment (#access_token=...). Handle all of them, otherwise the
+  // page just shows the "send a link" form again and nothing seems to work.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setRecovering(Boolean(data.session)));
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || session) setRecovering(true);
+    let active = true;
+    const run = async () => {
+      const url = new URL(window.location.href);
+      const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+      const errorDescription = url.searchParams.get("error_description") ?? hash.get("error_description");
+      if (errorDescription) {
+        toast.error(errorDescription.replace(/\+/g, " "));
+        return;
+      }
+
+      const code = url.searchParams.get("code");
+      const tokenHash = url.searchParams.get("token_hash");
+      const accessToken = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token");
+
+      try {
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+        } else if (tokenHash) {
+          const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+          if (error) throw error;
+        } else if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) throw error;
+        } else {
+          return;
+        }
+        window.history.replaceState({}, "", url.pathname);
+        if (active) setRecovering(true);
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "That reset link is invalid or has expired — request a new one",
+        );
+      }
+    };
+    void run();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setRecovering(true);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const sendLink = async (e: React.FormEvent) => {
@@ -70,10 +118,18 @@ function ResetPasswordPage() {
     }
     setLoading(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error("Your reset link expired — request a new one below");
+      }
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      toast.success("Password updated — you can sign in now");
       setPassword("");
+      setConfirmPassword("");
+      await supabase.auth.signOut();
+      setRecovering(false);
+      toast.success("Password updated — sign in with your new password");
+      navigate({ to: "/auth" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not update password");
     } finally {
