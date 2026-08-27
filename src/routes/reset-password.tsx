@@ -117,10 +117,18 @@ function ResetPasswordPage() {
     }
     setLoading(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error("Your reset link expired — request a new one below");
+      }
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      toast.success("Password updated — you can sign in now");
       setPassword("");
+      setConfirmPassword("");
+      await supabase.auth.signOut();
+      setRecovering(false);
+      toast.success("Password updated — sign in with your new password");
+      navigate({ to: "/auth" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not update password");
     } finally {
