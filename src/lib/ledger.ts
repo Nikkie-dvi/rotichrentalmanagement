@@ -33,6 +33,31 @@ export type Ledger = {
 
 const n = (v: any) => Number(v ?? 0);
 
+/** Business timezone — balances must not depend on a device's clock/locale. */
+const TZ = "Africa/Nairobi";
+
+/**
+ * Today's calendar date in the business timezone, as {y, m, d}. Using this
+ * instead of the device's local date means a phone in another timezone (or a
+ * UTC server) always counts exactly the same number of rent cycles.
+ */
+export function businessToday(): { y: number; m: number; d: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const [y, m, d] = parts.split("-").map(Number);
+  return { y, m, d };
+}
+
+/** Today's date in the business timezone as YYYY-MM-DD. */
+export function businessTodayIso(): string {
+  const { y, m, d } = businessToday();
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
 /**
  * Rent that has fallen due since move-in, counting each anniversary of the
  * rent due day (the same rule the tenant portal has always used).
@@ -43,14 +68,15 @@ export function accruedRent(opts: {
   rentDueDay?: number | null;
 }): number {
   const rent = n(opts.rentAmount);
-  const start = opts.moveInDate ? new Date(opts.moveInDate) : null;
-  if (!rent || !start || Number.isNaN(start.getTime())) return 0;
-  const now = new Date();
-  let cycles =
-    (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()) + 1;
-  const dueDay = Math.max(1, Math.min(31, opts.rentDueDay ?? start.getDate()));
-  const lastDayThisMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  if (now.getDate() < Math.min(dueDay, lastDayThisMonth)) cycles -= 1;
+  const iso = opts.moveInDate ? String(opts.moveInDate).slice(0, 10) : null;
+  const parts = iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.split("-").map(Number) : null;
+  if (!rent || !parts) return 0;
+  const [sy, sm, sd] = parts;
+  const now = businessToday();
+  let cycles = (now.y - sy) * 12 + (now.m - sm) + 1;
+  const dueDay = Math.max(1, Math.min(31, opts.rentDueDay ?? sd));
+  const lastDayThisMonth = new Date(Date.UTC(now.y, now.m, 0)).getUTCDate();
+  if (now.d < Math.min(dueDay, lastDayThisMonth)) cycles -= 1;
   return Math.max(0, cycles) * rent;
 }
 

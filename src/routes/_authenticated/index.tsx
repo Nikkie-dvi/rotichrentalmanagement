@@ -149,7 +149,12 @@ function Dashboard() {
       const arrears = ledgers.reduce((s, l) => s + l.ledger.arrears, 0);
       return { totalUnits, occupied, occupancy, collected, arrears };
     },
+    // Money must never come from a device's saved offline copy.
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
+
 
 
 
