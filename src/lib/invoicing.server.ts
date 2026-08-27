@@ -4,6 +4,7 @@
 // raised for a due day that has not arrived yet). Together these keep the
 // arrears list honest: a tenant who is paid up never shows as owing.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { businessTodayIso } from "@/lib/ledger";
 
 const num = (v: any) => Number(v ?? 0) || 0;
 
@@ -19,7 +20,8 @@ export function dueDateFor(month: string, tenant: { rent_due_day?: number | null
   return `${month}-${String(Math.min(day, lastDayOf(y, m))).padStart(2, "0")}`;
 }
 
-const todayIso = () => new Date().toISOString().slice(0, 10);
+// Same calendar day everyone in the business sees, regardless of server clock.
+const todayIso = () => businessTodayIso();
 
 type Tenant = {
   id: string;
