@@ -55,19 +55,25 @@ export const tenantBalancesQuery = queryOptions({
   queryKey: ["tenant-balances"],
   queryFn: async () =>
     (await supabase.from("invoices").select("tenant_id,month_year,balance_remaining,total_due")).data ?? [],
-  staleTime: FRESH,
+  staleTime: 0,
+  refetchOnMount: "always" as const,
+  refetchOnWindowFocus: true,
 });
 
 export const tenantPaymentTotalsQuery = queryOptions({
   queryKey: ["tenant-payment-totals"],
   queryFn: async () => (await supabase.from("payments").select("tenant_id,amount_paid")).data ?? [],
-  staleTime: FRESH,
+  staleTime: 0,
+  refetchOnMount: "always" as const,
+  refetchOnWindowFocus: true,
 });
 
 export const tenantCreditAdjustmentsQuery = queryOptions({
   queryKey: ["tenant-credit-adjustments"],
   queryFn: async () => (await supabase.from("tenant_credit_events").select("tenant_id,delta")).data ?? [],
-  staleTime: FRESH,
+  staleTime: 0,
+  refetchOnMount: "always" as const,
+  refetchOnWindowFocus: true,
 });
 
 export const vacantUnitsQuery = queryOptions({
