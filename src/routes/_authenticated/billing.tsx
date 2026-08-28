@@ -106,6 +106,11 @@ function BillingPage() {
       ).select("id").maybeSingle();
       if (error) throw error;
 
+      if (saved?.id) {
+        // Push the landlord a breakdown of what was just billed.
+        await notifyInvoiceCreated({ data: { invoiceId: saved.id } }).catch(() => {});
+      }
+
       if (singleSms && saved?.id) {
         await sendInvoiceSms({ data: { invoiceId: saved.id } });
         return { texted: true };
