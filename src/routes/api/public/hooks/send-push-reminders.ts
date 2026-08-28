@@ -79,10 +79,8 @@ export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
           }
 
           if (reminder) {
-            const list = byOwner.get(t.owner_id) ?? [];
-            list.push(reminder);
-            byOwner.set(t.owner_id, list);
-
+            // Landlords asked not to be pushed about every rent/invoice
+            // reminder — they now only get a push when a tenant is invoiced.
             // Notify the tenant themselves (own wording) when they have a portal account.
             if (t.auth_user_id) {
               const amount = unpaidBalance && unpaidBalance > 0 && diff <= 0 ? unpaidBalance : rentAmount;
@@ -113,20 +111,6 @@ export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
 
         if (byOwner.size === 0) {
           return Response.json({ ok: true, sent: 0, note: "no reminders today" });
-        }
-
-        // Fan out landlord reminders to their active property managers too.
-        const { data: managers } = await supabaseAdmin
-          .from("property_managers")
-          .select("landlord_user_id, manager_user_id")
-          .eq("active", true);
-        for (const m of ((managers ?? []) as any[])) {
-          if (!m.manager_user_id) continue;
-          const landlordReminders = byOwner.get(m.landlord_user_id);
-          if (!landlordReminders?.length) continue;
-          const list = byOwner.get(m.manager_user_id) ?? [];
-          list.push(...landlordReminders);
-          byOwner.set(m.manager_user_id, list);
         }
 
         const { data: subs } = await supabaseAdmin
