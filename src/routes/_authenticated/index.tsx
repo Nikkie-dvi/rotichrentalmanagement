@@ -242,30 +242,49 @@ function Dashboard() {
           .from("invoices")
           .select("id,tenant_id,month_year,balance_remaining,total_due,status,due_date,tenants(full_name,rent_due_day,move_in_date,units(unit_number,properties(name,location)))")
           .gt("balance_remaining", 0)
-          .order("month_year", { ascending: false }),
+          .order("month_year", { ascending: true }),
         loadTenantLedgers(),
       ]);
-      const rows: any[] = data ?? [];
 
-      // Any tenant whose ledger says they owe more than their open invoices
-      // (rent due but never invoiced, or credit edits) still belongs here, so
-      // the arrears page matches the Tenants page exactly.
-      for (const { tenant, ledger, openInvoiceBalance } of ledgers) {
-        const extra = Math.round(ledger.arrears - openInvoiceBalance);
-        if (extra <= 1) continue;
-        rows.push({
-          id: `unbilled-${tenant.id}`,
-          unbilled: true,
-          tenant_id: tenant.id,
-          month_year: "Not invoiced yet",
-          balance_remaining: extra,
-          total_due: extra,
-          tenants: tenant,
-        });
+      // Group the open invoices per tenant (oldest first).
+      const byTenant = new Map<string, any[]>();
+      for (const inv of (data ?? []) as any[]) {
+        const list = byTenant.get(inv.tenant_id) ?? [];
+        list.push(inv);
+        byTenant.set(inv.tenant_id, list);
       }
+
+      // The rows must add up to exactly the same number as the KPI card, so we
+      // spend each tenant's ledger arrears across their open invoices (oldest
+      // first) and show whatever is left over as "not invoiced yet".
+      const rows: any[] = [];
+      for (const { tenant, ledger } of ledgers) {
+        let remaining = Math.round(ledger.arrears);
+        if (remaining <= 0) continue;
+        for (const inv of byTenant.get(tenant.id) ?? []) {
+          if (remaining <= 0) break;
+          const show = Math.min(Math.round(Number(inv.balance_remaining ?? 0)), remaining);
+          if (show <= 0) continue;
+          remaining -= show;
+          rows.push({ ...inv, balance_remaining: show });
+        }
+        if (remaining > 1) {
+          rows.push({
+            id: `unbilled-${tenant.id}`,
+            unbilled: true,
+            tenant_id: tenant.id,
+            month_year: "Not invoiced yet",
+            balance_remaining: remaining,
+            total_due: remaining,
+            tenants: tenant,
+          });
+        }
+      }
+      rows.sort((a, b) => String(b.month_year).localeCompare(String(a.month_year)));
       return rows;
     },
   });
+
 
 
 
@@ -550,7 +569,11 @@ function Dashboard() {
                 <p className="text-xs text-muted-foreground">
                   Send everyone in arrears an app alert + SMS, or remind one tenant at a time.
                 </p>
+                <p className="mt-1 text-sm font-bold text-destructive">
+                  Total outstanding: {money((arrearsList ?? []).reduce((s: number, r: any) => s + Number(r.balance_remaining ?? 0), 0))}
+                </p>
               </div>
+
               <Button
                 size="sm"
                 className="glow-red bg-destructive text-destructive-foreground hover:bg-destructive/90"

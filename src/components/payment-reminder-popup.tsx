@@ -138,22 +138,33 @@ export function PaymentReminderPopup() {
         if (!dueRaw) continue;
         const effectiveDue = Math.min(dueRaw, lastDay);
         const diff = effectiveDue - todayDay;
+        // Days until the NEXT time rent falls due — if this month's due day has
+        // already passed, roll over to next month so upcoming rent still shows.
+        const nextMonthLastDay = new Date(today.getFullYear(), today.getMonth() + 2, 0).getDate();
+        const daysUntilNext =
+          diff >= 0 ? diff : lastDay - todayDay + Math.min(dueRaw, nextMonthLastDay);
+        const nextDueDay = diff >= 0 ? effectiveDue : Math.min(dueRaw, nextMonthLastDay);
         const rentAmount = Number(t.units?.rent_amount ?? 0);
         const unpaidBalance = unpaidByTenant.get(t.id);
 
         let kind: ReminderItem["kind"] | null = null;
         let amount = rentAmount;
+        let daysDiff = daysUntilNext;
+        let dueDay = nextDueDay;
 
         if (unpaidBalance && unpaidBalance > 0 && diff <= 0) {
           kind = "overdue";
           amount = unpaidBalance;
-        } else if (diff === 0) {
+          daysDiff = diff;
+          dueDay = effectiveDue;
+        } else if (daysUntilNext === 0) {
           kind = "due-today";
-        } else if (diff > 0 && diff <= 5) {
+        } else if (daysUntilNext > 0 && daysUntilNext <= 5) {
           kind = "upcoming";
         }
 
         if (!kind) continue;
+
 
         const item: ReminderItem = {
           key: `${t.id}-${kind}`,
@@ -163,8 +174,9 @@ export function PaymentReminderPopup() {
           property: t.units?.properties?.name ?? null,
           amount,
           kind,
-          daysDiff: diff,
-          dueDay: effectiveDue,
+          daysDiff,
+          dueDay,
+
         };
         if (!wasDismissed(item)) collected.push(item);
       }
