@@ -29,6 +29,7 @@ import { InvoiceCharges } from "@/components/invoice-charges";
 import { InvoiceExtrasDialog } from "@/components/invoice-extras-dialog";
 import { runLateFeesNow } from "@/lib/billing.functions";
 import { sendInvoiceSms, sendBulkOverdueNoticesSms } from "@/lib/receipts.functions";
+import { notifyInvoiceCreated } from "@/lib/invoice-notify.functions";
 import { generateMonthFn, listIncorrectInvoicesFn, removeIncorrectInvoicesFn } from "@/lib/invoicing.functions";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -105,6 +106,11 @@ function BillingPage() {
         { onConflict: "tenant_id,month_year" },
       ).select("id").maybeSingle();
       if (error) throw error;
+
+      if (saved?.id) {
+        // Push the landlord a breakdown of what was just billed.
+        await notifyInvoiceCreated({ data: { invoiceId: saved.id } }).catch(() => {});
+      }
 
       if (singleSms && saved?.id) {
         await sendInvoiceSms({ data: { invoiceId: saved.id } });
