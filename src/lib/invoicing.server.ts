@@ -124,22 +124,42 @@ export async function generateMonthlyInvoices(ownerId: string, month: string) {
     const applied = Math.min(credit, total);
     const balance = Math.max(0, total - applied);
 
-    const { error } = await supabaseAdmin.from("invoices").upsert(
-      {
-        tenant_id: t.id,
-        owner_id: ownerId,
-        month_year: month,
-        base_rent: rent,
-        utility_amount: util,
-        total_due: total,
-        balance_remaining: balance,
-        due_date: due,
-        status: balance === 0 ? "paid" : balance < total ? "partial" : "unpaid",
-      },
-      { onConflict: "tenant_id,month_year" },
-    );
+    const { data: saved, error } = await supabaseAdmin
+      .from("invoices")
+      .upsert(
+        {
+          tenant_id: t.id,
+          owner_id: ownerId,
+          month_year: month,
+          base_rent: rent,
+          utility_amount: util,
+          total_due: total,
+          balance_remaining: balance,
+          due_date: due,
+          status: balance === 0 ? "paid" : balance < total ? "partial" : "unpaid",
+        },
+        { onConflict: "tenant_id,month_year" },
+      )
+      .select("id")
+      .maybeSingle();
     if (error) throw new Error(error.message);
     created++;
+
+    // Tell the landlord exactly what was billed, what upfront money went to it
+    // and where the tenant now stands.
+    if ((saved as any)?.id) {
+      try {
+        const { notifyLandlordOfInvoice } = await import("@/lib/invoice-notify.server");
+        await notifyLandlordOfInvoice({
+          ownerId,
+          invoiceId: (saved as any).id,
+          tenantId: t.id,
+          creditApplied: Math.round(applied),
+        });
+      } catch {
+        /* alerts must never block invoicing */
+      }
+    }
 
     if (applied > 0) {
       creditApplied += applied;
