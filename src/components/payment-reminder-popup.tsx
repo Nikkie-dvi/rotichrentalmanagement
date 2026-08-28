@@ -174,8 +174,9 @@ export function PaymentReminderPopup() {
           property: t.units?.properties?.name ?? null,
           amount,
           kind,
-          daysDiff: diff,
-          dueDay: effectiveDue,
+          daysDiff,
+          dueDay,
+
         };
         if (!wasDismissed(item)) collected.push(item);
       }
