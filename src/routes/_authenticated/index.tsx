@@ -569,7 +569,11 @@ function Dashboard() {
                 <p className="text-xs text-muted-foreground">
                   Send everyone in arrears an app alert + SMS, or remind one tenant at a time.
                 </p>
+                <p className="mt-1 text-sm font-bold text-destructive">
+                  Total outstanding: {money((arrearsList ?? []).reduce((s: number, r: any) => s + Number(r.balance_remaining ?? 0), 0))}
+                </p>
               </div>
+
               <Button
                 size="sm"
                 className="glow-red bg-destructive text-destructive-foreground hover:bg-destructive/90"
