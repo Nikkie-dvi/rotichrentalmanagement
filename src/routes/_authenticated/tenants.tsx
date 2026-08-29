@@ -843,7 +843,9 @@ function TenantForm({
   const [phone, setPhone] = useState("");
   const [unitId, setUnitId] = useState("");
   const [deposit, setDeposit] = useState("0");
-  const [moveInDate, setMoveInDate] = useState("");
+  // New tenants always join today — the landlord can only adjust dates for
+  // existing tenants (from the Edit tenant dialog).
+  const [moveInDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [rentDueDay, setRentDueDay] = useState("");
 
   const contactsSupported =
