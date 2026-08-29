@@ -138,7 +138,7 @@ export const getMyLandlordInfo = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: tenant } = await supabase
       .from("tenants")
-      .select("owner_id")
+      .select("owner_id, signed_lease_path, signed_lease_name, signed_lease_uploaded_at")
       .eq("auth_user_id", userId)
       .maybeSingle();
     if (!tenant?.owner_id) return null;
