@@ -353,6 +353,27 @@ function DashboardPage() {
         </Card>
       )}
 
+      {/* Automatic rent reminder — shows as the due date approaches or passes */}
+      {nextDue && !rentSettled && nextDue.diffDays <= 5 && (
+        <Card className="mb-4 glass-card border-amber-300 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-950/20">
+          <CardContent className="flex items-start gap-3 p-4 text-sm">
+            <CalendarClock className="mt-0.5 h-4 w-4 text-amber-600" />
+            <div>
+              <div className="font-semibold">
+                {nextDue.diffDays > 0
+                  ? `Your rent is almost due — ${nextDue.diffDays} day${nextDue.diffDays === 1 ? "" : "s"} to go`
+                  : "Your rent is due today"}
+              </div>
+              <p className="mt-0.5 text-muted-foreground">
+                {unit ? `${KES(Number(unit.rent_amount))} is due on ` : "Due on "}
+                {nextDue.date.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}. Pay
+                early to avoid late charges.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Rent due summary — floating, detached bar */}
       <div className="relative z-10 mb-6 px-0.5">
         <Card
