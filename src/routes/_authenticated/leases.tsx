@@ -90,7 +90,7 @@ function LeasesPage() {
 
   // Tenants who still have no signature on file — the landlord can nudge them.
   const unsigned = useMemo(
-    () => (query.data ?? []).filter((t: any) => t.active && !t.lease_signature),
+    () => (query.data ?? []).filter((t: any) => t.active && !t.lease_signature && !t.signed_lease_path),
     [query.data],
   );
 
