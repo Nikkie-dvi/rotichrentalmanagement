@@ -84,7 +84,7 @@ function ClaimPage() {
       });
       if (signUpErr) throw signUpErr;
       const authUserId = signUp.user?.id;
-      if (!authUserId) throw new Error("Sign up failed — please try again");
+      if (!authUserId) throw new Error("Could not create your account — please try again");
 
       await claim({ data: { authUserId, email: email.trim(), code, phone } });
       toast.success("Your unit is linked to this login");

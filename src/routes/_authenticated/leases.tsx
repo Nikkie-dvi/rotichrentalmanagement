@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, FileSignature } from "lucide-react";
+import { Loader2, FileSignature, BellRing, MessageSquare, AlertTriangle } from "lucide-react";
 import { LeaseDialog, type LeaseData } from "@/components/lease-document";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { resolveLeaseTemplate } from "@/lib/lease-template";
@@ -74,6 +77,49 @@ function LeasesPage() {
     );
   }, [query.data, q]);
 
+  // Tenants who still have no signature on file — the landlord can nudge them.
+  const unsigned = useMemo(
+    () => (query.data ?? []).filter((t: any) => t.active && !t.lease_signature),
+    [query.data],
+  );
+
+  const notify = useServerFn(notifyMyTenants);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+
+  const remind = async (tenant: any, channel: "sms" | "push") => {
+    setSendingId(`${tenant.id}-${channel}`);
+    const link =
+      typeof window !== "undefined" ? `${window.location.origin}/tenant/dashboard` : "/tenant/dashboard";
+    try {
+      const res: any = await notify({
+        data: {
+          title: "Please sign your lease",
+          body:
+            channel === "sms"
+              ? `Hi ${tenant.full_name}, please sign your lease agreement here: ${link}`
+              : `Hi ${tenant.full_name}, your lease agreement is waiting for your signature. Open your portal to sign it.`,
+          url: "/tenant/dashboard",
+          tag: `lease-sign-${tenant.id}`,
+          sms: channel === "sms",
+          push: channel === "push",
+          tenantIds: [tenant.id],
+        },
+      });
+      if (channel === "sms") {
+        if (res?.smsSkippedNoCredit) toast.error("Not enough SMS credit — top up your SMS wallet");
+        else if (res?.smsSent) toast.success("Signing link sent by SMS");
+        else toast.error("SMS not delivered — check the tenant's phone number");
+      } else {
+        if (res?.sent) toast.success("Reminder sent to their phone");
+        else toast.error("No device registered for this tenant yet");
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not send the reminder");
+    } finally {
+      setSendingId(null);
+    }
+  };
+
   return (
     <div className="grid gap-4">
       <SectionSwitcher items={LEASE_TABS} />
@@ -82,6 +128,54 @@ function LeasesPage() {
         <h1 className="text-2xl font-bold">Lease agreements</h1>
         <p className="text-sm text-muted-foreground">Every tenant's signed lease copy, with name and signature.</p>
       </div>
+
+      {unsigned.length > 0 && (
+        <Card className="border-amber-300 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              {unsigned.length} tenant{unsigned.length === 1 ? "" : "s"} haven't signed a lease
+            </CardTitle>
+            <CardDescription>Send them a signing link by SMS, or a reminder to their phone.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2">
+            {unsigned.map((t: any) => (
+              <div key={t.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-background/60 p-3">
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{t.full_name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Unit {t.units?.unit_number ?? "—"} · {t.phone_number ?? "No phone on file"}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!t.phone_number || sendingId === `${t.id}-sms`}
+                    onClick={() => remind(t, "sms")}
+                  >
+                    {sendingId === `${t.id}-sms` ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                    )}
+                    Send SMS link
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={sendingId === `${t.id}-push`} onClick={() => remind(t, "push")}>
+                    {sendingId === `${t.id}-push` ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <BellRing className="mr-2 h-4 w-4" />
+                    )}
+                    Remind
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
 
       <Card>
         <CardHeader className="pb-3">

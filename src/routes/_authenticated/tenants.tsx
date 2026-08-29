@@ -791,6 +791,9 @@ function EditTenantDatesDialog({ tenant: t }: { tenant: any }) {
           <div className="grid gap-1.5">
             <Label htmlFor={`mi-${t.id}`}>Joining / move-in date</Label>
             <Input id={`mi-${t.id}`} type="date" value={moveIn} onChange={(e) => setMoveIn(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground">
+              Only change this for tenants who joined before you started using the app.
+            </p>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor={`dd-${t.id}`}>Rent due day (1–31)</Label>
@@ -843,7 +846,9 @@ function TenantForm({
   const [phone, setPhone] = useState("");
   const [unitId, setUnitId] = useState("");
   const [deposit, setDeposit] = useState("0");
-  const [moveInDate, setMoveInDate] = useState("");
+  // New tenants always join today — the landlord can only adjust dates for
+  // existing tenants (from the Edit tenant dialog).
+  const [moveInDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [rentDueDay, setRentDueDay] = useState("");
 
   const contactsSupported =
@@ -939,7 +944,8 @@ function TenantForm({
         </div>
         <div>
           <Label>Move-in Date</Label>
-          <Input type="date" value={moveInDate} onChange={(e) => setMoveInDate(e.target.value)} />
+          <Input type="date" value={moveInDate} readOnly disabled />
+          <p className="mt-1 text-[11px] text-muted-foreground">Set automatically to today — the day they join.</p>
         </div>
         <div className="col-span-2">
           <Label>Rent Due Day (1–31)</Label>
