@@ -51,10 +51,20 @@ function LeasesPage() {
   });
 
   const rows = useMemo(() => {
-    const list = (query.data ?? []).map((t: any): LeaseData & { id: string; active: boolean; approval_status: string } => ({
+    const list = (query.data ?? []).map((t: any): LeaseData & {
+      id: string;
+      active: boolean;
+      approval_status: string;
+      signed_lease_path: string | null;
+      signed_lease_name: string | null;
+      signed_lease_uploaded_at: string | null;
+    } => ({
       id: t.id,
       active: t.active,
       approval_status: t.approval_status,
+      signed_lease_path: t.signed_lease_path ?? null,
+      signed_lease_name: t.signed_lease_name ?? null,
+      signed_lease_uploaded_at: t.signed_lease_uploaded_at ?? null,
       full_name: t.full_name,
       phone_number: t.phone_number,
       email: t.email,
