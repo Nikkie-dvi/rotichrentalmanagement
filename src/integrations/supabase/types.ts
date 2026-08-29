@@ -962,6 +962,9 @@ export type Database = {
           owner_id: string
           phone_number: string | null
           rent_due_day: number | null
+          signed_lease_name: string | null
+          signed_lease_path: string | null
+          signed_lease_uploaded_at: string | null
           unit_id: string | null
         }
         Insert: {
@@ -981,6 +984,9 @@ export type Database = {
           owner_id?: string
           phone_number?: string | null
           rent_due_day?: number | null
+          signed_lease_name?: string | null
+          signed_lease_path?: string | null
+          signed_lease_uploaded_at?: string | null
           unit_id?: string | null
         }
         Update: {
@@ -1000,6 +1006,9 @@ export type Database = {
           owner_id?: string
           phone_number?: string | null
           rent_due_day?: number | null
+          signed_lease_name?: string | null
+          signed_lease_path?: string | null
+          signed_lease_uploaded_at?: string | null
           unit_id?: string | null
         }
         Relationships: [
