@@ -221,6 +221,8 @@ function LeasesPage() {
                   <Badge variant="outline" className="capitalize">{r.approval_status}</Badge>
                   {r.lease_signature ? (
                     <Badge variant="secondary">Signed</Badge>
+                  ) : r.signed_lease_path ? (
+                    <Badge variant="secondary">Signed (hard copy)</Badge>
                   ) : (
                     <Badge variant="outline">Unsigned</Badge>
                   )}
@@ -228,11 +230,24 @@ function LeasesPage() {
                 <div className="text-xs text-muted-foreground">
                   {r.property_name ?? "—"} · Unit {r.unit_number ?? "—"}
                   {r.lease_signed_at ? ` · ${new Date(r.lease_signed_at).toLocaleDateString()}` : ""}
+                  {!r.lease_signature && r.signed_lease_uploaded_at
+                    ? ` · uploaded ${new Date(r.signed_lease_uploaded_at).toLocaleDateString()}`
+                    : ""}
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setSelected(r)}>
-                <FileSignature className="mr-2 h-4 w-4" /> View lease
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <TenantSignedLeaseUpload
+                  tenantId={r.id}
+                  tenantName={r.full_name}
+                  path={r.signed_lease_path}
+                  name={r.signed_lease_name}
+                  uploadedAt={r.signed_lease_uploaded_at}
+                  compact
+                />
+                <Button variant="outline" size="sm" onClick={() => setSelected(r)}>
+                  <FileSignature className="mr-2 h-4 w-4" /> View lease
+                </Button>
+              </div>
             </div>
           ))}
         </CardContent>
