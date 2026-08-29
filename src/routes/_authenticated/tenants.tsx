@@ -939,7 +939,8 @@ function TenantForm({
         </div>
         <div>
           <Label>Move-in Date</Label>
-          <Input type="date" value={moveInDate} onChange={(e) => setMoveInDate(e.target.value)} />
+          <Input type="date" value={moveInDate} readOnly disabled />
+          <p className="mt-1 text-[11px] text-muted-foreground">Set automatically to today — the day they join.</p>
         </div>
         <div className="col-span-2">
           <Label>Rent Due Day (1–31)</Label>
