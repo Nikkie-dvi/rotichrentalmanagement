@@ -791,6 +791,9 @@ function EditTenantDatesDialog({ tenant: t }: { tenant: any }) {
           <div className="grid gap-1.5">
             <Label htmlFor={`mi-${t.id}`}>Joining / move-in date</Label>
             <Input id={`mi-${t.id}`} type="date" value={moveIn} onChange={(e) => setMoveIn(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground">
+              Only change this for tenants who joined before you started using the app.
+            </p>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor={`dd-${t.id}`}>Rent due day (1–31)</Label>
