@@ -158,7 +158,15 @@ function LeasesPage() {
                     Unit {t.units?.unit_number ?? "—"} · {t.phone_number ?? "No phone on file"}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <TenantSignedLeaseUpload
+                    tenantId={t.id}
+                    tenantName={t.full_name}
+                    path={t.signed_lease_path ?? null}
+                    name={t.signed_lease_name}
+                    uploadedAt={t.signed_lease_uploaded_at}
+                    compact
+                  />
                   <Button
                     size="sm"
                     variant="outline"
