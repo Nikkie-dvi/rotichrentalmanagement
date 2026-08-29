@@ -512,7 +512,13 @@ function DashboardPage() {
           <CardDescription>
             {(t as any).lease_signed_at
               ? `Signed ${new Date((t as any).lease_signed_at).toLocaleString()}`
-              : "Not signed yet"}
+              : landlordInfoQuery.data?.mySignedLeaseUrl
+                ? `Signed — copy on file${
+                    landlordInfoQuery.data.mySignedLeaseUploadedAt
+                      ? ` (uploaded ${new Date(landlordInfoQuery.data.mySignedLeaseUploadedAt).toLocaleDateString()})`
+                      : ""
+                  }`
+                : "Not signed yet"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -520,6 +526,12 @@ function DashboardPage() {
             <Button variant="outline" size="sm" onClick={() => setLeaseOpen(true)} className="glass-btn glow-blue">
               View full lease &amp; signature
             </Button>
+            {landlordInfoQuery.data?.mySignedLeaseUrl && (
+              <LeaseCopyActions
+                url={landlordInfoQuery.data.mySignedLeaseUrl}
+                name={landlordInfoQuery.data.mySignedLeaseName}
+              />
+            )}
             {landlordInfoQuery.data?.leaseDocumentUrl && (
               <LeaseCopyActions
                 url={landlordInfoQuery.data.leaseDocumentUrl}
