@@ -42,7 +42,7 @@ function LeasesPage() {
       const { data, error } = await supabase
         .from("tenants")
         .select(
-          "id, full_name, phone_number, email, deposit_paid, move_in_date, move_out_date, active, rent_due_day, approval_status, lease_signature, lease_signed_at, units(unit_number, rent_amount, properties(name, location))",
+          "id, full_name, phone_number, email, deposit_paid, move_in_date, move_out_date, active, rent_due_day, approval_status, lease_signature, lease_signed_at, signed_lease_path, signed_lease_name, signed_lease_uploaded_at, units(unit_number, rent_amount, properties(name, location))",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
