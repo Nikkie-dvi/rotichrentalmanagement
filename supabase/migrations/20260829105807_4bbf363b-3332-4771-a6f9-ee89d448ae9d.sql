@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.tenants_guard_self_update() FROM PUBLIC, anon, authenticated;

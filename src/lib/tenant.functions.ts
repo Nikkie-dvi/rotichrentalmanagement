@@ -138,7 +138,7 @@ export const getMyLandlordInfo = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: tenant } = await supabase
       .from("tenants")
-      .select("owner_id")
+      .select("owner_id, signed_lease_path, signed_lease_name, signed_lease_uploaded_at")
       .eq("auth_user_id", userId)
       .maybeSingle();
     if (!tenant?.owner_id) return null;
@@ -163,7 +163,20 @@ export const getMyLandlordInfo = createServerFn({ method: "GET" })
       leaseDocumentUrl = signed?.signedUrl ?? null;
     }
 
+    // The tenant's own signed hard copy, uploaded by the landlord.
+    let mySignedLeaseUrl: string | null = null;
+    const myPath = (tenant as any).signed_lease_path as string | null;
+    if (myPath) {
+      const { data: signedMine } = await supabaseAdmin.storage
+        .from("lease-documents")
+        .createSignedUrl(myPath, 60 * 60);
+      mySignedLeaseUrl = signedMine?.signedUrl ?? null;
+    }
+
     return {
+      mySignedLeaseUrl,
+      mySignedLeaseName: ((tenant as any).signed_lease_name as string) ?? null,
+      mySignedLeaseUploadedAt: ((tenant as any).signed_lease_uploaded_at as string) ?? null,
       leaseDocumentUrl,
       leaseDocumentName: ((landlord as any).lease_document_name as string) ?? null,
       leaseDocumentUploadedAt: ((landlord as any).lease_document_uploaded_at as string) ?? null,

@@ -14,6 +14,7 @@ import { LeaseDialog, type LeaseData } from "@/components/lease-document";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { resolveLeaseTemplate } from "@/lib/lease-template";
 import { SectionSwitcher, SectionPanel, LEASE_TABS } from "@/components/section-switcher";
+import { TenantSignedLeaseUpload } from "@/components/tenant-signed-lease-upload";
 
 export const Route = createFileRoute("/_authenticated/leases")({
   head: () => ({
@@ -41,7 +42,7 @@ function LeasesPage() {
       const { data, error } = await supabase
         .from("tenants")
         .select(
-          "id, full_name, phone_number, email, deposit_paid, move_in_date, move_out_date, active, rent_due_day, approval_status, lease_signature, lease_signed_at, units(unit_number, rent_amount, properties(name, location))",
+          "id, full_name, phone_number, email, deposit_paid, move_in_date, move_out_date, active, rent_due_day, approval_status, lease_signature, lease_signed_at, signed_lease_path, signed_lease_name, signed_lease_uploaded_at, units(unit_number, rent_amount, properties(name, location))",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -50,10 +51,20 @@ function LeasesPage() {
   });
 
   const rows = useMemo(() => {
-    const list = (query.data ?? []).map((t: any): LeaseData & { id: string; active: boolean; approval_status: string } => ({
+    const list = (query.data ?? []).map((t: any): LeaseData & {
+      id: string;
+      active: boolean;
+      approval_status: string;
+      signed_lease_path: string | null;
+      signed_lease_name: string | null;
+      signed_lease_uploaded_at: string | null;
+    } => ({
       id: t.id,
       active: t.active,
       approval_status: t.approval_status,
+      signed_lease_path: t.signed_lease_path ?? null,
+      signed_lease_name: t.signed_lease_name ?? null,
+      signed_lease_uploaded_at: t.signed_lease_uploaded_at ?? null,
       full_name: t.full_name,
       phone_number: t.phone_number,
       email: t.email,
@@ -79,7 +90,7 @@ function LeasesPage() {
 
   // Tenants who still have no signature on file — the landlord can nudge them.
   const unsigned = useMemo(
-    () => (query.data ?? []).filter((t: any) => t.active && !t.lease_signature),
+    () => (query.data ?? []).filter((t: any) => t.active && !t.lease_signature && !t.signed_lease_path),
     [query.data],
   );
 
@@ -147,7 +158,15 @@ function LeasesPage() {
                     Unit {t.units?.unit_number ?? "—"} · {t.phone_number ?? "No phone on file"}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <TenantSignedLeaseUpload
+                    tenantId={t.id}
+                    tenantName={t.full_name}
+                    path={t.signed_lease_path ?? null}
+                    name={t.signed_lease_name}
+                    uploadedAt={t.signed_lease_uploaded_at}
+                    compact
+                  />
                   <Button
                     size="sm"
                     variant="outline"
@@ -202,6 +221,8 @@ function LeasesPage() {
                   <Badge variant="outline" className="capitalize">{r.approval_status}</Badge>
                   {r.lease_signature ? (
                     <Badge variant="secondary">Signed</Badge>
+                  ) : r.signed_lease_path ? (
+                    <Badge variant="secondary">Signed (hard copy)</Badge>
                   ) : (
                     <Badge variant="outline">Unsigned</Badge>
                   )}
@@ -209,11 +230,24 @@ function LeasesPage() {
                 <div className="text-xs text-muted-foreground">
                   {r.property_name ?? "—"} · Unit {r.unit_number ?? "—"}
                   {r.lease_signed_at ? ` · ${new Date(r.lease_signed_at).toLocaleDateString()}` : ""}
+                  {!r.lease_signature && r.signed_lease_uploaded_at
+                    ? ` · uploaded ${new Date(r.signed_lease_uploaded_at).toLocaleDateString()}`
+                    : ""}
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setSelected(r)}>
-                <FileSignature className="mr-2 h-4 w-4" /> View lease
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <TenantSignedLeaseUpload
+                  tenantId={r.id}
+                  tenantName={r.full_name}
+                  path={r.signed_lease_path}
+                  name={r.signed_lease_name}
+                  uploadedAt={r.signed_lease_uploaded_at}
+                  compact
+                />
+                <Button variant="outline" size="sm" onClick={() => setSelected(r)}>
+                  <FileSignature className="mr-2 h-4 w-4" /> View lease
+                </Button>
+              </div>
             </div>
           ))}
         </CardContent>
