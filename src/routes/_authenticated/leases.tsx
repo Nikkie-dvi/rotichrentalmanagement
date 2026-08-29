@@ -14,6 +14,7 @@ import { LeaseDialog, type LeaseData } from "@/components/lease-document";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { resolveLeaseTemplate } from "@/lib/lease-template";
 import { SectionSwitcher, SectionPanel, LEASE_TABS } from "@/components/section-switcher";
+import { TenantSignedLeaseUpload } from "@/components/tenant-signed-lease-upload";
 
 export const Route = createFileRoute("/_authenticated/leases")({
   head: () => ({
