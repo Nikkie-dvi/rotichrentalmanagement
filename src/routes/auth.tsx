@@ -281,7 +281,7 @@ function AuthPage() {
                     />
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {isSignup ? "Create my landlord account" : "Sign in"}
+                      {isSignup ? "Create my account" : "Sign in"}
                     </Button>
                     {!isSignup && (
                       <p className="text-center text-sm">
