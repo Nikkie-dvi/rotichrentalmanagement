@@ -143,6 +143,18 @@ function RentPaymentSettingsPage() {
   );
   const unitScope = { propertyId: propertyId === "all" ? null : propertyId, unitIds };
 
+  // The bulk documents card keeps its own property / unit selection.
+  const docUnits = (units ?? []).filter(
+    (u: any) => docPropertyId === "all" || u.property_id === docPropertyId,
+  );
+  const docScopedUnitIds = docUnitIds.length ? docUnitIds : docUnits.map((u: any) => u.id);
+  const docTenants = (tenants ?? []).filter((t: any) =>
+    docPropertyId === "all" && docUnitIds.length === 0
+      ? true
+      : t.unit_id && docScopedUnitIds.includes(t.unit_id),
+  );
+
+
   useEffect(() => {
     if (!account) return;
     setNumber((account as any).rent_payment_number ?? "");
