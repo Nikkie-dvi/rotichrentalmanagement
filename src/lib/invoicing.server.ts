@@ -43,7 +43,7 @@ async function loadOwnerData(ownerId: string) {
       .eq("owner_id", ownerId),
     supabaseAdmin
       .from("invoices")
-      .select("id, tenant_id, month_year, total_due, balance_remaining, due_date, status")
+      .select("id, tenant_id, month_year, total_due, balance_remaining, due_date, status, kind")
       .eq("owner_id", ownerId),
     supabaseAdmin.from("payments").select("tenant_id, invoice_id, amount_paid").eq("owner_id", ownerId),
     supabaseAdmin.from("tenant_credit_events").select("tenant_id, delta").eq("owner_id", ownerId),
@@ -56,11 +56,16 @@ async function loadOwnerData(ownerId: string) {
   };
 }
 
+/** Rent bills and service (water, electricity, etc.) bills are raised separately. */
+export type InvoiceKind = "rent" | "service";
+
 /**
  * Generates invoices for one month, only for tenants whose due day has actually
  * arrived, and offsets each new invoice against money already paid ahead.
+ * `kind` decides whether the bill carries the base rent or only the services
+ * (utility readings) for that month — the two never share an invoice.
  */
-export async function generateMonthlyInvoices(ownerId: string, month: string) {
+export async function generateMonthlyInvoices(ownerId: string, month: string, kind: InvoiceKind = "rent") {
   const { tenants, invoices, payments, events } = await loadOwnerData(ownerId);
   const today = todayIso();
 
@@ -70,13 +75,16 @@ export async function generateMonthlyInvoices(ownerId: string, month: string) {
   for (const e of events) adjByTenant.set(e.tenant_id, (adjByTenant.get(e.tenant_id) ?? 0) + num(e.delta));
   const otherInvoiced = new Map<string, number>();
   for (const i of invoices) {
-    if (i.month_year === month) continue;
+    // Only the invoice we are about to (re)raise is excluded; the other kind of
+    // bill for the same month still consumes the tenant's credit.
+    if (i.month_year === month && (i.kind ?? "rent") === kind) continue;
     otherInvoiced.set(i.tenant_id, (otherInvoiced.get(i.tenant_id) ?? 0) + num(i.total_due));
   }
 
   const [y, m] = month.split("-").map(Number);
   const start = `${month}-01`;
   const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+
 
   let created = 0;
   let creditApplied = 0;

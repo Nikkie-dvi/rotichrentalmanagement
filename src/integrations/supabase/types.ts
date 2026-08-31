@@ -154,6 +154,7 @@ export type Database = {
           electricity_amount: number
           garbage_amount: number
           id: string
+          kind: string
           late_penalty_amount: number
           month_year: string
           other_amount: number
@@ -176,6 +177,7 @@ export type Database = {
           electricity_amount?: number
           garbage_amount?: number
           id?: string
+          kind?: string
           late_penalty_amount?: number
           month_year: string
           other_amount?: number
@@ -198,6 +200,7 @@ export type Database = {
           electricity_amount?: number
           garbage_amount?: number
           id?: string
+          kind?: string
           late_penalty_amount?: number
           month_year?: string
           other_amount?: number
