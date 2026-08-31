@@ -92,6 +92,8 @@ function RentPaymentSettingsPage() {
   const [docKind, setDocKind] = useState<"invoice" | "receipt" | "statement">("invoice");
   const [docMonth, setDocMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [docSending, setDocSending] = useState(false);
+  const [docPropertyId, setDocPropertyId] = useState<string>("all");
+  const [docUnitIds, setDocUnitIds] = useState<string[]>([]);
   const [mode, setMode] = useState<"details" | "message">(
     typeof window !== "undefined" && window.location.hash === "#sms-tenants" ? "message" : "details",
   );
