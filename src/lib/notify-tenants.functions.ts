@@ -14,6 +14,8 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
     push?: boolean;
     audience?: "all" | "due" | "overdue";
     tenantIds?: string[];
+    propertyId?: string | null;
+    unitIds?: string[];
   }) => {
     const title = (data?.title ?? "").trim();
     const body = (data?.body ?? "").trim();
@@ -27,13 +29,15 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
       push: data.push ?? true,
       audience: data.audience ?? "all",
       tenantIds: Array.isArray(data.tenantIds) ? data.tenantIds.filter(Boolean) : [],
+      propertyId: (data.propertyId ?? "") || null,
+      unitIds: Array.isArray(data.unitIds) ? data.unitIds.filter(Boolean) : [],
     };
   })
   .handler(async ({ data, context }) => {
     // RLS scopes this to tenants the caller may see (owner or active manager).
     const { data: tenants, error } = await context.supabase
       .from("tenants")
-      .select("id, owner_id, phone_number, auth_user_id")
+      .select("id, owner_id, phone_number, auth_user_id, unit_id")
       .eq("active", true);
     if (error) throw new Error(error.message);
 
@@ -42,7 +46,23 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
       owner_id: string;
       phone_number: string | null;
       auth_user_id: string | null;
+      unit_id: string | null;
     }[];
+
+    // Narrow by property / units first, so "all tenants" means "all on these units".
+    let unitFilter = new Set(data.unitIds);
+    if (data.propertyId) {
+      const { data: units } = await context.supabase
+        .from("units")
+        .select("id")
+        .eq("property_id", data.propertyId);
+      const inProperty = ((units ?? []) as { id: string }[]).map((u) => u.id);
+      unitFilter = new Set(
+        data.unitIds.length ? data.unitIds.filter((id) => inProperty.includes(id)) : inProperty,
+      );
+    }
+    if (unitFilter.size > 0) rows = rows.filter((t) => t.unit_id && unitFilter.has(t.unit_id));
+    else if (data.propertyId) rows = [];
 
     // Narrow the audience: hand-picked tenants, tenants with rent due, or those overdue.
     if (data.tenantIds.length > 0) {

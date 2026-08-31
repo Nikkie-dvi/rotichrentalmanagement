@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Wallet, Save, BellRing, Send, Users } from "lucide-react";
+import { Loader2, Wallet, Save, BellRing, Send, Users, Receipt, Building2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
+import { sendBulkTenantDocsSms } from "@/lib/bulk-docs.functions";
 import { SmsCreditCard } from "@/components/sms-credit-card";
 import { ModeTabs } from "@/components/mode-tabs";
 import { AnimatePresence, motion } from "framer-motion";
@@ -86,23 +87,59 @@ function RentPaymentSettingsPage() {
   const [viaSms, setViaSms] = useState(true);
   const [audience, setAudience] = useState<Audience>("all");
   const [picked, setPicked] = useState<string[]>([]);
+  const [propertyId, setPropertyId] = useState<string>("all");
+  const [unitIds, setUnitIds] = useState<string[]>([]);
+  const [docKind, setDocKind] = useState<"invoice" | "receipt" | "statement">("invoice");
+  const [docMonth, setDocMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [docSending, setDocSending] = useState(false);
   const [mode, setMode] = useState<"details" | "message">(
     typeof window !== "undefined" && window.location.hash === "#sms-tenants" ? "message" : "details",
   );
 
 
 
+  const { data: properties } = useQuery({
+    queryKey: ["properties", "message-picker"],
+    queryFn: async () => {
+      const { data } = await supabase.from("properties").select("id, name").order("name");
+      return data ?? [];
+    },
+  });
+
+  const { data: units } = useQuery({
+    queryKey: ["units", "message-picker"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("units")
+        .select("id, unit_number, property_id")
+        .order("unit_number");
+      return data ?? [];
+    },
+  });
+
   const { data: tenants } = useQuery({
     queryKey: ["tenants", "message-picker"],
     queryFn: async () => {
       const { data } = await supabase
         .from("tenants")
-        .select("id, full_name, phone_number")
+        .select("id, full_name, phone_number, unit_id")
         .eq("active", true)
         .order("full_name");
       return data ?? [];
     },
   });
+
+  // Units belonging to the chosen property, and the tenants living on the chosen units.
+  const scopedUnits = (units ?? []).filter(
+    (u: any) => propertyId === "all" || u.property_id === propertyId,
+  );
+  const scopedUnitIds = unitIds.length ? unitIds : scopedUnits.map((u: any) => u.id);
+  const scopedTenants = (tenants ?? []).filter(
+    (t: any) => propertyId === "all" && unitIds.length === 0
+      ? true
+      : t.unit_id && scopedUnitIds.includes(t.unit_id),
+  );
+  const unitScope = { propertyId: propertyId === "all" ? null : propertyId, unitIds };
 
   useEffect(() => {
     if (!account) return;
@@ -291,17 +328,85 @@ function RentPaymentSettingsPage() {
             </Select>
           </div>
 
+          <div className="grid gap-1.5">
+            <Label className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" /> Property
+            </Label>
+            <Select
+              value={propertyId}
+              onValueChange={(v) => {
+                setPropertyId(v);
+                setUnitIds([]);
+                setPicked([]);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All properties</SelectItem>
+                {(properties ?? []).map((p: any) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="rounded-lg border bg-muted/40 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
+              <span>Units {unitIds.length > 0 ? `(${unitIds.length} selected)` : "(all)"}</span>
+              {scopedUnits.length > 0 && (
+                <label className="flex items-center gap-2 text-xs font-normal">
+                  <Checkbox
+                    checked={unitIds.length > 0 && unitIds.length === scopedUnits.length}
+                    onCheckedChange={(v) => {
+                      setUnitIds(v === true ? scopedUnits.map((u: any) => u.id) : []);
+                      setPicked([]);
+                    }}
+                  />
+                  Select all
+                </label>
+              )}
+            </div>
+            <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
+              {scopedUnits.map((u: any) => {
+                const on = unitIds.includes(u.id);
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => {
+                      setPicked([]);
+                      setUnitIds((prev) => (on ? prev.filter((id) => id !== u.id) : [...prev, u.id]));
+                    }}
+                    className={`rounded-full border px-3 py-1 text-xs transition ${
+                      on ? "border-primary bg-primary/15 text-primary" : "bg-background/60"
+                    }`}
+                  >
+                    {u.unit_number}
+                  </button>
+                );
+              })}
+              {scopedUnits.length === 0 && <p className="text-xs text-muted-foreground">No units yet.</p>}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {scopedTenants.length} tenant(s) in this selection.
+            </p>
+          </div>
+
           <div className="rounded-lg border bg-muted/40 p-3">
             <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
               <span className="flex items-center gap-2">
                 <Users className="h-4 w-4" /> Or pick specific tenants
               </span>
-              {(tenants ?? []).length > 0 && (
+              {scopedTenants.length > 0 && (
                 <label className="flex items-center gap-2 text-xs font-normal">
                   <Checkbox
-                    checked={picked.length > 0 && picked.length === (tenants ?? []).length}
+                    checked={picked.length > 0 && picked.length === scopedTenants.length}
                     onCheckedChange={(v) =>
-                      setPicked(v === true ? (tenants ?? []).map((t: any) => t.id) : [])
+                      setPicked(v === true ? scopedTenants.map((t: any) => t.id) : [])
                     }
                   />
                   Select all
@@ -309,7 +414,7 @@ function RentPaymentSettingsPage() {
               )}
             </div>
             <div className="max-h-40 space-y-1.5 overflow-y-auto pr-1">
-              {(tenants ?? []).map((t: any) => (
+              {scopedTenants.map((t: any) => (
                 <label key={t.id} className="flex items-center gap-2 text-sm">
                   <Checkbox
                     checked={picked.includes(t.id)}
@@ -323,7 +428,7 @@ function RentPaymentSettingsPage() {
                   </span>
                 </label>
               ))}
-              {(tenants ?? []).length === 0 && (
+              {scopedTenants.length === 0 && (
                 <p className="text-xs text-muted-foreground">No active tenants yet.</p>
               )}
             </div>
@@ -411,6 +516,7 @@ function RentPaymentSettingsPage() {
                     sms: viaSms,
                     audience,
                     tenantIds: picked,
+                    ...unitScope,
                   },
                 });
                 if ((res as any).recipients === 0) {
@@ -434,6 +540,73 @@ function RentPaymentSettingsPage() {
           <p className="text-xs text-muted-foreground">
             Saving your payment details above also sends an update to all tenants using these same channels.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Receipt className="h-4 w-4" /> Bulk receipts, invoices & statements
+          </CardTitle>
+          <CardDescription>
+            Texts every tenant on the units selected above their own figures — itemised invoice, latest payment
+            receipt or a month statement. 1 SMS per tenant from your SMS credit.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label>What to send</Label>
+              <Select value={docKind} onValueChange={(v) => setDocKind(v as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="invoice">Invoices (itemised bill for the month)</SelectItem>
+                  <SelectItem value="receipt">Receipts (latest payment received)</SelectItem>
+                  <SelectItem value="statement">Statements (billed, paid, balance)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="doc-month">Month</Label>
+              <Input id="doc-month" type="month" value={docMonth} onChange={(e) => setDocMonth(e.target.value)} />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Going to {picked.length > 0 ? `${picked.length} selected tenant(s)` : `${scopedTenants.length} tenant(s)`}
+            {propertyId !== "all" || unitIds.length > 0 ? " on the chosen units" : " (all units)"}.
+          </p>
+          <Button
+            disabled={docSending}
+            onClick={async () => {
+              setDocSending(true);
+              try {
+                const res: any = await sendBulkTenantDocsSms({
+                  data: { kind: docKind, month: docMonth, tenantIds: picked, ...unitScope },
+                });
+                if (res.sent === 0 && res.failed === 0) {
+                  toast.info(`Nothing to send — ${res.skipped} tenant(s) had no ${docKind} for ${docMonth}`);
+                } else {
+                  toast.success(`Sent ${res.sent} ${docKind}(s)`, {
+                    description: [
+                      res.failed ? `${res.failed} failed` : null,
+                      res.skipped ? `${res.skipped} skipped` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || undefined,
+                  });
+                }
+              } catch (e: any) {
+                toast.error(e?.message ?? "Could not send");
+              } finally {
+                setDocSending(false);
+              }
+            }}
+            className="w-full sm:w-auto"
+          >
+            {docSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send to units
+          </Button>
         </CardContent>
       </Card>
           </motion.div>
