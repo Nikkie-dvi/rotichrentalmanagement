@@ -92,6 +92,8 @@ function RentPaymentSettingsPage() {
   const [docKind, setDocKind] = useState<"invoice" | "receipt" | "statement">("invoice");
   const [docMonth, setDocMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [docSending, setDocSending] = useState(false);
+  const [docPropertyId, setDocPropertyId] = useState<string>("all");
+  const [docUnitIds, setDocUnitIds] = useState<string[]>([]);
   const [mode, setMode] = useState<"details" | "message">(
     typeof window !== "undefined" && window.location.hash === "#sms-tenants" ? "message" : "details",
   );
@@ -140,6 +142,18 @@ function RentPaymentSettingsPage() {
       : t.unit_id && scopedUnitIds.includes(t.unit_id),
   );
   const unitScope = { propertyId: propertyId === "all" ? null : propertyId, unitIds };
+
+  // The bulk documents card keeps its own property / unit selection.
+  const docUnits = (units ?? []).filter(
+    (u: any) => docPropertyId === "all" || u.property_id === docPropertyId,
+  );
+  const docScopedUnitIds = docUnitIds.length ? docUnitIds : docUnits.map((u: any) => u.id);
+  const docTenants = (tenants ?? []).filter((t: any) =>
+    docPropertyId === "all" && docUnitIds.length === 0
+      ? true
+      : t.unit_id && docScopedUnitIds.includes(t.unit_id),
+  );
+
 
   useEffect(() => {
     if (!account) return;
@@ -549,8 +563,8 @@ function RentPaymentSettingsPage() {
             <Receipt className="h-4 w-4" /> Bulk receipts, invoices & statements
           </CardTitle>
           <CardDescription>
-            Texts every tenant on the units selected above their own figures — itemised invoice, latest payment
-            receipt or a month statement. 1 SMS per tenant from your SMS credit.
+            Pick the property and the exact units, then text each tenant their own figures — itemised invoice, latest
+            payment receipt or a month statement. 1 SMS per tenant from your SMS credit.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
@@ -573,9 +587,70 @@ function RentPaymentSettingsPage() {
               <Input id="doc-month" type="month" value={docMonth} onChange={(e) => setDocMonth(e.target.value)} />
             </div>
           </div>
+
+          <div className="grid gap-1.5">
+            <Label className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" /> Property
+            </Label>
+            <Select
+              value={docPropertyId}
+              onValueChange={(v) => {
+                setDocPropertyId(v);
+                setDocUnitIds([]);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All properties</SelectItem>
+                {(properties ?? []).map((p: any) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="rounded-lg border bg-muted/40 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
+              <span>Units {docUnitIds.length > 0 ? `(${docUnitIds.length} selected)` : "(all)"}</span>
+              {docUnits.length > 0 && (
+                <label className="flex items-center gap-2 text-xs font-normal">
+                  <Checkbox
+                    checked={docUnitIds.length > 0 && docUnitIds.length === docUnits.length}
+                    onCheckedChange={(v) => setDocUnitIds(v === true ? docUnits.map((u: any) => u.id) : [])}
+                  />
+                  Select all
+                </label>
+              )}
+            </div>
+            <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
+              {docUnits.map((u: any) => {
+                const on = docUnitIds.includes(u.id);
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() =>
+                      setDocUnitIds((prev) => (on ? prev.filter((id) => id !== u.id) : [...prev, u.id]))
+                    }
+                    className={`rounded-full border px-3 py-1 text-xs transition ${
+                      on ? "border-primary bg-primary/15 text-primary" : "bg-background/60"
+                    }`}
+                  >
+                    {u.unit_number}
+                  </button>
+                );
+              })}
+              {docUnits.length === 0 && <p className="text-xs text-muted-foreground">No units yet.</p>}
+            </div>
+          </div>
+
           <p className="text-xs text-muted-foreground">
-            Going to {picked.length > 0 ? `${picked.length} selected tenant(s)` : `${scopedTenants.length} tenant(s)`}
-            {propertyId !== "all" || unitIds.length > 0 ? " on the chosen units" : " (all units)"}.
+            Going to {docTenants.length} tenant(s)
+            {docPropertyId !== "all" || docUnitIds.length > 0 ? " on the chosen units" : " (all units)"}.
           </p>
           <Button
             disabled={docSending}
@@ -583,7 +658,13 @@ function RentPaymentSettingsPage() {
               setDocSending(true);
               try {
                 const res: any = await sendBulkTenantDocsSms({
-                  data: { kind: docKind, month: docMonth, tenantIds: picked, ...unitScope },
+                  data: {
+                    kind: docKind,
+                    month: docMonth,
+                    propertyId: docPropertyId === "all" ? null : docPropertyId,
+                    unitIds: docUnitIds,
+                  },
+
                 });
                 if (res.sent === 0 && res.failed === 0) {
                   toast.info(`Nothing to send — ${res.skipped} tenant(s) had no ${docKind} for ${docMonth}`);
