@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Wallet, Save, BellRing, Send, Users } from "lucide-react";
+import { Loader2, Wallet, Save, BellRing, Send, Users, Receipt, Building2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
+import { sendBulkTenantDocsSms } from "@/lib/bulk-docs.functions";
 import { SmsCreditCard } from "@/components/sms-credit-card";
 import { ModeTabs } from "@/components/mode-tabs";
 import { AnimatePresence, motion } from "framer-motion";
@@ -86,23 +87,59 @@ function RentPaymentSettingsPage() {
   const [viaSms, setViaSms] = useState(true);
   const [audience, setAudience] = useState<Audience>("all");
   const [picked, setPicked] = useState<string[]>([]);
+  const [propertyId, setPropertyId] = useState<string>("all");
+  const [unitIds, setUnitIds] = useState<string[]>([]);
+  const [docKind, setDocKind] = useState<"invoice" | "receipt" | "statement">("invoice");
+  const [docMonth, setDocMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [docSending, setDocSending] = useState(false);
   const [mode, setMode] = useState<"details" | "message">(
     typeof window !== "undefined" && window.location.hash === "#sms-tenants" ? "message" : "details",
   );
 
 
 
+  const { data: properties } = useQuery({
+    queryKey: ["properties", "message-picker"],
+    queryFn: async () => {
+      const { data } = await supabase.from("properties").select("id, name").order("name");
+      return data ?? [];
+    },
+  });
+
+  const { data: units } = useQuery({
+    queryKey: ["units", "message-picker"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("units")
+        .select("id, unit_number, property_id")
+        .order("unit_number");
+      return data ?? [];
+    },
+  });
+
   const { data: tenants } = useQuery({
     queryKey: ["tenants", "message-picker"],
     queryFn: async () => {
       const { data } = await supabase
         .from("tenants")
-        .select("id, full_name, phone_number")
+        .select("id, full_name, phone_number, unit_id")
         .eq("active", true)
         .order("full_name");
       return data ?? [];
     },
   });
+
+  // Units belonging to the chosen property, and the tenants living on the chosen units.
+  const scopedUnits = (units ?? []).filter(
+    (u: any) => propertyId === "all" || u.property_id === propertyId,
+  );
+  const scopedUnitIds = unitIds.length ? unitIds : scopedUnits.map((u: any) => u.id);
+  const scopedTenants = (tenants ?? []).filter(
+    (t: any) => propertyId === "all" && unitIds.length === 0
+      ? true
+      : t.unit_id && scopedUnitIds.includes(t.unit_id),
+  );
+  const unitScope = { propertyId: propertyId === "all" ? null : propertyId, unitIds };
 
   useEffect(() => {
     if (!account) return;
