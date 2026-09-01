@@ -42,8 +42,9 @@ export async function invoiceBreakdown(client: any, invoiceId: string): Promise<
 
   push("Late fee", num(inv.late_penalty_amount));
 
-  // Fall back to a plain utility line when nothing itemised is present.
-  if (parts.length === 0) push("Total charges", num(inv.total_due));
+  // Fall back to a plain line when nothing itemised is present.
+  if (parts.length === 0) push(inv.kind === "service" ? "Services" : "Total charges", num(inv.total_due));
+
 
   return {
     text: parts.join(", "),
