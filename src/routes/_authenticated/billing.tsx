@@ -145,11 +145,11 @@ function BillingPage() {
   // Raises any rent that falls due today (and re-checks credits) without waiting
   // for the overnight job, so it lands in arrears immediately.
   const dueToday = useMutation({
-    mutationFn: async () => (generateMonthFn as any)({ data: { month: thisMonth } }),
+    mutationFn: async () => (generateMonthFn as any)({ data: { month: thisMonth, kind: "rent" } }),
     onSuccess: (r: any) => {
       qc.invalidateQueries();
       setMonth(thisMonth);
-      toast.success(`${r?.created ?? 0} invoice(s) raised for ${thisMonth}`, {
+      toast.success(`${r?.created ?? 0} rent invoice(s) raised for ${thisMonth}`, {
         description: [
           r?.creditApplied ? `${money(r.creditApplied)} of credit applied` : null,
           r?.waiting?.length ? `${r.waiting.length} not due yet` : null,
@@ -159,22 +159,28 @@ function BillingPage() {
     onError: (e: any) => toast.error(e?.message ?? "Could not raise today's invoices"),
   });
 
+  // Rent bills and service bills (water, electricity, etc.) are raised separately.
   const generate = useMutation({
-
-    mutationFn: async () => (generateMonthFn as any)({ data: { month } }),
-    onSuccess: (r: any) => {
+    mutationFn: async (kind: "rent" | "service") => (generateMonthFn as any)({ data: { month, kind } }),
+    onSuccess: (r: any, kind) => {
       qc.invalidateQueries();
       const bits = [
         r?.creditApplied ? `${money(r.creditApplied)} of credit applied` : null,
         r?.waiting?.length ? `${r.waiting.length} not due yet` : null,
         r?.reconciled ? `${r.reconciled} balance(s) corrected` : null,
       ].filter(Boolean);
-      toast.success(`Generated ${r?.created ?? 0} invoice(s) for ${month}`, {
-        description: bits.join(" · ") || undefined,
-      });
+      toast.success(
+        `Generated ${r?.created ?? 0} ${kind === "service" ? "service" : "rent"} invoice(s) for ${month}`,
+        {
+          description:
+            bits.join(" · ") ||
+            (kind === "service" ? "No service charges were recorded for this month." : undefined),
+        },
+      );
     },
     onError: (e: any) => toast.error(e.message),
   });
+
 
   const { data: badInvoices } = useQuery({
     queryKey: ["incorrect-invoices"],
