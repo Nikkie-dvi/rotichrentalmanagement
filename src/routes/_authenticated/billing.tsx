@@ -289,7 +289,7 @@ function BillingPage() {
       <SectionPanel items={FINANCE_TABS}>
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Billing & Monthly Rent Roll</h2>
-        <p className="text-sm text-muted-foreground">Generate invoices combining rent + utilities per month.</p>
+        <p className="text-sm text-muted-foreground">Rent and services (water, electricity, etc.) are billed on separate invoices.</p>
       </div>
 
       <Card>
