@@ -479,7 +479,9 @@ function BillingPage() {
               <TableRow>
                 <TableHead>Tenant</TableHead>
                 <TableHead>Unit</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead className="text-right">Base Rent</TableHead>
+
                 <TableHead className="text-right">Utilities</TableHead>
                 <TableHead className="text-right">Late fees</TableHead>
                 <TableHead className="text-right">Total Due</TableHead>
