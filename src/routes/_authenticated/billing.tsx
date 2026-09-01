@@ -540,7 +540,7 @@ function BillingPage() {
                 </TableRow>
               ))}
               {(!invoices || invoices.length === 0) && (
-                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-6">No invoices for this month. Click generate above.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-6">No invoices for this month. Click generate above.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
