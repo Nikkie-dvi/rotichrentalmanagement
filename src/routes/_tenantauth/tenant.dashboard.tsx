@@ -131,7 +131,7 @@ function DashboardPage() {
       const [inv, pay, allPay, credits] = await Promise.all([
         supabase
           .from("invoices")
-          .select("id, month_year, total_due, balance_remaining, status, created_at, base_rent, utility_amount, water_amount, electricity_amount, garbage_amount, other_amount, other_label, late_penalty_amount, due_date, penalty_waived")
+          .select("id, month_year, kind, total_due, balance_remaining, status, created_at, base_rent, utility_amount, water_amount, electricity_amount, garbage_amount, other_amount, other_label, late_penalty_amount, due_date, penalty_waived")
           .eq("tenant_id", tenantId)
           .order("created_at", { ascending: false }),
         supabase
