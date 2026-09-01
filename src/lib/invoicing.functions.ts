@@ -12,17 +12,25 @@ async function ownerFor(context: any) {
   return (managed as any)?.landlord_user_id ?? context.userId;
 }
 
-/** Bulk-generates a month's invoices using each tenant's real due day and credit. */
+/**
+ * Bulk-generates a month's invoices using each tenant's real due day and credit.
+ * `kind` picks rent bills or service bills (water, electricity, etc.); they are
+ * always raised as separate invoices.
+ */
 export const generateMonthFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { month: string }) => ({ month: String(data.month).slice(0, 7) }))
+  .inputValidator((data: { month: string; kind?: "rent" | "service" }) => ({
+    month: String(data.month).slice(0, 7),
+    kind: data?.kind === "service" ? ("service" as const) : ("rent" as const),
+  }))
   .handler(async ({ data, context }) => {
     const ownerId = await ownerFor(context);
     const { generateMonthlyInvoices, reconcileInvoiceBalances } = await import("@/lib/invoicing.server");
-    const res = await generateMonthlyInvoices(ownerId, data.month);
+    const res = await generateMonthlyInvoices(ownerId, data.month, data.kind);
     const rec = await reconcileInvoiceBalances(ownerId);
-    return { ...res, reconciled: rec.fixed };
+    return { ...res, kind: data.kind, reconciled: rec.fixed };
   });
+
 
 /** Lists invoices that should not be counted as arrears. */
 export const listIncorrectInvoicesFn = createServerFn({ method: "POST" })
