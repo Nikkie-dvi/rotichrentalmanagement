@@ -56,7 +56,7 @@ export const sendBulkTenantDocsSms = createServerFn({ method: "POST" })
     const tenantIds = rows.map((t) => t.id);
     const { data: invoices } = await context.supabase
       .from("invoices")
-      .select("id, tenant_id, month_year, due_date, total_due, balance_remaining, late_penalty_amount, penalty_waived")
+      .select("id, tenant_id, month_year, kind, due_date, total_due, balance_remaining, late_penalty_amount, penalty_waived")
       .in("tenant_id", tenantIds);
     const allInvoices = (invoices ?? []) as any[];
 
