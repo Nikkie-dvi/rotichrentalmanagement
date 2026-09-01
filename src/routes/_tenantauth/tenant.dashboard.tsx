@@ -468,7 +468,10 @@ function DashboardPage() {
                     <div key={i.id} className="rounded-md border p-2 text-sm">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-medium">{i.month_year}</div>
+                          <div className="font-medium">
+                            {i.month_year} · {(i as any).kind === "service" ? "Services" : "Rent"}
+                          </div>
+
                           <div className="text-xs capitalize text-muted-foreground">{String(i.status).replace("_", " ")}</div>
                         </div>
                         <div className="text-right">
