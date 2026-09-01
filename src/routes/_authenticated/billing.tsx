@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SectionSwitcher, SectionPanel, FINANCE_TABS } from "@/components/section-switcher";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Printer, UserPlus, Coins, Zap, Trash2, MessageSquare } from "lucide-react";
+import { FileText, Printer, UserPlus, Coins, Zap, Trash2, MessageSquare, Droplets } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
