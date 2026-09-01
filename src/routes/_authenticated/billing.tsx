@@ -87,37 +87,57 @@ function BillingPage() {
       if (!singleTenant) throw new Error("Choose a tenant");
       const rent = Number(singleRent) || 0;
       const util = singleExtras;
-      const total = rent + util;
-      const { data: saved, error } = await supabase.from("invoices").upsert(
-        {
+      if (rent <= 0 && util <= 0) throw new Error("Enter a rent or service amount");
+
+      // Rent and services are billed on separate invoices.
+      const rows: any[] = [];
+      if (rent > 0) {
+        rows.push({
           tenant_id: singleTenant,
           month_year: singleMonth,
+          kind: "rent",
           base_rent: rent,
+          utility_amount: 0,
+          total_due: rent,
+          balance_remaining: rent,
+          status: "unpaid",
+        });
+      }
+      if (util > 0) {
+        rows.push({
+          tenant_id: singleTenant,
+          month_year: singleMonth,
+          kind: "service",
+          base_rent: 0,
           utility_amount: util,
           water_amount: Number(singleWater) || 0,
           electricity_amount: Number(singlePower) || 0,
           garbage_amount: Number(singleGarbage) || 0,
           other_amount: Number(singleOther) || 0,
           other_label: singleOtherLabel.trim() || null,
-          total_due: total,
-          balance_remaining: total,
-          status: total === 0 ? "paid" : "unpaid",
-        },
-        { onConflict: "tenant_id,month_year" },
-      ).select("id").maybeSingle();
-      if (error) throw error;
-
-      if (saved?.id) {
-        // Push the landlord a breakdown of what was just billed.
-        await notifyInvoiceCreated({ data: { invoiceId: saved.id } }).catch(() => {});
+          total_due: util,
+          balance_remaining: util,
+          status: "unpaid",
+        });
       }
 
-      if (singleSms && saved?.id) {
-        await sendInvoiceSms({ data: { invoiceId: saved.id } });
+      const { data: saved, error } = await supabase
+        .from("invoices")
+        .upsert(rows as never, { onConflict: "tenant_id,month_year,kind" })
+        .select("id");
+      if (error) throw error;
+
+      const ids = ((saved ?? []) as any[]).map((r) => r.id).filter(Boolean);
+      // Push the landlord a breakdown of what was just billed.
+      for (const id of ids) await notifyInvoiceCreated({ data: { invoiceId: id } }).catch(() => {});
+
+      if (singleSms && ids.length) {
+        for (const id of ids) await sendInvoiceSms({ data: { invoiceId: id } });
         return { texted: true };
       }
       return { texted: false };
     },
+
     onSuccess: (r: any) => {
       qc.invalidateQueries();
       toast.success(r?.texted ? "Invoice saved and texted to the tenant" : "Invoice saved");
