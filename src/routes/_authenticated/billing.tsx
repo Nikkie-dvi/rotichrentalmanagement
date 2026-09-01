@@ -279,9 +279,13 @@ function BillingPage() {
             <Label>Billing Month</Label>
             <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
           </div>
-          <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
-            <FileText className="h-4 w-4" />Generate Bills for {month}
+          <Button onClick={() => generate.mutate("rent")} disabled={generate.isPending}>
+            <FileText className="h-4 w-4" />Generate rent invoices for {month}
           </Button>
+          <Button variant="secondary" onClick={() => generate.mutate("service")} disabled={generate.isPending}>
+            <Droplets className="h-4 w-4" />Generate service invoices for {month}
+          </Button>
+
           <Button variant="outline" onClick={() => dueToday.mutate()} disabled={dueToday.isPending}>
             <FileText className="h-4 w-4" />
             {dueToday.isPending ? "Raising invoices…" : "Invoice rent due today"}
