@@ -495,7 +495,11 @@ function BillingPage() {
                 <TableRow key={i.id}>
                   <TableCell className="font-medium">{i.tenants?.full_name ?? "—"}</TableCell>
                   <TableCell>{i.tenants?.units?.unit_number ?? "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{i.kind === "service" ? "Services" : "Rent"}</Badge>
+                  </TableCell>
                   <TableCell className="text-right">{money(Number(i.base_rent))}</TableCell>
+
                   <TableCell className="text-right">{money(Number(i.utility_amount))}</TableCell>
                   <TableCell className="text-right text-destructive">{Number(i.late_penalty_amount ?? 0) > 0 ? money(Number(i.late_penalty_amount)) : "—"}</TableCell>
                   <TableCell className="text-right font-semibold">{money(Number(i.total_due))}</TableCell>
