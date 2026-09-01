@@ -10,11 +10,12 @@ export async function invoiceBreakdown(client: any, invoiceId: string): Promise<
   const { data: inv } = await client
     .from("invoices")
     .select(
-      "id, month_year, base_rent, water_amount, electricity_amount, garbage_amount, other_amount, other_label, late_penalty_amount, total_due, balance_remaining",
+      "id, month_year, kind, base_rent, water_amount, electricity_amount, garbage_amount, other_amount, other_label, late_penalty_amount, total_due, balance_remaining",
     )
     .eq("id", invoiceId)
     .maybeSingle();
   if (!inv) return null;
+
 
   const { data: items } = await client
     .from("invoice_line_items")
