@@ -85,25 +85,32 @@ export const sendBulkTenantDocsSms = createServerFn({ method: "POST" })
       const first = ((tenant.full_name as string) ?? "there").split(" ")[0];
       const mine = allInvoices.filter((i) => i.tenant_id === tenant.id);
       const balance = mine.reduce((s, i) => s + (Number(i.balance_remaining) || 0), 0);
-      const monthInvoice = mine.find((i) => i.month_year === data.month);
+      // Rent and services are separate invoices, so a month can have both.
+      const monthInvoices = mine.filter((i) => i.month_year === data.month);
 
       let message = "";
       let subject = "";
       let invoiceId: string | null = null;
 
       if (data.kind === "invoice") {
-        if (!monthInvoice) {
+        if (monthInvoices.length === 0) {
           skipped++;
           continue;
         }
-        invoiceId = monthInvoice.id;
+        invoiceId = monthInvoices[0].id;
         subject = "Invoice";
-        const bd = await invoiceBreakdown(context.supabase, monthInvoice.id);
-        const duePart = monthInvoice.due_date ? ` Due ${monthInvoice.due_date}.` : "";
-        message =
-          `Hi ${first}, your ${monthInvoice.month_year} invoice is ready. ` +
-          (bd?.text ? `${bd.text}. ` : "") +
-          `Total ${money(Number(monthInvoice.total_due) || 0)}, balance ${money(Number(monthInvoice.balance_remaining) || 0)}.${duePart}`;
+        const lines: string[] = [];
+        for (const inv of monthInvoices) {
+          const label = inv.kind === "service" ? "Services" : "Rent";
+          const bd = await invoiceBreakdown(context.supabase, inv.id);
+          lines.push(
+            `${label}: ${bd?.text ? `${bd.text}; ` : ""}total ${money(Number(inv.total_due) || 0)}, balance ${money(Number(inv.balance_remaining) || 0)}`,
+          );
+        }
+        const withDue = monthInvoices.find((i) => i.due_date);
+        const duePart = withDue?.due_date ? ` Due ${withDue.due_date}.` : "";
+        message = `Hi ${first}, your ${data.month} invoice(s): ` + lines.join(". ") + `.${duePart}`;
+
       } else if (data.kind === "receipt") {
         const last = allPayments.find((p) => p.tenant_id === tenant.id);
         if (!last) {
