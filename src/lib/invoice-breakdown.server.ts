@@ -10,11 +10,12 @@ export async function invoiceBreakdown(client: any, invoiceId: string): Promise<
   const { data: inv } = await client
     .from("invoices")
     .select(
-      "id, month_year, base_rent, water_amount, electricity_amount, garbage_amount, other_amount, other_label, late_penalty_amount, total_due, balance_remaining",
+      "id, month_year, kind, base_rent, water_amount, electricity_amount, garbage_amount, other_amount, other_label, late_penalty_amount, total_due, balance_remaining",
     )
     .eq("id", invoiceId)
     .maybeSingle();
   if (!inv) return null;
+
 
   const { data: items } = await client
     .from("invoice_line_items")
@@ -41,8 +42,9 @@ export async function invoiceBreakdown(client: any, invoiceId: string): Promise<
 
   push("Late fee", num(inv.late_penalty_amount));
 
-  // Fall back to a plain utility line when nothing itemised is present.
-  if (parts.length === 0) push("Total charges", num(inv.total_due));
+  // Fall back to a plain line when nothing itemised is present.
+  if (parts.length === 0) push(inv.kind === "service" ? "Services" : "Total charges", num(inv.total_due));
+
 
   return {
     text: parts.join(", "),

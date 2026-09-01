@@ -131,7 +131,7 @@ function DashboardPage() {
       const [inv, pay, allPay, credits] = await Promise.all([
         supabase
           .from("invoices")
-          .select("id, month_year, total_due, balance_remaining, status, created_at, base_rent, utility_amount, water_amount, electricity_amount, garbage_amount, other_amount, other_label, late_penalty_amount, due_date, penalty_waived")
+          .select("id, month_year, kind, total_due, balance_remaining, status, created_at, base_rent, utility_amount, water_amount, electricity_amount, garbage_amount, other_amount, other_label, late_penalty_amount, due_date, penalty_waived")
           .eq("tenant_id", tenantId)
           .order("created_at", { ascending: false }),
         supabase
@@ -468,7 +468,10 @@ function DashboardPage() {
                     <div key={i.id} className="rounded-md border p-2 text-sm">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-medium">{i.month_year}</div>
+                          <div className="font-medium">
+                            {i.month_year} · {(i as any).kind === "service" ? "Services" : "Rent"}
+                          </div>
+
                           <div className="text-xs capitalize text-muted-foreground">{String(i.status).replace("_", " ")}</div>
                         </div>
                         <div className="text-right">

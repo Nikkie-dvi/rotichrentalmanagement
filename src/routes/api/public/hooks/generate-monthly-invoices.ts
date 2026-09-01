@@ -41,9 +41,12 @@ export const Route = createFileRoute("/api/public/hooks/generate-monthly-invoice
               skipped++;
               continue;
             }
-            const res = await generateMonthlyInvoices(ownerId, month);
-            created += res.created;
-            creditApplied += res.creditApplied;
+            // Rent and services are billed on separate invoices.
+            const rentRes = await generateMonthlyInvoices(ownerId, month, "rent");
+            const svcRes = await generateMonthlyInvoices(ownerId, month, "service");
+            created += rentRes.created + svcRes.created;
+            creditApplied += rentRes.creditApplied + svcRes.creditApplied;
+
 
             const bad = await findIncorrectInvoices(ownerId);
             if (bad.length) {

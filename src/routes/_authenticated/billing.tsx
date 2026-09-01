@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SectionSwitcher, SectionPanel, FINANCE_TABS } from "@/components/section-switcher";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Printer, UserPlus, Coins, Zap, Trash2, MessageSquare } from "lucide-react";
+import { FileText, Printer, UserPlus, Coins, Zap, Trash2, MessageSquare, Droplets } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -87,37 +87,57 @@ function BillingPage() {
       if (!singleTenant) throw new Error("Choose a tenant");
       const rent = Number(singleRent) || 0;
       const util = singleExtras;
-      const total = rent + util;
-      const { data: saved, error } = await supabase.from("invoices").upsert(
-        {
+      if (rent <= 0 && util <= 0) throw new Error("Enter a rent or service amount");
+
+      // Rent and services are billed on separate invoices.
+      const rows: any[] = [];
+      if (rent > 0) {
+        rows.push({
           tenant_id: singleTenant,
           month_year: singleMonth,
+          kind: "rent",
           base_rent: rent,
+          utility_amount: 0,
+          total_due: rent,
+          balance_remaining: rent,
+          status: "unpaid",
+        });
+      }
+      if (util > 0) {
+        rows.push({
+          tenant_id: singleTenant,
+          month_year: singleMonth,
+          kind: "service",
+          base_rent: 0,
           utility_amount: util,
           water_amount: Number(singleWater) || 0,
           electricity_amount: Number(singlePower) || 0,
           garbage_amount: Number(singleGarbage) || 0,
           other_amount: Number(singleOther) || 0,
           other_label: singleOtherLabel.trim() || null,
-          total_due: total,
-          balance_remaining: total,
-          status: total === 0 ? "paid" : "unpaid",
-        },
-        { onConflict: "tenant_id,month_year" },
-      ).select("id").maybeSingle();
-      if (error) throw error;
-
-      if (saved?.id) {
-        // Push the landlord a breakdown of what was just billed.
-        await notifyInvoiceCreated({ data: { invoiceId: saved.id } }).catch(() => {});
+          total_due: util,
+          balance_remaining: util,
+          status: "unpaid",
+        });
       }
 
-      if (singleSms && saved?.id) {
-        await sendInvoiceSms({ data: { invoiceId: saved.id } });
+      const { data: saved, error } = await supabase
+        .from("invoices")
+        .upsert(rows as never, { onConflict: "tenant_id,month_year,kind" })
+        .select("id");
+      if (error) throw error;
+
+      const ids = ((saved ?? []) as any[]).map((r) => r.id).filter(Boolean);
+      // Push the landlord a breakdown of what was just billed.
+      for (const id of ids) await notifyInvoiceCreated({ data: { invoiceId: id } }).catch(() => {});
+
+      if (singleSms && ids.length) {
+        for (const id of ids) await sendInvoiceSms({ data: { invoiceId: id } });
         return { texted: true };
       }
       return { texted: false };
     },
+
     onSuccess: (r: any) => {
       qc.invalidateQueries();
       toast.success(r?.texted ? "Invoice saved and texted to the tenant" : "Invoice saved");
@@ -145,11 +165,11 @@ function BillingPage() {
   // Raises any rent that falls due today (and re-checks credits) without waiting
   // for the overnight job, so it lands in arrears immediately.
   const dueToday = useMutation({
-    mutationFn: async () => (generateMonthFn as any)({ data: { month: thisMonth } }),
+    mutationFn: async () => (generateMonthFn as any)({ data: { month: thisMonth, kind: "rent" } }),
     onSuccess: (r: any) => {
       qc.invalidateQueries();
       setMonth(thisMonth);
-      toast.success(`${r?.created ?? 0} invoice(s) raised for ${thisMonth}`, {
+      toast.success(`${r?.created ?? 0} rent invoice(s) raised for ${thisMonth}`, {
         description: [
           r?.creditApplied ? `${money(r.creditApplied)} of credit applied` : null,
           r?.waiting?.length ? `${r.waiting.length} not due yet` : null,
@@ -159,22 +179,28 @@ function BillingPage() {
     onError: (e: any) => toast.error(e?.message ?? "Could not raise today's invoices"),
   });
 
+  // Rent bills and service bills (water, electricity, etc.) are raised separately.
   const generate = useMutation({
-
-    mutationFn: async () => (generateMonthFn as any)({ data: { month } }),
-    onSuccess: (r: any) => {
+    mutationFn: async (kind: "rent" | "service") => (generateMonthFn as any)({ data: { month, kind } }),
+    onSuccess: (r: any, kind) => {
       qc.invalidateQueries();
       const bits = [
         r?.creditApplied ? `${money(r.creditApplied)} of credit applied` : null,
         r?.waiting?.length ? `${r.waiting.length} not due yet` : null,
         r?.reconciled ? `${r.reconciled} balance(s) corrected` : null,
       ].filter(Boolean);
-      toast.success(`Generated ${r?.created ?? 0} invoice(s) for ${month}`, {
-        description: bits.join(" · ") || undefined,
-      });
+      toast.success(
+        `Generated ${r?.created ?? 0} ${kind === "service" ? "service" : "rent"} invoice(s) for ${month}`,
+        {
+          description:
+            bits.join(" · ") ||
+            (kind === "service" ? "No service charges were recorded for this month." : undefined),
+        },
+      );
     },
     onError: (e: any) => toast.error(e.message),
   });
+
 
   const { data: badInvoices } = useQuery({
     queryKey: ["incorrect-invoices"],
@@ -263,7 +289,7 @@ function BillingPage() {
       <SectionPanel items={FINANCE_TABS}>
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Billing & Monthly Rent Roll</h2>
-        <p className="text-sm text-muted-foreground">Generate invoices combining rent + utilities per month.</p>
+        <p className="text-sm text-muted-foreground">Rent and services (water, electricity, etc.) are billed on separate invoices.</p>
       </div>
 
       <Card>
@@ -273,9 +299,13 @@ function BillingPage() {
             <Label>Billing Month</Label>
             <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
           </div>
-          <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
-            <FileText className="h-4 w-4" />Generate Bills for {month}
+          <Button onClick={() => generate.mutate("rent")} disabled={generate.isPending}>
+            <FileText className="h-4 w-4" />Generate rent invoices for {month}
           </Button>
+          <Button variant="secondary" onClick={() => generate.mutate("service")} disabled={generate.isPending}>
+            <Droplets className="h-4 w-4" />Generate service invoices for {month}
+          </Button>
+
           <Button variant="outline" onClick={() => dueToday.mutate()} disabled={dueToday.isPending}>
             <FileText className="h-4 w-4" />
             {dueToday.isPending ? "Raising invoices…" : "Invoice rent due today"}
@@ -449,7 +479,9 @@ function BillingPage() {
               <TableRow>
                 <TableHead>Tenant</TableHead>
                 <TableHead>Unit</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead className="text-right">Base Rent</TableHead>
+
                 <TableHead className="text-right">Utilities</TableHead>
                 <TableHead className="text-right">Late fees</TableHead>
                 <TableHead className="text-right">Total Due</TableHead>
@@ -463,7 +495,11 @@ function BillingPage() {
                 <TableRow key={i.id}>
                   <TableCell className="font-medium">{i.tenants?.full_name ?? "—"}</TableCell>
                   <TableCell>{i.tenants?.units?.unit_number ?? "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{i.kind === "service" ? "Services" : "Rent"}</Badge>
+                  </TableCell>
                   <TableCell className="text-right">{money(Number(i.base_rent))}</TableCell>
+
                   <TableCell className="text-right">{money(Number(i.utility_amount))}</TableCell>
                   <TableCell className="text-right text-destructive">{Number(i.late_penalty_amount ?? 0) > 0 ? money(Number(i.late_penalty_amount)) : "—"}</TableCell>
                   <TableCell className="text-right font-semibold">{money(Number(i.total_due))}</TableCell>
@@ -504,7 +540,7 @@ function BillingPage() {
                 </TableRow>
               ))}
               {(!invoices || invoices.length === 0) && (
-                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-6">No invoices for this month. Click generate above.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-6">No invoices for this month. Click generate above.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

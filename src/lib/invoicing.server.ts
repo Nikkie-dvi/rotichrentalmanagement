@@ -93,7 +93,7 @@ export async function generateMonthlyInvoices(ownerId: string, month: string, ki
 
   for (const t of tenants) {
     const rent = num(t.units?.rent_amount);
-    if (!t.active || !t.unit_id || rent <= 0) {
+    if (!t.active || !t.unit_id || (kind === "rent" && rent <= 0)) {
       skipped.push(t.full_name ?? "Tenant");
       continue;
     }
@@ -115,14 +115,22 @@ export async function generateMonthlyInvoices(ownerId: string, month: string, ki
       continue;
     }
 
-    const { data: readings } = await supabaseAdmin
-      .from("utility_readings")
-      .select("total_amount")
-      .eq("tenant_id", t.id)
-      .gte("reading_date", start)
-      .lt("reading_date", end);
-    const util = (readings ?? []).reduce((s: number, r: any) => s + num(r.total_amount), 0);
-    const total = rent + util;
+    let util = 0;
+    if (kind === "service") {
+      const { data: readings } = await supabaseAdmin
+        .from("utility_readings")
+        .select("total_amount")
+        .eq("tenant_id", t.id)
+        .gte("reading_date", start)
+        .lt("reading_date", end);
+      util = (readings ?? []).reduce((s: number, r: any) => s + num(r.total_amount), 0);
+    }
+    // Rent bills carry the rent only; service bills carry water/electricity etc. only.
+    const total = kind === "rent" ? rent : util;
+    if (total <= 0) {
+      skipped.push(t.full_name ?? "Tenant");
+      continue;
+    }
 
     // Money already paid ahead, ignoring this month's own invoice.
     const credit = Math.max(
@@ -139,19 +147,21 @@ export async function generateMonthlyInvoices(ownerId: string, month: string, ki
           tenant_id: t.id,
           owner_id: ownerId,
           month_year: month,
-          base_rent: rent,
+          kind,
+          base_rent: kind === "rent" ? rent : 0,
           utility_amount: util,
           total_due: total,
           balance_remaining: balance,
           due_date: due,
           status: balance === 0 ? "paid" : balance < total ? "partial" : "unpaid",
-        },
-        { onConflict: "tenant_id,month_year" },
+        } as never,
+        { onConflict: "tenant_id,month_year,kind" },
       )
       .select("id")
       .maybeSingle();
     if (error) throw new Error(error.message);
     created++;
+
 
     // Tell the landlord exactly what was billed, what upfront money went to it
     // and where the tenant now stands.
