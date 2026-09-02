@@ -30,7 +30,15 @@ import { InvoiceExtrasDialog } from "@/components/invoice-extras-dialog";
 import { runLateFeesNow } from "@/lib/billing.functions";
 import { sendInvoiceSms, sendBulkOverdueNoticesSms } from "@/lib/receipts.functions";
 import { notifyInvoiceCreated } from "@/lib/invoice-notify.functions";
-import { generateMonthFn, listIncorrectInvoicesFn, removeIncorrectInvoicesFn } from "@/lib/invoicing.functions";
+import {
+  generateMonthFn,
+  listIncorrectInvoicesFn,
+  removeIncorrectInvoicesFn,
+  invoiceTenantFn,
+  getAutoInvoicingFn,
+  setAutoInvoicingFn,
+} from "@/lib/invoicing.functions";
+import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/billing")({
