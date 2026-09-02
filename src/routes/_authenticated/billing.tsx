@@ -89,45 +89,22 @@ function BillingPage() {
       const util = singleExtras;
       if (rent <= 0 && util <= 0) throw new Error("Enter a rent or service amount");
 
-      // Rent and services are billed on separate invoices.
-      const rows: any[] = [];
-      if (rent > 0) {
-        rows.push({
-          tenant_id: singleTenant,
-          month_year: singleMonth,
-          kind: "rent",
-          base_rent: rent,
-          utility_amount: 0,
-          total_due: rent,
-          balance_remaining: rent,
-          status: "unpaid",
-        });
-      }
-      if (util > 0) {
-        rows.push({
-          tenant_id: singleTenant,
-          month_year: singleMonth,
-          kind: "service",
-          base_rent: 0,
-          utility_amount: util,
-          water_amount: Number(singleWater) || 0,
-          electricity_amount: Number(singlePower) || 0,
-          garbage_amount: Number(singleGarbage) || 0,
-          other_amount: Number(singleOther) || 0,
-          other_label: singleOtherLabel.trim() || null,
-          total_due: util,
-          balance_remaining: util,
-          status: "unpaid",
-        });
-      }
+      // Saved on the server so a property manager's invoice belongs to the
+      // landlord's account and shows on every landlord page.
+      const res: any = await (invoiceTenantFn as any)({
+        data: {
+          tenantId: singleTenant,
+          month: singleMonth,
+          rent,
+          water: Number(singleWater) || 0,
+          power: Number(singlePower) || 0,
+          garbage: Number(singleGarbage) || 0,
+          other: Number(singleOther) || 0,
+          otherLabel: singleOtherLabel,
+        },
+      });
 
-      const { data: saved, error } = await supabase
-        .from("invoices")
-        .upsert(rows as never, { onConflict: "tenant_id,month_year,kind" })
-        .select("id");
-      if (error) throw error;
-
-      const ids = ((saved ?? []) as any[]).map((r) => r.id).filter(Boolean);
+      const ids: string[] = res?.ids ?? [];
       // Push the landlord a breakdown of what was just billed.
       for (const id of ids) await notifyInvoiceCreated({ data: { invoiceId: id } }).catch(() => {});
 
