@@ -30,7 +30,15 @@ import { InvoiceExtrasDialog } from "@/components/invoice-extras-dialog";
 import { runLateFeesNow } from "@/lib/billing.functions";
 import { sendInvoiceSms, sendBulkOverdueNoticesSms } from "@/lib/receipts.functions";
 import { notifyInvoiceCreated } from "@/lib/invoice-notify.functions";
-import { generateMonthFn, listIncorrectInvoicesFn, removeIncorrectInvoicesFn } from "@/lib/invoicing.functions";
+import {
+  generateMonthFn,
+  listIncorrectInvoicesFn,
+  removeIncorrectInvoicesFn,
+  invoiceTenantFn,
+  getAutoInvoicingFn,
+  setAutoInvoicingFn,
+} from "@/lib/invoicing.functions";
+import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/billing")({
@@ -89,45 +97,22 @@ function BillingPage() {
       const util = singleExtras;
       if (rent <= 0 && util <= 0) throw new Error("Enter a rent or service amount");
 
-      // Rent and services are billed on separate invoices.
-      const rows: any[] = [];
-      if (rent > 0) {
-        rows.push({
-          tenant_id: singleTenant,
-          month_year: singleMonth,
-          kind: "rent",
-          base_rent: rent,
-          utility_amount: 0,
-          total_due: rent,
-          balance_remaining: rent,
-          status: "unpaid",
-        });
-      }
-      if (util > 0) {
-        rows.push({
-          tenant_id: singleTenant,
-          month_year: singleMonth,
-          kind: "service",
-          base_rent: 0,
-          utility_amount: util,
-          water_amount: Number(singleWater) || 0,
-          electricity_amount: Number(singlePower) || 0,
-          garbage_amount: Number(singleGarbage) || 0,
-          other_amount: Number(singleOther) || 0,
-          other_label: singleOtherLabel.trim() || null,
-          total_due: util,
-          balance_remaining: util,
-          status: "unpaid",
-        });
-      }
+      // Saved on the server so a property manager's invoice belongs to the
+      // landlord's account and shows on every landlord page.
+      const res: any = await (invoiceTenantFn as any)({
+        data: {
+          tenantId: singleTenant,
+          month: singleMonth,
+          rent,
+          water: Number(singleWater) || 0,
+          power: Number(singlePower) || 0,
+          garbage: Number(singleGarbage) || 0,
+          other: Number(singleOther) || 0,
+          otherLabel: singleOtherLabel,
+        },
+      });
 
-      const { data: saved, error } = await supabase
-        .from("invoices")
-        .upsert(rows as never, { onConflict: "tenant_id,month_year,kind" })
-        .select("id");
-      if (error) throw error;
-
-      const ids = ((saved ?? []) as any[]).map((r) => r.id).filter(Boolean);
+      const ids: string[] = res?.ids ?? [];
       // Push the landlord a breakdown of what was just billed.
       for (const id of ids) await notifyInvoiceCreated({ data: { invoiceId: id } }).catch(() => {});
 
@@ -179,9 +164,25 @@ function BillingPage() {
     onError: (e: any) => toast.error(e?.message ?? "Could not raise today's invoices"),
   });
 
+  // Automatic invoicing switch (per landlord account, works for managers too).
+  const { data: auto } = useQuery({
+    queryKey: ["auto-invoicing"],
+    queryFn: async () => (getAutoInvoicingFn as any)(),
+  });
+  const autoOn = (auto as any)?.enabled !== false;
+  const setAuto = useMutation({
+    mutationFn: async (enabled: boolean) => (setAutoInvoicingFn as any)({ data: { enabled } }),
+    onSuccess: (_r, enabled) => {
+      qc.invalidateQueries({ queryKey: ["auto-invoicing"] });
+      toast.success(enabled ? "Automatic invoicing is on" : "Automatic invoicing is off");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not save"),
+  });
+
   // Rent bills and service bills (water, electricity, etc.) are raised separately.
+  // Generating by hand is never blocked by the due day — the landlord decides.
   const generate = useMutation({
-    mutationFn: async (kind: "rent" | "service") => (generateMonthFn as any)({ data: { month, kind } }),
+    mutationFn: async (kind: "rent" | "service") => (generateMonthFn as any)({ data: { month, kind, force: true } }),
     onSuccess: (r: any, kind) => {
       qc.invalidateQueries();
       const bits = [
@@ -322,6 +323,25 @@ function BillingPage() {
             {bulkNotices.isPending ? "Texting tenants…" : `Text all unpaid for ${month}`}
           </Button>
 
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="flex items-center justify-between gap-4 p-4">
+          <div>
+            <div className="text-sm font-medium">Automatic invoicing</div>
+            <div className="text-xs text-muted-foreground">
+              {autoOn
+                ? "Each night rent is raised automatically for tenants whose due day (from their joining date) has arrived."
+                : "Off — nothing is raised automatically. Invoice by hand using the buttons above."}
+            </div>
+          </div>
+          <Switch
+            checked={autoOn}
+            disabled={setAuto.isPending}
+            onCheckedChange={(v) => setAuto.mutate(v === true)}
+            aria-label="Automatic invoicing"
+          />
         </CardContent>
       </Card>
 

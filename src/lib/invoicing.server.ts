@@ -65,7 +65,12 @@ export type InvoiceKind = "rent" | "service";
  * `kind` decides whether the bill carries the base rent or only the services
  * (utility readings) for that month — the two never share an invoice.
  */
-export async function generateMonthlyInvoices(ownerId: string, month: string, kind: InvoiceKind = "rent") {
+export async function generateMonthlyInvoices(
+  ownerId: string,
+  month: string,
+  kind: InvoiceKind = "rent",
+  opts: { force?: boolean } = {},
+) {
   const { tenants, invoices, payments, events } = await loadOwnerData(ownerId);
   const today = todayIso();
 
@@ -110,7 +115,8 @@ export async function generateMonthlyInvoices(ownerId: string, month: string, ki
       continue;
     }
     // The due day has not arrived yet — the daily job will raise it on the day.
-    if (due > today) {
+    // A landlord invoicing by hand (force) is never blocked by this.
+    if (!opts.force && due > today) {
       waiting.push({ tenantName: t.full_name ?? "Tenant", dueDate: due });
       continue;
     }
