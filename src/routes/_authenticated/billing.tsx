@@ -164,9 +164,25 @@ function BillingPage() {
     onError: (e: any) => toast.error(e?.message ?? "Could not raise today's invoices"),
   });
 
+  // Automatic invoicing switch (per landlord account, works for managers too).
+  const { data: auto } = useQuery({
+    queryKey: ["auto-invoicing"],
+    queryFn: async () => (getAutoInvoicingFn as any)(),
+  });
+  const autoOn = (auto as any)?.enabled !== false;
+  const setAuto = useMutation({
+    mutationFn: async (enabled: boolean) => (setAutoInvoicingFn as any)({ data: { enabled } }),
+    onSuccess: (_r, enabled) => {
+      qc.invalidateQueries({ queryKey: ["auto-invoicing"] });
+      toast.success(enabled ? "Automatic invoicing is on" : "Automatic invoicing is off");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not save"),
+  });
+
   // Rent bills and service bills (water, electricity, etc.) are raised separately.
+  // Generating by hand is never blocked by the due day — the landlord decides.
   const generate = useMutation({
-    mutationFn: async (kind: "rent" | "service") => (generateMonthFn as any)({ data: { month, kind } }),
+    mutationFn: async (kind: "rent" | "service") => (generateMonthFn as any)({ data: { month, kind, force: true } }),
     onSuccess: (r: any, kind) => {
       qc.invalidateQueries();
       const bits = [
