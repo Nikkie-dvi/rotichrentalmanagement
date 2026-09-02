@@ -65,7 +65,12 @@ export type InvoiceKind = "rent" | "service";
  * `kind` decides whether the bill carries the base rent or only the services
  * (utility readings) for that month — the two never share an invoice.
  */
-export async function generateMonthlyInvoices(ownerId: string, month: string, kind: InvoiceKind = "rent") {
+export async function generateMonthlyInvoices(
+  ownerId: string,
+  month: string,
+  kind: InvoiceKind = "rent",
+  opts: { force?: boolean } = {},
+) {
   const { tenants, invoices, payments, events } = await loadOwnerData(ownerId);
   const today = todayIso();
 
