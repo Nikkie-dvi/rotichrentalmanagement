@@ -326,6 +326,25 @@ function BillingPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardContent className="flex items-center justify-between gap-4 p-4">
+          <div>
+            <div className="text-sm font-medium">Automatic invoicing</div>
+            <div className="text-xs text-muted-foreground">
+              {autoOn
+                ? "Each night rent is raised automatically for tenants whose due day (from their joining date) has arrived."
+                : "Off — nothing is raised automatically. Invoice by hand using the buttons above."}
+            </div>
+          </div>
+          <Switch
+            checked={autoOn}
+            disabled={setAuto.isPending}
+            onCheckedChange={(v) => setAuto.mutate(v === true)}
+            aria-label="Automatic invoicing"
+          />
+        </CardContent>
+      </Card>
+
       {(() => {
         const due = (invoices ?? []).filter(
           (i: any) =>
