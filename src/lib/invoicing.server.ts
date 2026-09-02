@@ -115,7 +115,8 @@ export async function generateMonthlyInvoices(
       continue;
     }
     // The due day has not arrived yet — the daily job will raise it on the day.
-    if (due > today) {
+    // A landlord invoicing by hand (force) is never blocked by this.
+    if (!opts.force && due > today) {
       waiting.push({ tenantName: t.full_name ?? "Tenant", dueDate: due });
       continue;
     }
