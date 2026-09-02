@@ -19,16 +19,126 @@ async function ownerFor(context: any) {
  */
 export const generateMonthFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { month: string; kind?: "rent" | "service" }) => ({
+  .inputValidator((data: { month: string; kind?: "rent" | "service"; force?: boolean }) => ({
     month: String(data.month).slice(0, 7),
     kind: data?.kind === "service" ? ("service" as const) : ("rent" as const),
+    force: data?.force === true,
   }))
   .handler(async ({ data, context }) => {
     const ownerId = await ownerFor(context);
     const { generateMonthlyInvoices, reconcileInvoiceBalances } = await import("@/lib/invoicing.server");
-    const res = await generateMonthlyInvoices(ownerId, data.month, data.kind);
+    const res = await generateMonthlyInvoices(ownerId, data.month, data.kind, { force: data.force });
     const rec = await reconcileInvoiceBalances(ownerId);
     return { ...res, kind: data.kind, reconciled: rec.fixed };
+  });
+
+/**
+ * Raises one tenant's invoice under the landlord's account, so a property
+ * manager's invoice shows up on the landlord's pages too.
+ */
+export const invoiceTenantFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      tenantId: string;
+      month: string;
+      rent?: number;
+      water?: number;
+      power?: number;
+      garbage?: number;
+      other?: number;
+      otherLabel?: string | null;
+    }) => ({
+      tenantId: String(data.tenantId),
+      month: String(data.month).slice(0, 7),
+      rent: Math.max(0, Number(data.rent) || 0),
+      water: Math.max(0, Number(data.water) || 0),
+      power: Math.max(0, Number(data.power) || 0),
+      garbage: Math.max(0, Number(data.garbage) || 0),
+      other: Math.max(0, Number(data.other) || 0),
+      otherLabel: data.otherLabel?.trim() || null,
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const ownerId = await ownerFor(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: tenant } = await supabaseAdmin
+      .from("tenants")
+      .select("id, owner_id")
+      .eq("id", data.tenantId)
+      .maybeSingle();
+    if (!tenant || (tenant as any).owner_id !== ownerId) throw new Error("Tenant not found on this account");
+
+    const util = data.water + data.power + data.garbage + data.other;
+    if (data.rent <= 0 && util <= 0) throw new Error("Enter a rent or service amount");
+
+    const rows: any[] = [];
+    if (data.rent > 0) {
+      rows.push({
+        tenant_id: data.tenantId,
+        owner_id: ownerId,
+        month_year: data.month,
+        kind: "rent",
+        base_rent: data.rent,
+        utility_amount: 0,
+        total_due: data.rent,
+        balance_remaining: data.rent,
+        status: "unpaid",
+      });
+    }
+    if (util > 0) {
+      rows.push({
+        tenant_id: data.tenantId,
+        owner_id: ownerId,
+        month_year: data.month,
+        kind: "service",
+        base_rent: 0,
+        utility_amount: util,
+        water_amount: data.water,
+        electricity_amount: data.power,
+        garbage_amount: data.garbage,
+        other_amount: data.other,
+        other_label: data.otherLabel,
+        total_due: util,
+        balance_remaining: util,
+        status: "unpaid",
+      });
+    }
+
+    const { data: saved, error } = await supabaseAdmin
+      .from("invoices")
+      .upsert(rows as never, { onConflict: "tenant_id,month_year,kind" })
+      .select("id");
+    if (error) throw new Error(error.message);
+    return { ids: ((saved ?? []) as any[]).map((r) => r.id).filter(Boolean) as string[] };
+  });
+
+/** Reads the landlord's automatic-invoicing switch (works for managers too). */
+export const getAutoInvoicingFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const ownerId = await ownerFor(context);
+    const { data } = await context.supabase
+      .from("billing_settings")
+      .select("auto_reconcile_enabled")
+      .eq("owner_id", ownerId)
+      .maybeSingle();
+    return { enabled: (data as any)?.auto_reconcile_enabled !== false };
+  });
+
+/** Turns automatic (due-date based) invoicing on or off. */
+export const setAutoInvoicingFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { enabled: boolean }) => ({ enabled: data.enabled === true }))
+  .handler(async ({ data, context }) => {
+    const ownerId = await ownerFor(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("billing_settings")
+      .upsert({ owner_id: ownerId, auto_reconcile_enabled: data.enabled } as never, { onConflict: "owner_id" });
+    if (error) throw new Error(error.message);
+    return { enabled: data.enabled };
   });
 
 
