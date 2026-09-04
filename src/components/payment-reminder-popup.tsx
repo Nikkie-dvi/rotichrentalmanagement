@@ -122,15 +122,24 @@ export function PaymentReminderPopup() {
       const todayDay = today.getDate();
       const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-      // Get unpaid invoices for this month to detect overdue
-      const monthYear = today.toISOString().slice(0, 7);
-      const { data: invoices } = await supabase
-        .from("invoices")
-        .select("tenant_id, balance_remaining, status, month_year")
-        .eq("month_year", monthYear)
-        .neq("status", "paid");
-      const unpaidByTenant = new Map<string, number>();
-      (invoices ?? []).forEach((i: any) => unpaidByTenant.set(i.tenant_id, Number(i.balance_remaining) || 0));
+      // Real money position per tenant: everything still outstanding across all
+      // invoices, and any money paid ahead. A tenant who has part-paid must show
+      // the remaining balance, never the full base rent.
+      const [{ data: invoices }, { data: payments }, { data: events }] = await Promise.all([
+        supabase.from("invoices").select("tenant_id, total_due, balance_remaining"),
+        supabase.from("payments").select("tenant_id, amount_paid"),
+        supabase.from("tenant_credit_events").select("tenant_id, delta"),
+      ]);
+      const n = (v: any) => Number(v ?? 0) || 0;
+      const outstandingByTenant = new Map<string, number>();
+      const invoicedByTenant = new Map<string, number>();
+      (invoices ?? []).forEach((i: any) => {
+        outstandingByTenant.set(i.tenant_id, (outstandingByTenant.get(i.tenant_id) ?? 0) + n(i.balance_remaining));
+        invoicedByTenant.set(i.tenant_id, (invoicedByTenant.get(i.tenant_id) ?? 0) + n(i.total_due));
+      });
+      const paidByTenant = new Map<string, number>();
+      (payments ?? []).forEach((p: any) => paidByTenant.set(p.tenant_id, (paidByTenant.get(p.tenant_id) ?? 0) + n(p.amount_paid)));
+      (events ?? []).forEach((e: any) => paidByTenant.set(e.tenant_id, (paidByTenant.get(e.tenant_id) ?? 0) + n(e.delta)));
 
       const collected: ReminderItem[] = [];
       for (const t of tenants as any[]) {
@@ -145,16 +154,19 @@ export function PaymentReminderPopup() {
           diff >= 0 ? diff : lastDay - todayDay + Math.min(dueRaw, nextMonthLastDay);
         const nextDueDay = diff >= 0 ? effectiveDue : Math.min(dueRaw, nextMonthLastDay);
         const rentAmount = Number(t.units?.rent_amount ?? 0);
-        const unpaidBalance = unpaidByTenant.get(t.id);
+        const outstanding = Math.round(outstandingByTenant.get(t.id) ?? 0);
+        // Money paid ahead of everything billed so far.
+        const credit = Math.max(0, (paidByTenant.get(t.id) ?? 0) - (invoicedByTenant.get(t.id) ?? 0));
 
         let kind: ReminderItem["kind"] | null = null;
-        let amount = rentAmount;
+        // Upcoming rent is only what will still be owed after prepaid credit.
+        let amount = Math.max(0, Math.round(rentAmount - credit));
         let daysDiff = daysUntilNext;
         let dueDay = nextDueDay;
 
-        if (unpaidBalance && unpaidBalance > 0 && diff <= 0) {
+        if (outstanding > 0 && diff <= 0) {
           kind = "overdue";
-          amount = unpaidBalance;
+          amount = outstanding;
           daysDiff = diff;
           dueDay = effectiveDue;
         } else if (daysUntilNext === 0) {
@@ -163,7 +175,9 @@ export function PaymentReminderPopup() {
           kind = "upcoming";
         }
 
-        if (!kind) continue;
+        // Nothing to chase: already settled or fully covered by credit.
+        if (!kind || amount <= 0) continue;
+
 
 
         const item: ReminderItem = {
