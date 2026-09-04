@@ -106,6 +106,33 @@ export const invoiceTenantFn = createServerFn({ method: "POST" })
       });
     }
 
+    // Money the tenant has already paid ahead (payments + credit edits, less
+    // everything else already billed) must reduce what this new invoice asks
+    // for — otherwise a tenant who paid upfront is shown as owing again.
+    const [{ data: pays }, { data: evts }, { data: others }] = await Promise.all([
+      supabaseAdmin.from("payments").select("amount_paid").eq("tenant_id", data.tenantId),
+      supabaseAdmin.from("tenant_credit_events").select("delta").eq("tenant_id", data.tenantId),
+      supabaseAdmin.from("invoices").select("total_due, month_year, kind").eq("tenant_id", data.tenantId),
+    ]);
+    const n = (v: any) => Number(v ?? 0) || 0;
+    const kinds = new Set(rows.map((r) => r.kind));
+    const billedElsewhere = ((others ?? []) as any[])
+      .filter((i) => !(i.month_year === data.month && kinds.has(i.kind ?? "rent")))
+      .reduce((s, i) => s + n(i.total_due), 0);
+    let credit = Math.max(
+      0,
+      ((pays ?? []) as any[]).reduce((s, p) => s + n(p.amount_paid), 0) +
+        ((evts ?? []) as any[]).reduce((s, e) => s + n(e.delta), 0) -
+        billedElsewhere,
+    );
+    for (const r of rows) {
+      const applied = Math.min(credit, r.total_due);
+      credit -= applied;
+      const balance = Math.max(0, r.total_due - applied);
+      r.balance_remaining = balance;
+      r.status = balance === 0 ? "paid" : balance < r.total_due ? "partial" : "unpaid";
+    }
+
     const { data: saved, error } = await supabaseAdmin
       .from("invoices")
       .upsert(rows as never, { onConflict: "tenant_id,month_year,kind" })
@@ -113,6 +140,7 @@ export const invoiceTenantFn = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ids: ((saved ?? []) as any[]).map((r) => r.id).filter(Boolean) as string[] };
   });
+
 
 /** Reads the landlord's automatic-invoicing switch (works for managers too). */
 export const getAutoInvoicingFn = createServerFn({ method: "POST" })
