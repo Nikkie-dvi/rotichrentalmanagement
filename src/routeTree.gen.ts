@@ -30,6 +30,7 @@ import { Route as AuthenticatedMetersRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
 import { Route as AuthenticatedLeasesRouteImport } from './routes/_authenticated/leases'
 import { Route as AuthenticatedLandlordsRouteImport } from './routes/_authenticated/landlords'
+import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated/applications'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -155,6 +156,11 @@ const AuthenticatedLeasesRoute = AuthenticatedLeasesRouteImport.update({
 const AuthenticatedLandlordsRoute = AuthenticatedLandlordsRouteImport.update({
   id: '/landlords',
   path: '/landlords',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
@@ -290,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/billing': typeof AuthenticatedBillingRoute
+  '/calendar': typeof AuthenticatedCalendarRoute
   '/landlords': typeof AuthenticatedLandlordsRoute
   '/leases': typeof AuthenticatedLeasesRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
@@ -332,6 +339,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/billing': typeof AuthenticatedBillingRoute
+  '/calendar': typeof AuthenticatedCalendarRoute
   '/landlords': typeof AuthenticatedLandlordsRoute
   '/leases': typeof AuthenticatedLeasesRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
@@ -376,6 +384,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/applications': typeof AuthenticatedApplicationsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
+  '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/landlords': typeof AuthenticatedLandlordsRoute
   '/_authenticated/leases': typeof AuthenticatedLeasesRoute
   '/_authenticated/maintenance': typeof AuthenticatedMaintenanceRoute
@@ -421,6 +430,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/applications'
     | '/billing'
+    | '/calendar'
     | '/landlords'
     | '/leases'
     | '/maintenance'
@@ -463,6 +473,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/applications'
     | '/billing'
+    | '/calendar'
     | '/landlords'
     | '/leases'
     | '/maintenance'
@@ -506,6 +517,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/applications'
     | '/_authenticated/billing'
+    | '/_authenticated/calendar'
     | '/_authenticated/landlords'
     | '/_authenticated/leases'
     | '/_authenticated/maintenance'
@@ -714,6 +726,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLandlordsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/calendar': {
+      id: '/_authenticated/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AuthenticatedCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/billing': {
       id: '/_authenticated/billing'
       path: '/billing'
@@ -868,6 +887,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedApplicationsRoute: typeof AuthenticatedApplicationsRoute
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
+  AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedLandlordsRoute: typeof AuthenticatedLandlordsRoute
   AuthenticatedLeasesRoute: typeof AuthenticatedLeasesRoute
   AuthenticatedMaintenanceRoute: typeof AuthenticatedMaintenanceRoute
@@ -890,6 +910,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedApplicationsRoute: AuthenticatedApplicationsRoute,
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
+  AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedLandlordsRoute: AuthenticatedLandlordsRoute,
   AuthenticatedLeasesRoute: AuthenticatedLeasesRoute,
   AuthenticatedMaintenanceRoute: AuthenticatedMaintenanceRoute,
