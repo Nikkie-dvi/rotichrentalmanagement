@@ -55,7 +55,7 @@ function ReportsPage() {
     placeholderData: (prev) => prev,
     queryFn: async () => {
       const invoiceCols =
-        "id,month_year,base_rent,utility_amount,water_amount,electricity_amount,garbage_amount,other_amount,other_label,late_penalty_amount,total_due,balance_remaining,status,due_date,created_at,tenants(full_name,phone_number,units(unit_number,properties(name)))";
+        "id,month_year,kind,base_rent,utility_amount,water_amount,electricity_amount,garbage_amount,other_amount,other_label,late_penalty_amount,total_due,balance_remaining,status,due_date,created_at,tenants(full_name,phone_number,units(unit_number,properties(name)))";
       const [pay, inv, arrearsRes, tickets] = await Promise.all([
         supabase
           .from("payments")
@@ -233,7 +233,7 @@ function ReportsPage() {
     const pays = (d?.payments ?? []).filter((p: any) => groupOf(p).key === g.key);
     const dues = (d?.arrears ?? []).filter((i: any) => groupOf(i).key === g.key);
 
-    const lines: { date: string; description: string; charge?: number; paid?: number }[] = [];
+    const lines: StatementSection["lines"] = [];
     let utilities = 0;
     let rentBilled = 0;
 
@@ -268,15 +268,16 @@ function ReportsPage() {
           : ([["Late payment fee", n(i.late_penalty_amount)]] as [string, number][])),
       ];
       const when = i.due_date ?? String(i.created_at ?? "").slice(0, 10);
+      const category = i.kind === "service" ? "Services" : "Rent";
       let sum = 0;
       for (const [name, amt] of parts) {
         if (amt > 0) {
-          lines.push({ date: when, description: `${name} (${i.month_year})`, charge: amt });
+          lines.push({ date: when, category, description: `${name} (${i.month_year})`, charge: amt });
           sum += amt;
         }
       }
       const diff = n(i.total_due) - sum;
-      if (Math.abs(diff) > 0.5) lines.push({ date: when, description: `Adjustment (${i.month_year})`, charge: diff });
+      if (Math.abs(diff) > 0.5) lines.push({ date: when, category, description: `Adjustment (${i.month_year})`, charge: diff });
     }
 
     // Unpaid balances carried in from earlier months, so the statement explains the full arrears.

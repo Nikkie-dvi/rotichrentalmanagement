@@ -2,7 +2,13 @@
 // Browser print dialog → "Save as PDF" gives a proper document, not a spreadsheet export.
 import { toast } from "sonner";
 
-export type StatementLine = { date: string; description: string; charge?: number; paid?: number };
+export type StatementLine = {
+  date: string;
+  category?: "Rent" | "Services";
+  description: string;
+  charge?: number;
+  paid?: number;
+};
 
 export type StatementSection = {
   /** e.g. "Unit A1 — John Doe" */
@@ -54,26 +60,26 @@ export function buildStatementHtml(args: {
         <h2>${esc(s.heading)}</h2>
         ${s.subheading ? `<p class="sub">${esc(s.subheading)}</p>` : ""}
         <table>
-          <thead><tr><th>Date</th><th>Description</th><th class="r">Charge</th><th class="r">Paid</th></tr></thead>
+          <thead><tr><th>Date</th><th>Type</th><th>Description</th><th class="r">Charge</th><th class="r">Paid</th></tr></thead>
           <tbody>
             ${
               s.lines.length
                 ? s.lines
                     .map(
                       (l) =>
-                        `<tr><td>${esc(l.date)}</td><td>${esc(l.description)}</td><td class="r">${
+                        `<tr><td>${esc(l.date)}</td><td>${l.category ? `<span class="type">${esc(l.category)}</span>` : "—"}</td><td>${esc(l.description)}</td><td class="r">${
                           l.charge ? ksh(l.charge) : "—"
                         }</td><td class="r">${l.paid ? ksh(l.paid) : "—"}</td></tr>`,
                     )
                     .join("")
-                : `<tr><td colspan="4" class="c muted">No activity in this period.</td></tr>`
+                : `<tr><td colspan="5" class="c muted">No activity in this period.</td></tr>`
             }
           </tbody>
           <tfoot>
-            <tr><th colspan="2">Totals</th><th class="r">${ksh(s.billed)}</th><th class="r">${ksh(s.collected)}</th></tr>
-            <tr><td colspan="2" class="muted">of which rent</td><td class="r muted">${ksh(s.rentBilled ?? 0)}</td><td class="r muted">—</td></tr>
-            <tr><td colspan="2" class="muted">of which utilities</td><td class="r muted">${ksh(s.utilities)}</td><td class="r muted">${ksh(Math.max(0, s.utilities - (s.utilitiesDue ?? 0)))}</td></tr>
-            <tr><td colspan="2" class="muted">utilities still owed</td><td class="r muted">${ksh(s.utilitiesDue ?? 0)}</td><td class="r muted">—</td></tr>
+            <tr><th colspan="3">Totals</th><th class="r">${ksh(s.billed)}</th><th class="r">${ksh(s.collected)}</th></tr>
+            <tr><td colspan="3" class="muted">of which rent</td><td class="r muted">${ksh(s.rentBilled ?? 0)}</td><td class="r muted">—</td></tr>
+            <tr><td colspan="3" class="muted">of which utilities</td><td class="r muted">${ksh(s.utilities)}</td><td class="r muted">${ksh(Math.max(0, s.utilities - (s.utilitiesDue ?? 0)))}</td></tr>
+            <tr><td colspan="3" class="muted">utilities still owed</td><td class="r muted">${ksh(s.utilitiesDue ?? 0)}</td><td class="r muted">—</td></tr>
           </tfoot>
 
         </table>
@@ -97,6 +103,7 @@ export function buildStatementHtml(args: {
     table{width:100%;border-collapse:collapse;margin-top:6px}
     th,td{border-bottom:1px solid #e5e7eb;padding:5px 6px;text-align:left;font-size:11px}
     thead th{background:#f1f5f9}
+    .type{display:inline-block;border:1px solid #cbd5e1;border-radius:999px;padding:1px 6px;font-size:9px;font-weight:700;white-space:nowrap}
     .r{text-align:right}.c{text-align:center}.muted{color:#777}
     .bal{margin:8px 0 0;font-weight:700}
     .bal.due{color:#b91c1c}.bal.clear{color:#047857}
