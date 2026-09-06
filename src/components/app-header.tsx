@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Moon, Sun, Bell, BellOff, BellRing, LogOut, ClipboardCheck, Wrench, UserCog } from "lucide-react";
+import { Moon, Sun, Bell, BellOff, BellRing, LogOut, ClipboardCheck, Wrench, UserCog, Building2, Users, Receipt, LayoutDashboard } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -17,6 +17,30 @@ import {
   requestNotificationPermission,
 } from "@/lib/notifications";
 import { toast } from "sonner";
+import { QuickStartGuide } from "@/components/quick-start-guide";
+
+const LANDLORD_GUIDE = [
+  {
+    icon: LayoutDashboard,
+    title: "Welcome to your dashboard",
+    description: "This first page shows your units, occupancy, money collected and rent still owed. Tap any total to see the records behind it.",
+  },
+  {
+    icon: Building2,
+    title: "Add your property first",
+    description: "Open the menu and choose Properties & Units. Add a property, then create its units and set the monthly rent for each one.",
+  },
+  {
+    icon: Users,
+    title: "Add or approve tenants",
+    description: "Choose Tenants & Applications to add a tenant yourself, or approve tenants who register using your landlord code.",
+  },
+  {
+    icon: Receipt,
+    title: "Invoice and record payments",
+    description: "Use Billing, Payments & Reports to create rent or service invoices, record payments, send receipts and download statements.",
+  },
+];
 
 export function AppHeader() {
   const { theme, toggle } = useTheme();
@@ -93,6 +117,7 @@ export function AppHeader() {
         </Badge>
       )}
       <div className="ml-auto flex items-center gap-2 overflow-x-auto">
+        {!isManager && <QuickStartGuide audience="landlord" steps={LANDLORD_GUIDE} compact />}
         {counts.applications > 0 && (
           <Link to="/applications">
             <Badge className="bg-destructive text-destructive-foreground">

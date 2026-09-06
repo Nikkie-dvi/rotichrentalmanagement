@@ -6,7 +6,7 @@ import { InvoiceCharges } from "@/components/invoice-charges";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle, RefreshCw, FileSignature } from "lucide-react";
+import { Loader2, LogOut, Building2, CalendarClock, Wallet, AlertCircle, RefreshCw, FileSignature, Receipt, Wrench, CreditCard } from "lucide-react";
 import { TicketModal } from "@/components/tenant/ticket-modal";
 import { MoveOutCard } from "@/components/tenant/move-out-card";
 import { TenantBackBar } from "@/components/tenant/back-bar";
@@ -20,6 +20,30 @@ import { toast } from "sonner";
 import { accruedRent, buildLedger } from "@/lib/ledger";
 import { AnimatePresence, motion } from "framer-motion";
 import { TenantModeSwitcher, type ModeKey } from "@/components/tenant/mode-switcher";
+import { QuickStartGuide } from "@/components/quick-start-guide";
+
+const TENANT_GUIDE = [
+  {
+    icon: Wallet,
+    title: "Welcome to your tenant portal",
+    description: "My Details shows your next rent date, current balance, Rent and Services invoices, recent payments and lease agreement.",
+  },
+  {
+    icon: CreditCard,
+    title: "See how to pay",
+    description: "Tap How to Pay at the bottom to view your landlord's payment instructions and switch rent reminders on or off.",
+  },
+  {
+    icon: Wrench,
+    title: "Report a problem",
+    description: "Tap Report Problem to send a maintenance request, add a photo and follow the landlord's response and repair status.",
+  },
+  {
+    icon: Receipt,
+    title: "Keep track of your records",
+    description: "Check each invoice's Rent or Services label, what was charged, what you paid and any balance carried forward.",
+  },
+];
 
 
 export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
@@ -321,9 +345,12 @@ function DashboardPage() {
             <Badge variant="outline" className={leaseClass}>{leaseStatus}</Badge>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={signOut} className="glass-btn glow-red">
-          <LogOut className="mr-1 h-4 w-4" /> Sign out
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          <QuickStartGuide audience="tenant" steps={TENANT_GUIDE} compact />
+          <Button variant="outline" size="sm" onClick={signOut} className="glass-btn glow-red">
+            <LogOut className="mr-1 h-4 w-4" /> Sign out
+          </Button>
+        </div>
       </div>
 
       <AnimatePresence mode="wait" initial={false}>
