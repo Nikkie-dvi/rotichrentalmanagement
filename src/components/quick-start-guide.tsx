@@ -1,5 +1,5 @@
-import { useEffect, useState, type LucideIcon } from "react";
-import { ArrowLeft, ArrowRight, Check, HelpCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, ArrowRight, Check, HelpCircle, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,14 +32,26 @@ export function QuickStartGuide({
 
   useEffect(() => {
     let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     supabase.auth.getUser().then(({ data }) => {
       if (!active || !data.user) return;
       const key = `quick-start:${audience}:v1:${data.user.id}`;
       setStorageKey(key);
-      if (localStorage.getItem(key) !== "done") setOpen(true);
+      if (localStorage.getItem(key) === "done") return;
+      const showWhenClear = () => {
+        if (!active) return;
+        const anotherNotice = document.querySelector('[role="dialog"][data-state="open"]');
+        if (anotherNotice) {
+          timer = setTimeout(showWhenClear, 750);
+          return;
+        }
+        setOpen(true);
+      };
+      timer = setTimeout(showWhenClear, 1500);
     });
     return () => {
       active = false;
+      if (timer) clearTimeout(timer);
     };
   }, [audience]);
 
