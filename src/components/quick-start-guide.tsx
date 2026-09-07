@@ -47,7 +47,7 @@ export function QuickStartGuide({
         }
         setOpen(true);
       };
-      timer = setTimeout(showWhenClear, 350);
+      timer = setTimeout(showWhenClear, 1500);
     });
     return () => {
       active = false;
