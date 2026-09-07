@@ -1,5 +1,5 @@
-import { useEffect, useState, type LucideIcon } from "react";
-import { ArrowLeft, ArrowRight, Check, HelpCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, ArrowRight, Check, HelpCircle, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
