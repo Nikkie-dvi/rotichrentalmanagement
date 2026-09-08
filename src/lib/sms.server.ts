@@ -42,7 +42,28 @@ export function toKenyanMsisdn(raw: string | null | undefined): string | null {
   return digits;
 }
 
-export async function sendSms(to: string, message: string): Promise<SmsResult> {
+/** Public tenant portal sign-in page appended to tenant messages. */
+export const PORTAL_LINK = "homebasemanager.app/tenant/login";
+
+const segments = (text: string) => (text.length <= 160 ? 1 : Math.ceil(text.length / 153));
+
+/**
+ * Appends a portal link when it does not push the text into an extra
+ * (billable) SMS segment, and when a link isn't already present.
+ */
+export function withPortalLink(message: string): string {
+  if (!message) return message;
+  if (message.includes(PORTAL_LINK) || /https?:\/\//i.test(message)) return message;
+  const candidate = `${message} Open your portal: ${PORTAL_LINK}`;
+  return segments(candidate) > segments(message) ? message : candidate;
+}
+
+export async function sendSms(
+  to: string,
+  message: string,
+  options: { portalLink?: boolean } = {},
+): Promise<SmsResult> {
+
   const key = process.env["SMSLEOPARD_API_KEY"];
   const secret = process.env["SMSLEOPARD_API_SECRET"];
   // Falling back to a sender ID the account does not own makes the provider
@@ -52,7 +73,9 @@ export async function sendSms(to: string, message: string): Promise<SmsResult> {
 
   const destination = toKenyanMsisdn(to);
   if (!destination) return { ok: false, status: "failed", error: "Tenant has no phone number" };
-  const safeMessage = toSmsLeopardText(message);
+  const body = options.portalLink === false ? message : withPortalLink(message);
+  const safeMessage = toSmsLeopardText(body);
+
   if (!safeMessage) return { ok: false, status: "failed", error: "SMS message has no supported characters" };
 
   try {
