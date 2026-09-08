@@ -73,7 +73,9 @@ export async function sendSms(
 
   const destination = toKenyanMsisdn(to);
   if (!destination) return { ok: false, status: "failed", error: "Tenant has no phone number" };
-  const safeMessage = toSmsLeopardText(message);
+  const body = options.portalLink === false ? message : withPortalLink(message);
+  const safeMessage = toSmsLeopardText(body);
+
   if (!safeMessage) return { ok: false, status: "failed", error: "SMS message has no supported characters" };
 
   try {
