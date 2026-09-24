@@ -4,7 +4,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendSms, PORTAL_LINK } from "@/lib/sms.server";
 import { pushToUsers } from "@/lib/push.server";
 
-const first = (n?: string | null, f = "there") => (n ?? f).trim().split(" ")[0] || f;
+const first = (n?: string | null, f = "there") => {
+  const w = (n ?? "").trim().split(" ")[0];
+  return w && !w.includes("@") ? w : f;
+};
 const WINDOW_MS = 3 * 24 * 60 * 60 * 1000; // only greet people added in the last 3 days
 
 async function alreadyLogged(subject: string, key: { tenant_id?: string; owner_id?: string }) {
