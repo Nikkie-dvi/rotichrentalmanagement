@@ -11,6 +11,7 @@ import {
   ReceiptText,
   Settings2,
   ShieldCheck,
+  UserRound,
   UserCog,
   Users,
   WalletCards,
@@ -129,6 +130,13 @@ const sections: NavSection[] = [
     id: "configuration",
     label: "Configuration",
     items: [
+      {
+        title: "My Account",
+        description: "Code, subscription & profile",
+        url: "/settings/account",
+        icon: UserRound,
+        landlordOnly: true,
+      },
       {
         title: "Team & Managers",
         description: "Access control & permissions",

@@ -8,6 +8,9 @@
 - [x] Property performance section (per building)
 - [x] Messaging shortcuts made direct from the dashboard
 - [x] Sidebar navigation grouped into collapsible SaaS sections
+- [x] Dashboard simplified to one portfolio performance chart
+- [x] Detailed building performance moved to Properties & Units
+- [x] Landlord code and subscription moved to My Account
 
 ## Open
 - [ ] Signed-in check of the new dashboard sections (blocked: no test account available to sign in with)

@@ -21,49 +21,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
-import { accruedRent, buildLedger } from "@/lib/ledger";
-import { useLandlordAccount } from "@/hooks/use-landlord-account";
+import { loadTenantLedgers } from "@/lib/dashboard-ledgers";
 import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
 import { DashboardFocus } from "@/components/dashboard-focus";
-import { PropertyPerformance } from "@/components/property-performance";
+import { SimplePropertyPerformance } from "@/components/property-performance";
 import { sendLateFeeNoticeSms, sendPaymentReceiptSms } from "@/lib/receipts.functions";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 
 
 type DrillKey = "units" | "occupancy" | "collected" | "arrears" | null;
-
-/** Shows the landlord's unique 4-digit code that tenants use to find their units. */
-function LandlordCodeCard() {
-  const { data: account } = useLandlordAccount();
-  if (!account?.landlord_code) return null;
-  return (
-    <Card className="glass-card glow-primary">
-      <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
-        <div className="min-w-0">
-          <p className="text-sm font-medium">Your landlord code</p>
-          <p className="text-xs text-muted-foreground">
-            Share this with tenants — they enter it when registering to see only your vacant units.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="rounded-lg border bg-background/60 px-4 py-2 text-2xl font-bold tracking-[0.35em]">
-            {account.landlord_code}
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              navigator.clipboard?.writeText(account.landlord_code ?? "");
-              toast.success("Code copied");
-            }}
-          >
-            Copy
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -86,50 +52,6 @@ export const Route = createFileRoute("/_authenticated/")({
 // Tenants page and the tenant portal disagree with each other.
 
 
-
-/**
- * Rebuilds every active tenant's balance with the shared ledger, so the
- * dashboard arrears total is exactly what the Tenants page and the tenant
- * portal show (including rent that fell due but was never invoiced).
- */
-async function loadTenantLedgers() {
-  const [{ data: tenants }, { data: invoices }, { data: payments }, { data: events }] = await Promise.all([
-    supabase
-      .from("tenants")
-      .select("id,full_name,active,move_in_date,rent_due_day,units(unit_number,rent_amount,properties(name,location))"),
-    supabase.from("invoices").select("id,tenant_id,total_due,balance_remaining,month_year"),
-    supabase.from("payments").select("tenant_id,amount_paid"),
-    supabase.from("tenant_credit_events").select("tenant_id,delta"),
-  ]);
-
-  const sum = (rows: any[] | null, key: string, field: string) => {
-    const m = new Map<string, number>();
-    for (const r of rows ?? []) m.set(r[key], (m.get(r[key]) ?? 0) + Number(r[field] ?? 0));
-    return m;
-  };
-  const invoicedBy = sum(invoices as any[], "tenant_id", "total_due");
-  const paidBy = sum(payments as any[], "tenant_id", "amount_paid");
-  const adjBy = sum(events as any[], "tenant_id", "delta");
-
-  const openBy = new Map<string, number>();
-  for (const i of (invoices ?? []) as any[]) {
-    const bal = Math.max(0, Number(i.balance_remaining ?? 0));
-    if (bal > 0) openBy.set(i.tenant_id, (openBy.get(i.tenant_id) ?? 0) + bal);
-  }
-
-  return ((tenants ?? []) as any[]).map((t) => {
-    const accrued = t.active
-      ? accruedRent({ rentAmount: t.units?.rent_amount, moveInDate: t.move_in_date, rentDueDay: t.rent_due_day })
-      : 0;
-    const ledger = buildLedger({
-      invoiced: invoicedBy.get(t.id) ?? 0,
-      paid: paidBy.get(t.id) ?? 0,
-      adjustments: adjBy.get(t.id) ?? 0,
-      accrued,
-    });
-    return { tenant: t, ledger, openInvoiceBalance: openBy.get(t.id) ?? 0 };
-  });
-}
 
 function Dashboard() {
   const { data: stats } = useQuery({
@@ -183,50 +105,6 @@ function Dashboard() {
     staleTime: 0,
     refetchOnMount: "always",
   });
-
-  const { data: tenantsList } = useQuery({
-    queryKey: ["dashboard-tenants"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("tenants")
-        .select("id,full_name,move_in_date,active,units(unit_number,properties(name,location))")
-        .eq("active", true)
-        .order("move_in_date", { ascending: true });
-      return data ?? [];
-    },
-  });
-
-  // Tenants grouped under the property they live in.
-  const tenantsByProperty = (() => {
-    type Group = { name: string; location: string | null; tenants: any[] };
-    const groups = new Map<string, Group>();
-    for (const t of (tenantsList ?? []) as any[]) {
-      const prop = t.units?.properties;
-      const key = (prop?.name as string) ?? "Unassigned";
-      const group: Group = groups.get(key) ?? { name: key, location: prop?.location ?? null, tenants: [] };
-      group.tenants.push(t);
-      groups.set(key, group);
-    }
-    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
-  })();
-
-
-
-  const tenancyDuration = (moveIn: string | null) => {
-    if (!moveIn) return "—";
-    const start = new Date(moveIn);
-    const now = new Date();
-    let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
-    if (now.getDate() < start.getDate()) months -= 1;
-    if (months < 0) months = 0;
-    const years = Math.floor(months / 12);
-    const rem = months % 12;
-    const days = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    if (months < 1) return `${days} day${days === 1 ? "" : "s"}`;
-    if (years === 0) return `${rem} mo`;
-    if (rem === 0) return `${years} yr${years === 1 ? "" : "s"}`;
-    return `${years} yr${years === 1 ? "" : "s"} ${rem} mo`;
-  };
 
   const kpis = [
     { key: "units" as const, label: "Total Units", value: stats?.totalUnits ?? 0, icon: Building2, tone: "bg-secondary/80", glow: "glow-blue" },
@@ -438,7 +316,6 @@ function Dashboard() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <LandlordCodeCard />
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 
         {kpis.map((k) => (
@@ -465,6 +342,8 @@ function Dashboard() {
       </div>
 
       <DashboardFocus collected={stats?.collected ?? 0} />
+
+      <SimplePropertyPerformance arrearsByTenant={arrearsByTenant ?? new Map()} />
 
       <Dialog open={drill !== null} onOpenChange={(o) => !o && setDrill(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -751,50 +630,6 @@ function Dashboard() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
-
-      <PropertyPerformance arrearsByTenant={arrearsByTenant ?? new Map()} />
-
-      <Card className="glass-card">
-        <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
-          <CardTitle className="text-base">Tenants by property</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5 p-2 sm:p-6 sm:pt-0">
-          {tenantsByProperty.map((group) => (
-            <div key={group.name}>
-              <div className="mb-2 flex flex-wrap items-center gap-2 px-2 sm:px-0">
-                <h3 className="text-sm font-semibold">{group.name}</h3>
-                {group.location && <span className="text-xs text-muted-foreground">{group.location}</span>}
-                <Badge variant="secondary" className="ml-auto">
-                  {group.tenants.length} tenant{group.tenants.length === 1 ? "" : "s"}
-                </Badge>
-              </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tenant</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Move-in</TableHead>
-                    <TableHead className="text-right">Duration</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {group.tenants.map((t: any) => (
-                    <TableRow key={t.id}>
-                      <TableCell className="font-medium">{t.full_name}</TableCell>
-                      <TableCell>{t.units?.unit_number ?? "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{t.move_in_date ?? "—"}</TableCell>
-                      <TableCell className="text-right font-semibold">{tenancyDuration(t.move_in_date)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ))}
-          {tenantsByProperty.length === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">No active tenants yet.</p>
-          )}
         </CardContent>
       </Card>
 
