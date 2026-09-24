@@ -56,30 +56,30 @@ type Risk = { level: RiskLevel; total: number; monthsUnpaid: number; daysLate: n
 function RiskBadge({ risk }: { risk: Risk }) {
   if (risk.level === "credit")
     return (
-      <Badge className="gap-1 bg-emerald-600 text-white hover:bg-emerald-600">
+      <Badge variant="outline" className="gap-1">
         <CheckCircle2 className="h-3.5 w-3.5" /> Paid ahead · {money(Math.abs(risk.total))}
       </Badge>
     );
   if (risk.level === "high")
     return (
-      <Badge variant="destructive" className="animate-pulse gap-1">
+      <Badge variant="outline" className="gap-1 border-destructive/40 text-destructive">
         <AlertTriangle className="h-3.5 w-3.5" /> High risk · {risk.monthsUnpaid} mo
       </Badge>
     );
   if (risk.level === "overdue")
     return (
-      <Badge variant="destructive" className="gap-1">
+      <Badge variant="outline" className="gap-1 border-destructive/40 text-destructive">
         <AlertTriangle className="h-3.5 w-3.5" /> Overdue {risk.daysLate}d
       </Badge>
     );
   if (risk.level === "soon")
     return (
-      <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-300">
+      <Badge variant="outline" className="gap-1">
         <Clock className="h-3.5 w-3.5" /> Due soon
       </Badge>
     );
   return (
-    <Badge className="gap-1 bg-primary text-primary-foreground">
+    <Badge variant="outline" className="gap-1 text-muted-foreground">
       <CheckCircle2 className="h-3.5 w-3.5" /> Clear
     </Badge>
   );
@@ -271,6 +271,22 @@ function TenantsPage() {
     );
   const inactive = (tenants ?? []).filter((t: any) => !t.active && matches(t));
 
+  // Group active tenants by building, ordered by unit number inside each.
+  const groups = (() => {
+    const map = new Map<string, any[]>();
+    for (const t of active) {
+      const key = t.units?.properties?.name ?? "No unit assigned";
+      map.set(key, [...(map.get(key) ?? []), t]);
+    }
+    for (const list of map.values())
+      list.sort((a, b) =>
+        String(a.units?.unit_number ?? "~").localeCompare(String(b.units?.unit_number ?? "~"), undefined, { numeric: true }),
+      );
+    return Array.from(map.entries()).sort(([a], [b]) =>
+      a === "No unit assigned" ? 1 : b === "No unit assigned" ? -1 : a.localeCompare(b),
+    );
+  })();
+
   // Flag tenants that look like the same person entered more than once
   // (same name + phone). They stay listed, but are clearly marked.
   const dupKey = (t: any) =>
@@ -353,7 +369,7 @@ function TenantsPage() {
       )}
 
       {duplicateCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>
             <b>{duplicateCount}</b> tenant record{duplicateCount === 1 ? "" : "s"} look like duplicates (same name and phone). Move out the extra record to keep balances clean.
@@ -378,7 +394,7 @@ function TenantsPage() {
       </p>
 
       {creditHeld > 0 && (
-        <div className="space-y-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+        <div className="space-y-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span>
@@ -396,8 +412,14 @@ function TenantsPage() {
 
 
 
+      {groups.map(([groupName, members]) => (
+      <section key={groupName} className="space-y-2">
+        <div className="flex items-baseline justify-between border-b pb-1">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{groupName}</h3>
+          <span className="text-xs text-muted-foreground">{members.length} tenant{members.length === 1 ? "" : "s"}</span>
+        </div>
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {active.map((t: any) => {
+        {members.map((t: any) => {
           const ledger = ledgers.get(t.id) ?? buildLedger({ invoiced: 0, paid: 0 });
           const balance = balances?.get(t.id) ?? 0;
           const risk: Risk = risks.get(t.id) ?? {
@@ -418,7 +440,10 @@ function TenantsPage() {
             />
           );
         })}
-
+      </div>
+      </section>
+      ))}
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.length === 0 && (
           <Card className="md:col-span-2 xl:col-span-3">
             <CardContent className="py-10 text-center text-muted-foreground">No active tenants yet.</CardContent>
@@ -469,7 +494,7 @@ function TenantCard({
 
 
   return (
-    <Card className={`glass-card relative ${flagged ? "border-l-4 border-l-destructive" : ""}`}>
+    <Card className={`glass-card relative ${flagged ? "border-l-2 border-l-destructive/60" : ""}`}>
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -489,8 +514,8 @@ function TenantCard({
                 balance > 0
                   ? "text-sm font-semibold text-destructive"
                   : inCredit
-                    ? "text-sm font-semibold text-emerald-600 dark:text-emerald-400"
-                    : "text-sm font-semibold text-primary"
+                    ? "text-sm font-semibold text-foreground"
+                    : "text-sm font-semibold text-muted-foreground"
               }
             >
               {inCredit ? `+${money(Math.abs(balance))}` : money(balance)}
@@ -501,12 +526,12 @@ function TenantCard({
         <div className="mt-2 flex flex-wrap gap-2">
           {(flagged || inCredit) && <RiskBadge risk={inCredit ? { ...risk, level: "credit" } : risk} />}
           {ledger.credit > 0 && ledger.arrears > 0 && (
-            <Badge variant="outline" className="gap-1 border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+            <Badge variant="outline" className="gap-1">
               Credit {money(ledger.credit)}
             </Badge>
           )}
           {duplicate && (
-            <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-300">
+            <Badge variant="outline" className="gap-1">
               <AlertTriangle className="h-3 w-3" /> Possible duplicate
             </Badge>
           )}
@@ -523,7 +548,7 @@ function TenantCard({
             {ledger.uninvoiced > 0 && (
               <div className="flex justify-between py-1">
                 <span className="text-muted-foreground">Rent due, not invoiced yet</span>
-                <span className="font-medium text-amber-600 dark:text-amber-400">{money(ledger.uninvoiced)}</span>
+                <span className="font-medium">{money(ledger.uninvoiced)}</span>
               </div>
             )}
             <Row label="Total owed to date" value={money(ledger.owed)} />
@@ -539,7 +564,7 @@ function TenantCard({
             </div>
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">Credit on account</span>
-              <span className={ledger.credit > 0 ? "font-semibold text-emerald-600 dark:text-emerald-400" : "font-medium"}>
+              <span className={ledger.credit > 0 ? "font-semibold" : "font-medium"}>
                 {money(ledger.credit)}
               </span>
             </div>

@@ -242,6 +242,7 @@ export function useLandlordAccount() {
           user_id: user.id,
           email: user.email ?? null,
           full_name: (user.user_metadata as any)?.full_name ?? user.email ?? null,
+          phone: (user.user_metadata as any)?.phone ?? null,
           status: isSuper ? "approved" : "pending",
           approved_at: isSuper ? new Date().toISOString() : null,
         })

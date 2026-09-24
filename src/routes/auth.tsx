@@ -46,6 +46,7 @@ function AuthPage() {
   const { next } = Route.useSearch();
   const redirected = useRef(false);
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -80,10 +81,18 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        if (phone.replace(/\D/g, "").length < 9) {
+          toast.error("Enter your phone number — it's used to reset your password by SMS");
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: next ? window.location.origin + next : window.location.origin },
+          options: {
+            emailRedirectTo: next ? window.location.origin + next : window.location.origin,
+            data: { phone: phone.trim() },
+          },
         });
         if (error) throw error;
         toast.success("Account created. Check your email if confirmation is required.");
@@ -266,6 +275,23 @@ function AuthPage() {
                         onChange={(e) => setEmail(e.target.value)}
                       />
                     </div>
+                    {isSignup && (
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone number</Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          required
+                          autoComplete="tel"
+                          placeholder="07XX XXX XXX"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          We'll text a code to this number if you ever forget your password, so use a phone you keep.
+                        </p>
+                      </div>
+                    )}
                     <PasswordField
                       id="password"
                       label={isSignup ? "Choose a password" : "Password"}
@@ -327,7 +353,7 @@ function AuthPage() {
                                 <Link to="/reset-password" className="text-primary underline">
                                   Reset it
                                 </Link>{" "}
-                                and we'll email you a link.
+                                and we'll text you a code.
                               </span>
                             </li>
                             <li className="flex items-start gap-2">
