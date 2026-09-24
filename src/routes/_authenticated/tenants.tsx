@@ -369,7 +369,7 @@ function TenantsPage() {
       )}
 
       {duplicateCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>
             <b>{duplicateCount}</b> tenant record{duplicateCount === 1 ? "" : "s"} look like duplicates (same name and phone). Move out the extra record to keep balances clean.
@@ -394,7 +394,7 @@ function TenantsPage() {
       </p>
 
       {creditHeld > 0 && (
-        <div className="space-y-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+        <div className="space-y-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span>
