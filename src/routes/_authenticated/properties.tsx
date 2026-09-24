@@ -27,6 +27,8 @@ import { money } from "@/lib/types";
 import { UNIT_TYPES, unitTypeLabel } from "@/lib/unit-types";
 import { useIsPropertyManager } from "@/hooks/use-landlord-account";
 import { assignableTenantsQuery, propertiesQuery, unitsFullQuery } from "@/lib/property-queries";
+import { DetailedPropertyPerformance } from "@/components/property-performance";
+import { loadTenantLedgers } from "@/lib/dashboard-ledgers";
 
 export const Route = createFileRoute("/_authenticated/properties")({
   head: () => ({
@@ -58,6 +60,15 @@ function PropertiesPage() {
   const { data: units } = useQuery(unitsFullQuery);
   // Tenants that can be moved into a unit (approved, no unit yet).
   const { data: assignableTenants } = useQuery(assignableTenantsQuery);
+  const { data: arrearsByTenant } = useQuery({
+    queryKey: ["property-detail-arrears"],
+    queryFn: async () => {
+      const ledgers = await loadTenantLedgers();
+      return new Map(ledgers.filter((row) => row.ledger.arrears > 0).map((row) => [row.tenant.id, row.ledger.arrears]));
+    },
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
 
 
   const saveProperty = useMutation({
@@ -193,6 +204,8 @@ function PropertiesPage() {
         </div>
         )}
       </div>
+
+      <DetailedPropertyPerformance arrearsByTenant={arrearsByTenant ?? new Map()} />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Properties</CardTitle></CardHeader>

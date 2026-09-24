@@ -1,10 +1,12 @@
-// Per-building performance: how each property is doing on occupancy,
-// collections this month and money still owed.
 import { useQuery } from "@tanstack/react-query";
-import { Building2 } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { ArrowRight, Building2, CircleDollarSign, DoorOpen, Users } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 
@@ -77,19 +79,73 @@ export async function loadPropertyPerformance(
   });
 }
 
-export function PropertyPerformance({ arrearsByTenant }: { arrearsByTenant: Map<string, number> }) {
-  const { data: rows } = useQuery({
-    queryKey: ["property-performance", arrearsByTenant.size],
+function usePropertyPerformance(arrearsByTenant: Map<string, number>) {
+  return useQuery({
+    queryKey: ["property-performance", Array.from(arrearsByTenant.entries())],
     queryFn: () => loadPropertyPerformance(arrearsByTenant),
     staleTime: 0,
     refetchOnMount: "always",
   });
+}
+
+const chartConfig = {
+  expectedRent: { label: "Expected", color: "var(--color-muted-foreground)" },
+  collected: { label: "Collected", color: "var(--color-primary)" },
+  arrears: { label: "Arrears", color: "var(--color-destructive)" },
+} satisfies ChartConfig;
+
+export function SimplePropertyPerformance({ arrearsByTenant }: { arrearsByTenant: Map<string, number> }) {
+  const { data: rows } = usePropertyPerformance(arrearsByTenant);
+
+  return (
+    <Card className="glass-card">
+      <CardHeader className="flex-row items-start justify-between gap-3 p-4 pb-2 sm:p-6 sm:pb-3">
+        <div>
+          <CardTitle className="text-base">Portfolio performance</CardTitle>
+          <CardDescription>A simple view of expected rent, collections, and arrears this month.</CardDescription>
+        </div>
+        <Button asChild variant="ghost" size="sm" className="shrink-0">
+          <Link to="/properties">Details <ArrowRight className="h-4 w-4" /></Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+        {rows && rows.length > 0 ? (
+          <>
+            <ChartContainer config={chartConfig} className="h-64 w-full aspect-auto">
+              <BarChart data={rows} margin={{ top: 12, right: 4, left: 4, bottom: 0 }}>
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
+                <YAxis tickLine={false} axisLine={false} width={52} tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`} />
+                <ChartTooltip content={<ChartTooltipContent formatter={(value) => money(Number(value))} />} />
+                <Bar dataKey="expectedRent" fill="var(--color-expectedRent)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="collected" fill="var(--color-collected)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="arrears" fill="var(--color-arrears)" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
+              {Object.entries(chartConfig).map(([key, item]) => (
+                <span key={key} className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: item.color }} />{item.label}
+                </span>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="py-12 text-center text-sm text-muted-foreground">Add a property to see performance here.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function DetailedPropertyPerformance({ arrearsByTenant }: { arrearsByTenant: Map<string, number> }) {
+  const { data: rows } = usePropertyPerformance(arrearsByTenant);
 
   return (
     <Card className="glass-card">
       <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
-        <CardTitle className="text-base">Property performance</CardTitle>
-        <CardDescription>How each building is doing this month.</CardDescription>
+        <CardTitle className="text-base">Detailed property performance</CardTitle>
+        <CardDescription>Occupancy, monthly income, and outstanding balances for every building.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 p-4 pt-0 sm:grid-cols-2 sm:p-6 sm:pt-0">
         {(rows ?? []).map((p) => {
@@ -109,22 +165,22 @@ export function PropertyPerformance({ arrearsByTenant }: { arrearsByTenant: Map<
                 <Badge variant={p.occupancy >= 80 ? "default" : "secondary"}>{p.occupancy}% full</Badge>
               </div>
 
-              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <div>
-                  <p className="text-[11px] text-muted-foreground">Units</p>
-                  <p className="text-sm font-semibold">
-                    {p.occupied}/{p.units}
-                  </p>
+                  <p className="flex items-center gap-1 text-[11px] text-muted-foreground"><DoorOpen className="h-3 w-3" /> Units</p>
+                  <p className="text-sm font-semibold">{p.occupied} occupied · {Math.max(0, p.units - p.occupied)} vacant</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-muted-foreground">Collected</p>
-                  <p className="text-sm font-semibold text-primary">{money(p.collected)}</p>
+                  <p className="flex items-center gap-1 text-[11px] text-muted-foreground"><Users className="h-3 w-3" /> Active tenants</p>
+                  <p className="text-sm font-semibold">{p.tenants}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-muted-foreground">Owed</p>
-                  <p className={`text-sm font-semibold ${p.arrears > 0 ? "text-destructive" : ""}`}>
-                    {money(p.arrears)}
-                  </p>
+                  <p className="flex items-center gap-1 text-[11px] text-muted-foreground"><CircleDollarSign className="h-3 w-3" /> Expected / collected</p>
+                  <p className="text-sm font-semibold">{money(p.expectedRent)} / <span className="text-primary">{money(p.collected)}</span></p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Outstanding arrears</p>
+                  <p className={`text-sm font-semibold ${p.arrears > 0 ? "text-destructive" : ""}`}>{money(p.arrears)}</p>
                 </div>
               </div>
 
