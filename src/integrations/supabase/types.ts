@@ -759,6 +759,7 @@ export type Database = {
       property_managers: {
         Row: {
           active: boolean
+          can_edit_units: boolean
           created_at: string
           email: string
           full_name: string | null
@@ -772,6 +773,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          can_edit_units?: boolean
           created_at?: string
           email: string
           full_name?: string | null
@@ -785,6 +787,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          can_edit_units?: boolean
           created_at?: string
           email?: string
           full_name?: string | null
@@ -828,6 +831,27 @@ export type Database = {
           owner_id?: string
           p256dh?: string
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      signup_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          kind: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          kind: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          kind?: string
         }
         Relationships: []
       }
@@ -1196,6 +1220,7 @@ export type Database = {
     }
     Functions: {
       generate_landlord_code: { Args: never; Returns: string }
+      manager_can_edit: { Args: { _owner: string }; Returns: boolean }
       manages_owner: { Args: { _owner: string }; Returns: boolean }
       sms_charge: {
         Args: {

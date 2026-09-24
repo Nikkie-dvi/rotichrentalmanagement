@@ -15,6 +15,13 @@
       "when": 1790275869810,
       "tag": "0001_manager_self_signup",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790276482971,
+      "tag": "0002_manager_unit_edit_permission",
+      "breakpoints": true
     }
   ]
 }
