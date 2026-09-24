@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { PasswordField } from "@/components/password-field";
 import { AppLogo } from "@/components/app-logo";
+import { ManagerSignupForm } from "@/components/manager-signup-form";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-type Role = "landlord" | "tenant";
+type Role = "landlord" | "tenant" | "manager";
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -47,6 +48,7 @@ function AuthPage() {
   const redirected = useRef(false);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -81,6 +83,11 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        if (fullName.trim().length < 3) {
+          toast.error("Enter your full name");
+          setLoading(false);
+          return;
+        }
         if (phone.replace(/\D/g, "").length < 9) {
           toast.error("Enter your phone number — it's used to reset your password by SMS");
           setLoading(false);
@@ -91,7 +98,7 @@ function AuthPage() {
           password,
           options: {
             emailRedirectTo: next ? window.location.origin + next : window.location.origin,
-            data: { phone: phone.trim() },
+            data: { phone: phone.trim(), full_name: fullName.trim() },
           },
         });
         if (error) throw error;
@@ -174,7 +181,7 @@ function AuthPage() {
               </div>
 
               {/* Role chooser — stops tenants signing in on the landlord side */}
-              <div className="grid grid-cols-2 gap-2 rounded-2xl bg-muted/50 p-1">
+              <div className="grid grid-cols-3 gap-1 rounded-2xl bg-muted/50 p-1">
                 <button
                   type="button"
                   onClick={() => setRole("landlord")}
@@ -193,11 +200,22 @@ function AuthPage() {
                 >
                   <User className="h-4 w-4" /> Tenant
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("manager")}
+                  className={`flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-sm font-medium transition ${
+                    role === "manager" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <ShieldCheck className="h-4 w-4" /> Manager
+                </button>
               </div>
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {role === "tenant" ? (
+              {role === "manager" ? (
+                <ManagerTab />
+              ) : role === "tenant" ? (
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
                     <div className="flex items-center gap-2 text-sm font-semibold">
@@ -275,6 +293,19 @@ function AuthPage() {
                         onChange={(e) => setEmail(e.target.value)}
                       />
                     </div>
+                    {isSignup && (
+                      <div className="space-y-2">
+                        <Label htmlFor="fullname">Full name</Label>
+                        <Input
+                          id="fullname"
+                          required
+                          autoComplete="name"
+                          placeholder="e.g. Jane Wanjiru"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                        />
+                      </div>
+                    )}
                     {isSignup && (
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone number</Label>
@@ -400,6 +431,34 @@ function AuthPage() {
           </p>
         </section>
       </div>
+    </div>
+  );
+}
+
+function ManagerTab() {
+  const [signup, setSignup] = useState(false);
+  if (signup) {
+    return (
+      <div className="space-y-3">
+        <ManagerSignupForm />
+        <button type="button" className="w-full text-center text-xs text-muted-foreground underline" onClick={() => setSignup(false)}>
+          I already have a manager account
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-xs text-muted-foreground">
+        <div className="text-sm font-semibold text-foreground">Property managers</div>
+        <p className="mt-1.5">
+          Already have a login? Choose <span className="font-medium">Landlord</span> above and sign in with your email and
+          password. New here? Register and list the properties you manage — KES 250 per property per month.
+        </p>
+      </div>
+      <Button className="w-full" onClick={() => setSignup(true)}>
+        <UserPlus className="mr-1.5 h-4 w-4" /> Register as a property manager
+      </Button>
     </div>
   );
 }
