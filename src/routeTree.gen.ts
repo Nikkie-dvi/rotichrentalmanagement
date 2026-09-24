@@ -45,6 +45,7 @@ import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_auth
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
+import { Route as ApiPublicHooksWelcomeSweepRouteImport } from './routes/api/public/hooks/welcome-sweep'
 import { Route as ApiPublicHooksSendRentRemindersRouteImport } from './routes/api/public/hooks/send-rent-reminders'
 import { Route as ApiPublicHooksSendPushRemindersRouteImport } from './routes/api/public/hooks/send-push-reminders'
 import { Route as ApiPublicHooksGenerateMonthlyInvoicesRouteImport } from './routes/api/public/hooks/generate-monthly-invoices'
@@ -241,6 +242,12 @@ const ApiPublicMpesaSimulateCallbackRoute =
     path: '/api/public/mpesa/simulate-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksWelcomeSweepRoute =
+  ApiPublicHooksWelcomeSweepRouteImport.update({
+    id: '/api/public/hooks/welcome-sweep',
+    path: '/api/public/hooks/welcome-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSendRentRemindersRoute =
   ApiPublicHooksSendRentRemindersRouteImport.update({
     id: '/api/public/hooks/send-rent-reminders',
@@ -310,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/hooks/send-rent-reminders': typeof ApiPublicHooksSendRentRemindersRoute
+  '/api/public/hooks/welcome-sweep': typeof ApiPublicHooksWelcomeSweepRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
@@ -351,6 +359,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/hooks/send-rent-reminders': typeof ApiPublicHooksSendRentRemindersRoute
+  '/api/public/hooks/welcome-sweep': typeof ApiPublicHooksWelcomeSweepRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
@@ -395,6 +404,7 @@ export interface FileRoutesById {
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   '/api/public/hooks/send-push-reminders': typeof ApiPublicHooksSendPushRemindersRoute
   '/api/public/hooks/send-rent-reminders': typeof ApiPublicHooksSendRentRemindersRoute
+  '/api/public/hooks/welcome-sweep': typeof ApiPublicHooksWelcomeSweepRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
 }
@@ -438,6 +448,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/hooks/send-rent-reminders'
+    | '/api/public/hooks/welcome-sweep'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
   fileRoutesByTo: FileRoutesByTo
@@ -479,6 +490,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/hooks/send-rent-reminders'
+    | '/api/public/hooks/welcome-sweep'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
   id:
@@ -522,6 +534,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/generate-monthly-invoices'
     | '/api/public/hooks/send-push-reminders'
     | '/api/public/hooks/send-rent-reminders'
+    | '/api/public/hooks/welcome-sweep'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
   fileRoutesById: FileRoutesById
@@ -543,6 +556,7 @@ export interface RootRouteChildren {
   ApiPublicHooksGenerateMonthlyInvoicesRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
   ApiPublicHooksSendPushRemindersRoute: typeof ApiPublicHooksSendPushRemindersRoute
   ApiPublicHooksSendRentRemindersRoute: typeof ApiPublicHooksSendRentRemindersRoute
+  ApiPublicHooksWelcomeSweepRoute: typeof ApiPublicHooksWelcomeSweepRoute
   ApiPublicMpesaSimulateCallbackRoute: typeof ApiPublicMpesaSimulateCallbackRoute
   ApiPublicMpesaStkPushRoute: typeof ApiPublicMpesaStkPushRoute
 }
@@ -801,6 +815,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMpesaSimulateCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/welcome-sweep': {
+      id: '/api/public/hooks/welcome-sweep'
+      path: '/api/public/hooks/welcome-sweep'
+      fullPath: '/api/public/hooks/welcome-sweep'
+      preLoaderRoute: typeof ApiPublicHooksWelcomeSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/send-rent-reminders': {
       id: '/api/public/hooks/send-rent-reminders'
       path: '/api/public/hooks/send-rent-reminders'
@@ -923,6 +944,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksGenerateMonthlyInvoicesRoute,
   ApiPublicHooksSendPushRemindersRoute: ApiPublicHooksSendPushRemindersRoute,
   ApiPublicHooksSendRentRemindersRoute: ApiPublicHooksSendRentRemindersRoute,
+  ApiPublicHooksWelcomeSweepRoute: ApiPublicHooksWelcomeSweepRoute,
   ApiPublicMpesaSimulateCallbackRoute: ApiPublicMpesaSimulateCallbackRoute,
   ApiPublicMpesaStkPushRoute: ApiPublicMpesaStkPushRoute,
 }
