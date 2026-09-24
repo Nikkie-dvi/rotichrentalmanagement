@@ -76,7 +76,7 @@ function PropertiesPage() {
     mutationFn: async (v: { name: string; location: string }) => {
       const { error } = await supabase
         .from("properties")
-        .insert(isManager && account?.user_id ? { ...v, owner_id: account.user_id } : v);
+        .insert({ ...v, ...(isManager && account?.user_id ? { owner_id: account.user_id } : {}) } as { name: string; location: string; owner_id?: string });
       if (error) throw error;
     },
     onSuccess: () => {

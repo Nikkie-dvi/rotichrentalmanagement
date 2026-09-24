@@ -5,6 +5,8 @@ import { createServerFn } from "@tanstack/react-start";
 
 export const MANAGER_RATE_PER_PROPERTY = 250;
 
+type LandlordRow = { user_id: string; full_name: string | null; email: string | null };
+
 type PropertyInput = {
   propertyName: string;
   location?: string;
@@ -104,22 +106,22 @@ export const registerPropertyManager = createServerFn({ method: "POST" })
         if (!msisdn) throw new Error(`${first.landlordName}'s phone number doesn't look right`);
 
         // Find existing landlord by code, then phone, then email
-        let landlord: { user_id: string; full_name: string | null; email: string | null } | null = null;
+        let landlord = null as LandlordRow | null;
         if (first.landlordCode) {
           const { data: r } = await supabaseAdmin
             .from("landlord_accounts").select("user_id, full_name, email").eq("landlord_code", first.landlordCode).maybeSingle();
-          landlord = r as typeof landlord;
+          landlord = (r as LandlordRow | null) ?? null;
           if (!landlord) throw new Error(`No landlord uses the code ${first.landlordCode}. Check it or leave it blank.`);
         }
         if (!landlord) {
           const { data: r } = await supabaseAdmin
             .from("landlord_accounts").select("user_id, full_name, email").in("phone", phoneVariants(msisdn, first.landlordPhone)).limit(1);
-          landlord = (r?.[0] as typeof landlord) ?? null;
+          landlord = (r?.[0] as LandlordRow | undefined) ?? null;
         }
         if (!landlord) {
           const { data: r } = await supabaseAdmin
             .from("landlord_accounts").select("user_id, full_name, email").eq("email", first.landlordEmail).limit(1);
-          landlord = (r?.[0] as typeof landlord) ?? null;
+          landlord = (r?.[0] as LandlordRow | undefined) ?? null;
         }
 
         const names = props.map((p) => p.propertyName);
