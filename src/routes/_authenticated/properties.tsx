@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { UNIT_TYPES, unitTypeLabel } from "@/lib/unit-types";
-import { useIsPropertyManager } from "@/hooks/use-landlord-account";
+import { useIsPropertyManager, useLandlordAccount } from "@/hooks/use-landlord-account";
 import { assignableTenantsQuery, propertiesQuery, unitsFullQuery } from "@/lib/property-queries";
 import { DetailedPropertyPerformance } from "@/components/property-performance";
 import { loadTenantLedgers } from "@/lib/dashboard-ledgers";
@@ -167,7 +167,7 @@ function PropertiesPage() {
           <h2 className="text-2xl font-bold tracking-tight">Properties & Units</h2>
           <p className="text-sm text-muted-foreground">Buildings and their rentable units.</p>
         </div>
-        {false ? null : (
+        {(
         <div className="flex gap-2">
           <Dialog open={propOpen} onOpenChange={setPropOpen}>
             <DialogTrigger asChild><Button variant="secondary"><Plus className="h-4 w-4" />Add Property</Button></DialogTrigger>
