@@ -25,6 +25,7 @@ import { accruedRent, buildLedger } from "@/lib/ledger";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
 import { DashboardFocus } from "@/components/dashboard-focus";
+import { PropertyPerformance } from "@/components/property-performance";
 import { sendLateFeeNoticeSms, sendPaymentReceiptSms } from "@/lib/receipts.functions";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 
@@ -170,6 +171,19 @@ function Dashboard() {
     },
   });
 
+  // Per-tenant arrears, reused by the property performance card.
+  const { data: arrearsByTenant } = useQuery({
+    queryKey: ["tenant-arrears-map"],
+    queryFn: async () => {
+      const ledgers = await loadTenantLedgers();
+      const m = new Map<string, number>();
+      for (const l of ledgers) if (l.ledger.arrears > 0) m.set(l.tenant.id, l.ledger.arrears);
+      return m;
+    },
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+
   const { data: tenantsList } = useQuery({
     queryKey: ["dashboard-tenants"],
     queryFn: async () => {
@@ -181,6 +195,22 @@ function Dashboard() {
       return data ?? [];
     },
   });
+
+  // Tenants grouped under the property they live in.
+  const tenantsByProperty = (() => {
+    type Group = { name: string; location: string | null; tenants: any[] };
+    const groups = new Map<string, Group>();
+    for (const t of (tenantsList ?? []) as any[]) {
+      const prop = t.units?.properties;
+      const key = (prop?.name as string) ?? "Unassigned";
+      const group: Group = groups.get(key) ?? { name: key, location: prop?.location ?? null, tenants: [] };
+      group.tenants.push(t);
+      groups.set(key, group);
+    }
+    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
+  })();
+
+
 
   const tenancyDuration = (moveIn: string | null) => {
     if (!moveIn) return "—";
@@ -724,42 +754,50 @@ function Dashboard() {
         </CardContent>
       </Card>
 
+      <PropertyPerformance arrearsByTenant={arrearsByTenant ?? new Map()} />
+
       <Card className="glass-card">
         <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
-          <CardTitle className="text-base">Tenants & Tenancy Duration</CardTitle>
+          <CardTitle className="text-base">Tenants by property</CardTitle>
         </CardHeader>
-        <CardContent className="p-2 sm:p-6 sm:pt-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tenant</TableHead>
-                <TableHead>Property / Area</TableHead>
-                <TableHead>Unit</TableHead>
-                <TableHead>Move-in</TableHead>
-                <TableHead className="text-right">Duration</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(tenantsList ?? []).map((t: any) => {
-                const prop = t.units?.properties;
-                const area = prop ? [prop.name, prop.location].filter(Boolean).join(" · ") : "—";
-                return (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium">{t.full_name}</TableCell>
-                    <TableCell className="text-muted-foreground">{area}</TableCell>
-                    <TableCell>{t.units?.unit_number ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{t.move_in_date ?? "—"}</TableCell>
-                    <TableCell className="text-right font-semibold">{tenancyDuration(t.move_in_date)}</TableCell>
+        <CardContent className="space-y-5 p-2 sm:p-6 sm:pt-0">
+          {tenantsByProperty.map((group) => (
+            <div key={group.name}>
+              <div className="mb-2 flex flex-wrap items-center gap-2 px-2 sm:px-0">
+                <h3 className="text-sm font-semibold">{group.name}</h3>
+                {group.location && <span className="text-xs text-muted-foreground">{group.location}</span>}
+                <Badge variant="secondary" className="ml-auto">
+                  {group.tenants.length} tenant{group.tenants.length === 1 ? "" : "s"}
+                </Badge>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tenant</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Move-in</TableHead>
+                    <TableHead className="text-right">Duration</TableHead>
                   </TableRow>
-                );
-              })}
-              {(!tenantsList || tenantsList.length === 0) && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No active tenants yet.</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                  {group.tenants.map((t: any) => (
+                    <TableRow key={t.id}>
+                      <TableCell className="font-medium">{t.full_name}</TableCell>
+                      <TableCell>{t.units?.unit_number ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{t.move_in_date ?? "—"}</TableCell>
+                      <TableCell className="text-right font-semibold">{tenancyDuration(t.move_in_date)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ))}
+          {tenantsByProperty.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">No active tenants yet.</p>
+          )}
         </CardContent>
       </Card>
+
     </div>
   );
 }

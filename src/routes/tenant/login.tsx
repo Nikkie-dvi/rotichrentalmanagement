@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import { PasswordField } from "@/components/password-field";
 import { toast } from "sonner";
 import { tenantSignInWithPhone } from "@/lib/tenant-auth.functions";
+import { requestTenantLoginCode, verifyTenantLoginCode } from "@/lib/tenant-otp.functions";
 import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/tenant/login")({
@@ -35,11 +36,56 @@ function TenantLoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Code-by-text sign in
+  const [codeMode, setCodeMode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [codePhone, setCodePhone] = useState("");
+  const [code, setCode] = useState("");
+  const [codeBusy, setCodeBusy] = useState(false);
+  const [wait, setWait] = useState(0);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/tenant/dashboard" });
     });
   }, [navigate]);
+
+  useEffect(() => {
+    if (wait <= 0) return;
+    const t = setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => clearTimeout(t);
+  }, [wait]);
+
+  const sendCode = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setCodeBusy(true);
+    try {
+      const res = await requestTenantLoginCode({ data: { phone: codePhone } });
+      setCodeSent(true);
+      setWait(60);
+      toast.success(`Code sent to ${res.masked}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send the code");
+    } finally {
+      setCodeBusy(false);
+    }
+  };
+
+  const submitCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCodeBusy(true);
+    try {
+      const session = await verifyTenantLoginCode({ data: { phone: codePhone, code } });
+      const { error } = await supabase.auth.setSession(session);
+      if (error) throw error;
+      toast.success("Signed in");
+      navigate({ to: "/tenant/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sign in failed");
+    } finally {
+      setCodeBusy(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +111,7 @@ function TenantLoginPage() {
     }
   };
 
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-background to-muted/40" />
@@ -77,6 +124,83 @@ function TenantLoginPage() {
           <CardDescription>Use the email and password you registered with.</CardDescription>
         </CardHeader>
         <CardContent>
+          {codeMode ? (
+            <div className="grid gap-4">
+              {!codeSent ? (
+                <form onSubmit={sendCode} className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="codephone">Phone number</Label>
+                    <Input
+                      id="codephone"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      placeholder="07XX XXX XXX"
+                      required
+                      value={codePhone}
+                      onChange={(e) => setCodePhone(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use the number your landlord has on file. We'll text you a 6-digit code.
+                    </p>
+                  </div>
+                  <Button type="submit" size="lg" disabled={codeBusy}>
+                    {codeBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Text me a code
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={submitCode} className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="code">Enter the 6-digit code</Label>
+                    <Input
+                      id="code"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      placeholder="123456"
+                      required
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                      className="text-center text-lg tracking-[0.4em]"
+                    />
+                    <p className="text-xs text-muted-foreground">Sent to {codePhone}. It expires in 10 minutes.</p>
+                  </div>
+                  <Button type="submit" size="lg" disabled={codeBusy || code.length !== 6}>
+                    {codeBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Sign in
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={codeBusy || wait > 0}
+                    onClick={() => sendCode()}
+                  >
+                    {wait > 0 ? `Resend in ${wait}s` : "Send a new code"}
+                  </Button>
+                </form>
+              )}
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={() => {
+                  setCodeMode(false);
+                  setCodeSent(false);
+                  setCode("");
+                }}
+              >
+                Use a password instead
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                Number not recognised?{" "}
+                <Link to="/tenant/request-access" className="font-medium underline">Request access</Link>
+              </p>
+            </div>
+          ) : (
+            <>
           <form onSubmit={submit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Phone number or email</Label>
@@ -101,6 +225,16 @@ function TenantLoginPage() {
           <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
             <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
           </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            className="mb-3 w-full"
+            onClick={() => setCodeMode(true)}
+          >
+            Text me a code instead
+          </Button>
+
           <Button
             type="button"
             variant="outline"
@@ -129,8 +263,10 @@ function TenantLoginPage() {
           <p className="mt-2 text-center text-xs text-muted-foreground">
             Landlord? <Link to="/auth" className="font-medium underline">Sign in here</Link>
           </p>
-
+            </>
+          )}
         </CardContent>
+
       </Card>
       </div>
     </div>
