@@ -83,7 +83,7 @@ function AccountPage() {
           <CardContent className="space-y-3 text-sm">
             <Detail label="Name" value={account.full_name ?? "Not set"} />
             <Detail label="Email" value={account.email ?? "Not set"} />
-            <Detail label="Phone" value={account.phone ?? "Not set"} />
+            <PhoneEditor accountId={account.id} initial={account.phone ?? ""} />
             <div className="flex items-center justify-between gap-3 border-t pt-3">
               <span className="text-muted-foreground">Account status</span>
               <Badge variant={account.status === "approved" ? "default" : "secondary"}>{account.status}</Badge>
