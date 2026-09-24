@@ -1,4 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Clipboard, CreditCard, KeyRound, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
