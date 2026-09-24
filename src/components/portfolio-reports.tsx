@@ -26,7 +26,7 @@ function label(monthKey: string) {
 function monthRange(monthKey: string) {
   const [y, m] = monthKey.split("-").map(Number);
   const start = `${monthKey}-01`;
-  const endDate = new Date(y!, m!, 1); // first day of next month
+  const endDate = new Date(y || new Date().getFullYear(), m || 1, 1); // first day of next month
   const end = endDate.toISOString().slice(0, 10);
   return { start, end };
 }
@@ -495,7 +495,7 @@ export function PortfolioReports({ month, onMonthChange }: { month: string; onMo
                 ) : (d?.payments.length ?? 0) === 0 ? (
                   <TableRow><TableCell colSpan={5} className="py-6 text-center text-muted-foreground">No payments recorded this month.</TableCell></TableRow>
                 ) : (
-                  d!.payments.map((p: any) => (
+                  (d?.payments ?? []).map((p: any) => (
                     <TableRow key={p.id}>
                       <TableCell className="whitespace-nowrap">{new Date(p.payment_date).toLocaleDateString()}</TableCell>
                       <TableCell className="font-medium">{p.tenants?.full_name ?? "—"}</TableCell>

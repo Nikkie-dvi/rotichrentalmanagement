@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Clock, Wrench } from "lucide-react";
+import { Building2, Clock, FileDown, Gauge, Wrench } from "lucide-react";
 import { SectionSwitcher, SectionPanel, FINANCE_TABS } from "@/components/section-switcher";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,18 +10,19 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { unitTypeLabel } from "@/lib/unit-types";
+import { PortfolioReports, thisMonth } from "@/components/portfolio-reports";
 
 export const Route = createFileRoute("/_authenticated/performance")({
   head: () => ({
     meta: [
-      { title: "Unit Performance & Tenant Reports — Rotich Management Systems" },
+      { title: "Portfolio Performance & Reports — Rotich Management Systems" },
       {
         name: "description",
         content:
-          "See how each unit type performs: occupancy rate, rent collected, arrears, early vs late payments and maintenance reports from tenants.",
+          "Review portfolio occupancy, collections, arrears, payment habits, tenant issues and monthly reports in one workspace.",
       },
-      { property: "og:title", content: "Unit Performance & Tenant Reports" },
-      { property: "og:description", content: "Occupancy, collections, payment punctuality and tenant issues per unit type." },
+      { property: "og:title", content: "Portfolio Performance & Reports" },
+      { property: "og:description", content: "Portfolio occupancy, collections, arrears and monthly reports in one workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -41,16 +42,18 @@ type Row = {
 };
 
 function PerformancePage() {
-  // Only the last 12 months are analysed — older rows never change the view
-  // but make the payload (and the page) heavy.
-  const since = useMemo(() => {
-    const d = new Date();
-    d.setUTCMonth(d.getUTCMonth() - 11, 1);
-    return d.toISOString().slice(0, 10);
-  }, []);
+  const [month, setMonth] = useState(thisMonth());
+  const range = useMemo(() => {
+    const [year, monthNumber] = month.split("-").map(Number);
+    const start = `${month}-01`;
+    const safeYear = year || new Date().getFullYear();
+    const safeMonth = monthNumber || 1;
+    const end = new Date(Date.UTC(safeYear, safeMonth, 1)).toISOString().slice(0, 10);
+    return { start, end };
+  }, [month]);
 
   const q = useQuery({
-    queryKey: ["unit-performance", since],
+    queryKey: ["unit-performance", month],
     staleTime: 60_000,
     queryFn: async () => {
       const [units, tenants, invoices, payments, tickets] = await Promise.all([
@@ -59,16 +62,17 @@ function PerformancePage() {
         supabase
           .from("invoices")
           .select("id,tenant_id,total_due,balance_remaining,due_date,month_year")
-          // recent months, plus any older invoice still carrying arrears
-          .or(`month_year.gte.${since.slice(0, 7)},balance_remaining.gt.0`),
+          .lte("month_year", month),
         supabase
           .from("payments")
           .select("id,tenant_id,invoice_id,amount_paid,payment_date")
-          .gte("payment_date", since),
+          .gte("payment_date", range.start)
+          .lt("payment_date", range.end),
         supabase
           .from("maintenance_tickets")
           .select("id,tenant_id,category,status,created_at,updated_at")
-          .gte("created_at", since),
+          .gte("created_at", range.start)
+          .lt("created_at", `${range.end}T00:00:00`),
       ]);
       for (const r of [units, tenants, invoices, payments, tickets]) if (r.error) throw r.error;
       return {
@@ -93,7 +97,11 @@ function PerformancePage() {
     const row = (type: string) => {
       if (!rows.has(type))
         rows.set(type, { type, units: 0, occupied: 0, rentRoll: 0, billed: 0, collected: 0, arrears: 0, tickets: 0 });
-      return rows.get(type)!;
+      const existing = rows.get(type);
+      if (existing) return existing;
+      const created = { type, units: 0, occupied: 0, rentRoll: 0, billed: 0, collected: 0, arrears: 0, tickets: 0 };
+      rows.set(type, created);
+      return created;
     };
 
     for (const u of d.units as any[]) {
@@ -193,13 +201,47 @@ function PerformancePage() {
       <SectionSwitcher items={FINANCE_TABS} />
       <SectionPanel items={FINANCE_TABS}>
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Unit Performance</h2>
+        <div className="flex flex-col gap-4 border-b border-border/70 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase text-primary">Portfolio intelligence</p>
+            <h1 className="mt-1 text-2xl font-bold">Portfolio Performance</h1>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              One reliable view of occupancy, collections, arrears, payment habits, tenant issues and reports.
+            </p>
+          </div>
+          <label className="grid shrink-0 gap-1 text-xs font-medium text-muted-foreground">
+            Reporting month
+            <input
+              type="month"
+              value={month}
+              max={thisMonth()}
+              onChange={(event) => setMonth(event.target.value || thisMonth())}
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </label>
+        </div>
+        <nav className="flex gap-2 overflow-x-auto pb-1" aria-label="Portfolio performance sections">
+          {[
+            ["Overview", "#overview", Gauge],
+            ["Payment habits", "#payments", Clock],
+            ["Tenant issues", "#issues", Wrench],
+            ["Reports", "#reports", FileDown],
+          ].map(([label, href, Icon]) => (
+            <a key={String(href)} href={String(href)} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-muted">
+              <Icon className="h-4 w-4 text-primary" />{String(label)}
+            </a>
+          ))}
+        </nav>
+      </div>
+
+      <div id="overview" className="scroll-mt-24">
+        <h2 className="text-lg font-semibold">Unit performance</h2>
         <p className="text-sm text-muted-foreground">
-          How each room type performs — occupancy, money collected, payment habits and issues reported by tenants.
+          Occupancy and financial results for the selected month, grouped by room type.
         </p>
       </div>
 
-      <Card className="glass-card">
+      <Card id="payments" className="glass-card scroll-mt-24">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Building2 className="h-4 w-4" />By unit type
@@ -249,7 +291,7 @@ function PerformancePage() {
         </CardContent>
       </Card>
 
-      <Card className="glass-card">
+      <Card id="issues" className="glass-card scroll-mt-24">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Clock className="h-4 w-4" />Payment habits
@@ -306,6 +348,7 @@ function PerformancePage() {
           </div>
         </CardContent>
       </Card>
+      <PortfolioReports month={month} onMonthChange={setMonth} />
 
       <Card className="glass-card">
         <CardHeader className="pb-3">

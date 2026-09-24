@@ -18,5 +18,5 @@
 - [x] Published-page startup crash removed by lazy-loading Worker-incompatible integrations
 
 ## Open
-- [ ] Unify Portfolio Performance and monthly Reports in one shared workspace
+- [x] Unify Portfolio Performance and monthly Reports in one shared workspace
 - [ ] Signed-in check of the new dashboard sections (blocked: no test account available to sign in with)

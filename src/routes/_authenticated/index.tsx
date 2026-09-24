@@ -592,7 +592,7 @@ function Dashboard() {
             <Link to="/billing"><FileText className="h-4 w-4" />Generate Monthly Bills</Link>
           </Button>
           <Button asChild variant="outline" className="glass-btn glow-amber">
-            <Link to="/reports"><Download className="h-4 w-4" />Download Monthly Records</Link>
+            <Link to="/performance" hash="reports"><Download className="h-4 w-4" />Portfolio Reports</Link>
           </Button>
         </CardContent>
       </Card>
