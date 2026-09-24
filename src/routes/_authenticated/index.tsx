@@ -170,6 +170,19 @@ function Dashboard() {
     },
   });
 
+  // Per-tenant arrears, reused by the property performance card.
+  const { data: arrearsByTenant } = useQuery({
+    queryKey: ["tenant-arrears-map"],
+    queryFn: async () => {
+      const ledgers = await loadTenantLedgers();
+      const m = new Map<string, number>();
+      for (const l of ledgers) if (l.ledger.arrears > 0) m.set(l.tenant.id, l.ledger.arrears);
+      return m;
+    },
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+
   const { data: tenantsList } = useQuery({
     queryKey: ["dashboard-tenants"],
     queryFn: async () => {
@@ -181,6 +194,20 @@ function Dashboard() {
       return data ?? [];
     },
   });
+
+  // Tenants grouped under the property they live in.
+  const tenantsByProperty = (() => {
+    const groups = new Map<string, { name: string; location: string | null; tenants: any[] }>();
+    for (const t of (tenantsList ?? []) as any[]) {
+      const prop = t.units?.properties;
+      const key = prop?.name ?? "Unassigned";
+      const group = groups.get(key) ?? { name: key, location: prop?.location ?? null, tenants: [] };
+      group.tenants.push(t);
+      groups.set(key, group);
+    }
+    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
+  })();
+
 
   const tenancyDuration = (moveIn: string | null) => {
     if (!moveIn) return "—";
