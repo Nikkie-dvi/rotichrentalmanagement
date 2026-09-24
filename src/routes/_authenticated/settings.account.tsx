@@ -126,3 +126,26 @@ function Detail({ label, value }: { label: string; value: string }) {
 function Metric({ label, value }: { label: string; value: string }) {
   return <div className="rounded-lg border bg-muted/25 p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 font-semibold">{value}</p></div>;
 }
+function PhoneEditor({ accountId, initial }: { accountId: string; initial: string }) {
+  const qc = useQueryClient();
+  const [value, setValue] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    if (value.replace(/\D/g, "").length < 9) return toast.error("Enter a valid phone number");
+    setSaving(true);
+    const { error } = await supabase.from("landlord_accounts").update({ phone: value.trim() }).eq("id", accountId);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Phone saved — it will be used for password reset codes");
+    qc.invalidateQueries({ queryKey: ["landlord-account"] });
+  };
+  return (
+    <div className="space-y-1.5">
+      <span className="text-muted-foreground">Phone (for password reset by SMS)</span>
+      <div className="flex gap-2">
+        <Input type="tel" value={value} placeholder="07XX XXX XXX" onChange={(e) => setValue(e.target.value)} />
+        <Button variant="outline" onClick={save} disabled={saving || value.trim() === initial}>Save</Button>
+      </div>
+    </div>
+  );
+}
