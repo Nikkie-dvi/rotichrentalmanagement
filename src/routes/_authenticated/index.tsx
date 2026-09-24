@@ -197,16 +197,18 @@ function Dashboard() {
 
   // Tenants grouped under the property they live in.
   const tenantsByProperty = (() => {
-    const groups = new Map<string, { name: string; location: string | null; tenants: any[] }>();
+    type Group = { name: string; location: string | null; tenants: any[] };
+    const groups = new Map<string, Group>();
     for (const t of (tenantsList ?? []) as any[]) {
       const prop = t.units?.properties;
-      const key = prop?.name ?? "Unassigned";
-      const group = groups.get(key) ?? { name: key, location: prop?.location ?? null, tenants: [] };
+      const key = (prop?.name as string) ?? "Unassigned";
+      const group: Group = groups.get(key) ?? { name: key, location: prop?.location ?? null, tenants: [] };
       group.tenants.push(t);
       groups.set(key, group);
     }
     return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
   })();
+
 
 
   const tenancyDuration = (moveIn: string | null) => {
