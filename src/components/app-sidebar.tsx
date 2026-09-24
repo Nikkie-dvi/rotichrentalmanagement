@@ -5,6 +5,7 @@ import {
   Building2,
   CalendarDays,
   ChevronDown,
+  MessageSquareText,
   FileSignature,
   Gauge,
   LayoutDashboard,
@@ -136,6 +137,12 @@ const sections: NavSection[] = [
         url: "/settings/account",
         icon: UserRound,
         landlordOnly: true,
+      },
+      {
+        title: "SMS Tenants",
+        description: "Texts, notices & auto reminders",
+        url: "/messages",
+        icon: MessageSquareText,
       },
       {
         title: "Team & Managers",

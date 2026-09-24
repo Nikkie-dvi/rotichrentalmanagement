@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -64,7 +64,7 @@ export const Route = createFileRoute("/_authenticated/settings/payments")({
   head: () => ({
     meta: [
       { title: "Rent payment details — Rotich Management Systems" },
-      { name: "description", content: "Set how your tenants should pay rent and share an important notice with them." },
+      { name: "description", content: "Set how your tenants should pay rent." },
       { property: "og:title", content: "Rent payment details — Rotich Management Systems" },
       { property: "og:description", content: "Payment number, method and notice shown in your tenants' app." },
       { property: "og:type", content: "website" },
@@ -94,9 +94,7 @@ function RentPaymentSettingsPage() {
   const [docSending, setDocSending] = useState(false);
   const [docPropertyId, setDocPropertyId] = useState<string>("all");
   const [docUnitIds, setDocUnitIds] = useState<string[]>([]);
-  const [mode, setMode] = useState<"details" | "message">(
-    typeof window !== "undefined" && window.location.hash === "#sms-tenants" ? "message" : "details",
-  );
+
 
 
 
@@ -225,26 +223,7 @@ function RentPaymentSettingsPage() {
         </p>
       </div>
 
-      <ModeTabs
-        items={[
-          { key: "details", label: "Payment details" },
-          { key: "message", label: "SMS tenants" },
-        ]}
-        value={mode}
-        onChange={(k) => setMode(k as "details" | "message")}
-        layoutId="payments-mode-pill"
-      />
-
-      <AnimatePresence mode="wait" initial={false}>
-        {mode === "details" ? (
-          <motion.div
-            key="details"
-            initial={{ opacity: 0, x: 28 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -28 }}
-            transition={{ type: "spring", stiffness: 420, damping: 34 }}
-            className="space-y-4"
-          >
+      <div className="space-y-4">
       <Card className="glass-card">
 
         <CardHeader>
@@ -294,406 +273,18 @@ function RentPaymentSettingsPage() {
         </CardContent>
       </Card>
 
-      <SmsCreditCard />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="message"
-            initial={{ opacity: 0, x: 28 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -28 }}
-            transition={{ type: "spring", stiffness: 420, damping: 34 }}
-            className="space-y-4"
-          >
-      <Card className="glass-card border-primary/40 ring-1 ring-primary/20">
-
-        <CardHeader className="rounded-t-xl border-b border-primary/20 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent">
-          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-primary ring-1 ring-primary/30">
-              <BellRing className="h-5 w-5" />
-            </span>
-            Message your tenants
-          </CardTitle>
-          <CardDescription className="text-sm">
-            One message, both channels — an in-app notification and an SMS. Choose who gets it and pick a ready-made
-            message if you're in a hurry.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 pt-4">
-          <div className="grid gap-1.5">
-            <Label>Who should get this?</Label>
-            <Select
-              value={picked.length ? "selected" : audience}
-              onValueChange={(v) => {
-                if (v === "selected") return;
-                setPicked([]);
-                setAudience(v as any);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All tenants</SelectItem>
-                <SelectItem value="due">Tenants with rent due (unpaid invoices)</SelectItem>
-                <SelectItem value="overdue">Tenants already overdue</SelectItem>
-                {picked.length > 0 && <SelectItem value="selected">{picked.length} selected tenant(s)</SelectItem>}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-1.5">
-            <Label className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" /> Property
-            </Label>
-            <Select
-              value={propertyId}
-              onValueChange={(v) => {
-                setPropertyId(v);
-                setUnitIds([]);
-                setPicked([]);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All properties</SelectItem>
-                {(properties ?? []).map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="rounded-lg border bg-muted/40 p-3">
-            <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
-              <span>Units {unitIds.length > 0 ? `(${unitIds.length} selected)` : "(all)"}</span>
-              {scopedUnits.length > 0 && (
-                <label className="flex items-center gap-2 text-xs font-normal">
-                  <Checkbox
-                    checked={unitIds.length > 0 && unitIds.length === scopedUnits.length}
-                    onCheckedChange={(v) => {
-                      setUnitIds(v === true ? scopedUnits.map((u: any) => u.id) : []);
-                      setPicked([]);
-                    }}
-                  />
-                  Select all
-                </label>
-              )}
-            </div>
-            <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
-              {scopedUnits.map((u: any) => {
-                const on = unitIds.includes(u.id);
-                return (
-                  <button
-                    key={u.id}
-                    type="button"
-                    onClick={() => {
-                      setPicked([]);
-                      setUnitIds((prev) => (on ? prev.filter((id) => id !== u.id) : [...prev, u.id]));
-                    }}
-                    className={`rounded-full border px-3 py-1 text-xs transition ${
-                      on ? "border-primary bg-primary/15 text-primary" : "bg-background/60"
-                    }`}
-                  >
-                    {u.unit_number}
-                  </button>
-                );
-              })}
-              {scopedUnits.length === 0 && <p className="text-xs text-muted-foreground">No units yet.</p>}
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {scopedTenants.length} tenant(s) in this selection.
-            </p>
-          </div>
-
-          <div className="rounded-lg border bg-muted/40 p-3">
-            <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
-              <span className="flex items-center gap-2">
-                <Users className="h-4 w-4" /> Or pick specific tenants
-              </span>
-              {scopedTenants.length > 0 && (
-                <label className="flex items-center gap-2 text-xs font-normal">
-                  <Checkbox
-                    checked={picked.length > 0 && picked.length === scopedTenants.length}
-                    onCheckedChange={(v) =>
-                      setPicked(v === true ? scopedTenants.map((t: any) => t.id) : [])
-                    }
-                  />
-                  Select all
-                </label>
-              )}
-            </div>
-            <div className="max-h-40 space-y-1.5 overflow-y-auto pr-1">
-              {scopedTenants.map((t: any) => (
-                <label key={t.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={picked.includes(t.id)}
-                    onCheckedChange={(v) =>
-                      setPicked((p: string[]) => (v === true ? [...p, t.id] : p.filter((id: string) => id !== t.id)))
-                    }
-                  />
-                  <span className="truncate">
-                    {t.full_name}
-                    {t.phone_number ? <span className="text-muted-foreground"> · {t.phone_number}</span> : null}
-                  </span>
-                </label>
-              ))}
-              {scopedTenants.length === 0 && (
-                <p className="text-xs text-muted-foreground">No active tenants yet.</p>
-              )}
-            </div>
-            {picked.length > 0 && (
-              <Button variant="ghost" size="sm" className="mt-2 h-7 px-2 text-xs" onClick={() => setPicked([])}>
-                Clear selection
-              </Button>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-4 rounded-lg border bg-muted/40 p-3">
-            <label className="flex items-center gap-2 text-sm font-medium">
-              <Checkbox checked={viaPush} onCheckedChange={(v) => setViaPush(v === true)} />
-              App notification
-            </label>
-            <label className="flex items-center gap-2 text-sm font-medium">
-              <Checkbox checked={viaSms} onCheckedChange={(v) => setViaSms(v === true)} />
-              SMS
-            </label>
-          </div>
-
-          <div className="grid gap-1.5">
-            <Label className="text-xs text-muted-foreground">Quick messages</Label>
-            <div className="flex flex-wrap gap-2">
-              {SUGGESTIONS.map((s) => (
-                <Button
-                  key={s.label}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => {
-                    setUrgent(
-                      s.body.replace("{number}", number.trim() || "your payment number").replace(
-                        "{method}",
-                        paymentMethodLabel(method),
-                      ),
-                    );
-                    if (s.audience) setAudience(s.audience);
-                    if (s.audience) setPicked([]);
-                  }}
-                >
-                  {s.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <Textarea
-            rows={3}
-            value={urgent}
-            maxLength={SMS_LIMIT}
-            onChange={(e) => {
-              const next = e.target.value.slice(0, SMS_LIMIT);
-              if (next.length >= SMS_LIMIT && urgent.length < SMS_LIMIT) {
-                toast.warning(`Message limit reached — ${SMS_LIMIT} characters is the most an SMS can carry.`);
-              }
-              setUrgent(next);
-            }}
-            placeholder="e.g. Water will be off tomorrow from 8am to 2pm."
-          />
-          <div className="flex items-center justify-between text-xs">
-            <span className={urgent.length >= SMS_LIMIT ? "font-medium text-destructive" : "text-muted-foreground"}>
-              {urgent.length}/{SMS_LIMIT} characters
-              {urgent.length >= SMS_LIMIT ? " — limit reached, the rest would be cut off" : ""}
-            </span>
-            {viaSms && urgent.length > 0 && (
-              <span className="text-muted-foreground">
-                {smsParts(urgent.length)} SMS part{smsParts(urgent.length) === 1 ? "" : "s"} per tenant
-              </span>
-            )}
-          </div>
-
-          <Button
-            variant="secondary"
-            disabled={sending || urgent.trim().length < 3 || (!viaPush && !viaSms)}
-            onClick={async () => {
-              setSending(true);
-              try {
-                const res = await notifyMyTenants({
-                  data: {
-                    title: "Notice from your landlord",
-                    body: urgent.trim(),
-                    push: viaPush,
-                    sms: viaSms,
-                    audience,
-                    tenantIds: picked,
-                    ...unitScope,
-                  },
-                });
-                if ((res as any).recipients === 0) {
-                  toast.info("No tenants matched that group — nothing was sent");
-                } else {
-                  toast.success(`Sent to ${(res as any).recipients} tenant(s) — ${describeResult(res)}`, {
-                    description: res.smsFailed > 0 ? `${res.smsFailed} SMS could not be delivered` : undefined,
-                  });
-                  setUrgent("");
-                }
-              } catch (e: any) {
-                toast.error(e?.message ?? "Could not send");
-              } finally {
-                setSending(false);
-              }
-            }}
-            className="w-full sm:w-auto"
-          >
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send now
-          </Button>
-          <p className="text-xs text-muted-foreground">
-            Saving your payment details above also sends an update to all tenants using these same channels.
-          </p>
-        </CardContent>
-      </Card>
-
       <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Receipt className="h-4 w-4" /> Bulk receipts, invoices & statements
-          </CardTitle>
-          <CardDescription>
-            Pick the property and the exact units, then text each tenant their own figures — itemised invoice, latest
-            payment receipt or a month statement. 1 SMS per tenant from your SMS credit.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="grid gap-1.5">
-              <Label>What to send</Label>
-              <Select value={docKind} onValueChange={(v) => setDocKind(v as any)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="invoice">Invoices (itemised bill for the month)</SelectItem>
-                  <SelectItem value="receipt">Receipts (latest payment received)</SelectItem>
-                  <SelectItem value="statement">Statements (billed, paid, balance)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="doc-month">Month</Label>
-              <Input id="doc-month" type="month" value={docMonth} onChange={(e) => setDocMonth(e.target.value)} />
-            </div>
+        <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="flex items-center gap-2 font-medium"><BellRing className="h-4 w-4 text-primary" /> Texting your tenants?</p>
+            <p className="text-sm text-muted-foreground">Messages, notices, receipts and automatic reminders all live in SMS Tenants.</p>
           </div>
-
-          <div className="grid gap-1.5">
-            <Label className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" /> Property
-            </Label>
-            <Select
-              value={docPropertyId}
-              onValueChange={(v) => {
-                setDocPropertyId(v);
-                setDocUnitIds([]);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All properties</SelectItem>
-                {(properties ?? []).map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="rounded-lg border bg-muted/40 p-3">
-            <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
-              <span>Units {docUnitIds.length > 0 ? `(${docUnitIds.length} selected)` : "(all)"}</span>
-              {docUnits.length > 0 && (
-                <label className="flex items-center gap-2 text-xs font-normal">
-                  <Checkbox
-                    checked={docUnitIds.length > 0 && docUnitIds.length === docUnits.length}
-                    onCheckedChange={(v) => setDocUnitIds(v === true ? docUnits.map((u: any) => u.id) : [])}
-                  />
-                  Select all
-                </label>
-              )}
-            </div>
-            <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
-              {docUnits.map((u: any) => {
-                const on = docUnitIds.includes(u.id);
-                return (
-                  <button
-                    key={u.id}
-                    type="button"
-                    onClick={() =>
-                      setDocUnitIds((prev) => (on ? prev.filter((id) => id !== u.id) : [...prev, u.id]))
-                    }
-                    className={`rounded-full border px-3 py-1 text-xs transition ${
-                      on ? "border-primary bg-primary/15 text-primary" : "bg-background/60"
-                    }`}
-                  >
-                    {u.unit_number}
-                  </button>
-                );
-              })}
-              {docUnits.length === 0 && <p className="text-xs text-muted-foreground">No units yet.</p>}
-            </div>
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Going to {docTenants.length} tenant(s)
-            {docPropertyId !== "all" || docUnitIds.length > 0 ? " on the chosen units" : " (all units)"}.
-          </p>
-          <Button
-            disabled={docSending}
-            onClick={async () => {
-              setDocSending(true);
-              try {
-                const res: any = await sendBulkTenantDocsSms({
-                  data: {
-                    kind: docKind,
-                    month: docMonth,
-                    propertyId: docPropertyId === "all" ? null : docPropertyId,
-                    unitIds: docUnitIds,
-                  },
-
-                });
-                if (res.sent === 0 && res.failed === 0) {
-                  toast.info(`Nothing to send — ${res.skipped} tenant(s) had no ${docKind} for ${docMonth}`);
-                } else {
-                  toast.success(`Sent ${res.sent} ${docKind}(s)`, {
-                    description: [
-                      res.failed ? `${res.failed} failed` : null,
-                      res.skipped ? `${res.skipped} skipped` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || undefined,
-                  });
-                }
-              } catch (e: any) {
-                toast.error(e?.message ?? "Could not send");
-              } finally {
-                setDocSending(false);
-              }
-            }}
-            className="w-full sm:w-auto"
-          >
-            {docSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send to units
-          </Button>
+          <Button asChild variant="outline"><Link to="/messages">Open SMS Tenants</Link></Button>
         </CardContent>
       </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
 
+      <SmsCreditCard />
+      </div>
+    </div>
   );
 }
