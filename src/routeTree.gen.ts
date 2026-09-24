@@ -43,6 +43,7 @@ import { Route as AuthenticatedSettingsBrandingRouteImport } from './routes/_aut
 import { Route as AuthenticatedSettingsBillingRouteImport } from './routes/_authenticated/settings.billing'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings.account'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
 import { Route as ApiPublicHooksWelcomeSweepRouteImport } from './routes/api/public/hooks/welcome-sweep'
@@ -231,6 +232,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicMpesaStkPushRoute = ApiPublicMpesaStkPushRouteImport.update({
   id: '/api/public/mpesa/stk-push',
   path: '/api/public/mpesa/stk-push',
@@ -320,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/welcome-sweep': typeof ApiPublicHooksWelcomeSweepRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
@@ -362,6 +370,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/welcome-sweep': typeof ApiPublicHooksWelcomeSweepRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -407,6 +416,7 @@ export interface FileRoutesById {
   '/api/public/hooks/welcome-sweep': typeof ApiPublicHooksWelcomeSweepRoute
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -451,6 +461,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/welcome-sweep'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
+    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -493,6 +504,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/welcome-sweep'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
+    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/_authenticated'
@@ -537,6 +549,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/welcome-sweep'
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
+    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -559,6 +572,7 @@ export interface RootRouteChildren {
   ApiPublicHooksWelcomeSweepRoute: typeof ApiPublicHooksWelcomeSweepRoute
   ApiPublicMpesaSimulateCallbackRoute: typeof ApiPublicMpesaSimulateCallbackRoute
   ApiPublicMpesaStkPushRoute: typeof ApiPublicMpesaStkPushRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -801,6 +815,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/mpesa/stk-push': {
       id: '/api/public/mpesa/stk-push'
       path: '/api/public/mpesa/stk-push'
@@ -947,6 +968,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksWelcomeSweepRoute: ApiPublicHooksWelcomeSweepRoute,
   ApiPublicMpesaSimulateCallbackRoute: ApiPublicMpesaSimulateCallbackRoute,
   ApiPublicMpesaStkPushRoute: ApiPublicMpesaStkPushRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
