@@ -2,7 +2,6 @@
 // confirmation that a payment was received. Charged to the landlord's SMS wallet.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { chargeSmsWallet } from "@/lib/sms-wallet.server";
 
 const money = (n: number) => `KES ${Math.round(n).toLocaleString("en-US")}`;
 
@@ -72,6 +71,7 @@ export const sendPaymentReceiptSms = createServerFn({ method: "POST" })
 
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
 
     // Flat 1.2 KES per SMS from the landlord's wallet.
     const walletBalance = await chargeSmsWallet(supabaseAdmin, {
@@ -139,6 +139,7 @@ export const sendLateFeeNoticeSms = createServerFn({ method: "POST" })
         : `Hi ${first}, your ${(invoice as any).month_year} rent of ${money(balance)} is still outstanding.${duePart}${detail} Kindly clear it to avoid a late payment fee.`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
     const walletBalance = await chargeSmsWallet(supabaseAdmin, {
       ownerId: (invoice as any).owner_id,
       count: 1,
@@ -202,6 +203,7 @@ export const sendInvoiceSms = createServerFn({ method: "POST" })
       `Total ${money(Number((invoice as any).total_due) || 0)}, balance ${money(Number((invoice as any).balance_remaining) || 0)}.${duePart}`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
     const walletBalance = await chargeSmsWallet(supabaseAdmin, {
       ownerId: (invoice as any).owner_id,
       count: 1,
@@ -257,6 +259,7 @@ export const sendBulkOverdueNoticesSms = createServerFn({ method: "POST" })
     const byTenant = new Map<string, any>(((tenants ?? []) as any[]).map((t) => [t.id, t]));
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
     const { invoiceBreakdown } = await import("@/lib/invoice-breakdown.server");
     const { sendSms } = await import("@/lib/sms.server");
 

@@ -2,7 +2,6 @@
 // statements, texted out in one go and charged to the landlord's SMS wallet.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { chargeSmsWallet } from "@/lib/sms-wallet.server";
 
 const money = (n: number) => `KES ${Math.round(n).toLocaleString("en-US")}`;
 
@@ -69,6 +68,7 @@ export const sendBulkTenantDocsSms = createServerFn({ method: "POST" })
     const allPayments = (payments ?? []) as any[];
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
     const { invoiceBreakdown } = await import("@/lib/invoice-breakdown.server");
     const { sendSms } = await import("@/lib/sms.server");
 

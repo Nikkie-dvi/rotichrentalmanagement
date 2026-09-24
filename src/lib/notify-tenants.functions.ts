@@ -2,7 +2,6 @@
 // notification to every tenant device under that landlord.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { chargeSmsWallet } from "@/lib/sms-wallet.server";
 
 export const notifyMyTenants = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -88,6 +87,7 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
     const userIds = Array.from(new Set(rows.map((t) => t.auth_user_id).filter(Boolean))) as string[];
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
     const logs: Record<string, unknown>[] = [];
 
     let sent = 0;
