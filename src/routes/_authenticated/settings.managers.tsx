@@ -58,6 +58,9 @@ type ManagerRow = {
   phone: string | null;
   active: boolean;
   created_at: string;
+  source?: string;
+  property_names?: string[];
+  manager_user_id?: string | null;
 };
 
 function ManagersPage() {
@@ -79,10 +82,29 @@ function ManagersPage() {
     queryFn: async (): Promise<ManagerRow[]> => {
       const { data, error } = await (supabase as any)
         .from("property_managers")
-        .select("id, email, full_name, phone, active, created_at")
+        .select("id, email, full_name, phone, active, created_at, source, property_names, manager_user_id")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ManagerRow[];
+    },
+  });
+
+  // Payments each manager recorded in the last 30 days, so the landlord can track their work.
+  const recorded = useQuery({
+    queryKey: ["manager-recorded-payments"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+      const { data } = await (supabase as any)
+        .from("payments")
+        .select("recorded_by, amount_paid")
+        .gte("payment_date", since)
+        .not("recorded_by", "is", null);
+      const map = new Map<string, { count: number; total: number }>();
+      for (const p of (data ?? []) as { recorded_by: string; amount_paid: number }[]) {
+        const cur = map.get(p.recorded_by) ?? { count: 0, total: 0 };
+        map.set(p.recorded_by, { count: cur.count + 1, total: cur.total + Number(p.amount_paid || 0) });
+      }
+      return map;
     },
   });
 
@@ -212,8 +234,20 @@ function ManagersPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 font-medium">
                   {m.full_name || m.email}
-                  <Badge variant={m.active ? "secondary" : "outline"}>{m.active ? "Active" : "Paused"}</Badge>
+                  <Badge variant={m.active ? "secondary" : "outline"}>
+                    {m.active ? "Active" : m.source === "self" ? "Awaiting your approval" : "Paused"}
+                  </Badge>
+                  {m.source === "self" && <Badge variant="outline">Self-registered</Badge>}
                 </div>
+                {m.property_names && m.property_names.length > 0 && (
+                  <div className="truncate text-xs text-muted-foreground">Manages: {m.property_names.join(", ")}</div>
+                )}
+                {m.manager_user_id && (
+                  <div className="text-xs text-muted-foreground">
+                    Last 30 days: {recorded.data?.get(m.manager_user_id)?.count ?? 0} payments recorded · KES{" "}
+                    {(recorded.data?.get(m.manager_user_id)?.total ?? 0).toLocaleString()}
+                  </div>
+                )}
                 <div className="truncate text-sm text-muted-foreground">
                   {m.email}
                   {m.phone ? ` · ${m.phone}` : ""}

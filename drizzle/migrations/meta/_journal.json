@@ -8,6 +8,13 @@
       "when": 1790275034877,
       "tag": "0000_detach_moved_out_tenants",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790275869810,
+      "tag": "0001_manager_self_signup",
+      "breakpoints": true
     }
   ]
 }
