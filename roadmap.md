@@ -1,11 +1,12 @@
 # Roadmap
 
-## In progress
-- [ ] Tenant sign-in by texted code (server functions done; login UI pending)
+## Done
+- [x] Tenant sign-in by texted code (server + login screen)
 - [x] Portal link appended to tenant SMS messages
+- [x] Dashboard key metrics (units, occupancy, collected, arrears)
+- [x] Tenants grouped by property on the dashboard
+- [x] Property performance section (per building)
+- [x] Messaging shortcuts made direct from the dashboard
 
-## Next
-- [ ] Dashboard: key metrics (total units, occupancy rate, collected rent, arrears)
-- [ ] Dashboard: group tenants by property
-- [ ] Property performance analytics view (per-building)
-- [ ] Make messaging options directly reachable from existing dashboard shortcuts (modify, don't add)
+## Open
+- [ ] Signed-in check of the new dashboard sections (blocked: no test account available to sign in with)
