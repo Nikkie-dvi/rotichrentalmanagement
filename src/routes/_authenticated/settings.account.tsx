@@ -18,6 +18,7 @@ import {
   usePlatformPricing,
 } from "@/hooks/use-landlord-account";
 import { money } from "@/lib/types";
+import { SmsCreditCard } from "@/components/sms-credit-card";
 
 export const Route = createFileRoute("/_authenticated/settings/account")({
   head: () => ({
@@ -115,6 +116,8 @@ function AccountPage() {
           {account.discount_percent != null && Number(account.discount_percent) > 0 && <Metric label="Account discount" value={`${account.discount_percent}%`} />}
         </CardContent>
       </Card>
+
+      <SmsCreditCard />
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <CheckCircle2 className="h-4 w-4 text-primary" /> Account information is visible only to the landlord.

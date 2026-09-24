@@ -1,64 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Wallet, Save, BellRing, Send, Users, Receipt, Building2 } from "lucide-react";
+import { Loader2, Wallet, Save, BellRing } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
-import { notifyMyTenants } from "@/lib/notify-tenants.functions";
-import { sendBulkTenantDocsSms } from "@/lib/bulk-docs.functions";
-import { SmsCreditCard } from "@/components/sms-credit-card";
-import { ModeTabs } from "@/components/mode-tabs";
-import { AnimatePresence, motion } from "framer-motion";
-
-/** SMS Leopard messages are cut off past this length, so we stop typing there. */
-const SMS_LIMIT = 400;
-const SMS_SEGMENT = 160;
-const SMS_MULTI_SEGMENT = 153;
-
-const smsParts = (len: number) => (len <= SMS_SEGMENT ? (len === 0 ? 0 : 1) : Math.ceil(len / SMS_MULTI_SEGMENT));
-
-type Audience = "all" | "due" | "overdue";
-
-
-const SUGGESTIONS: { label: string; body: string; audience?: Audience }[] = [
-  {
-    label: "Rent due reminder",
-    body: "Friendly reminder: your rent is due. Please pay via {method} to {number}. Thank you.",
-    audience: "due",
-  },
-  {
-    label: "Overdue rent",
-    body: "Your rent is now overdue. Kindly clear the balance today via {method} to {number} to avoid a late fee.",
-    audience: "overdue",
-  },
-  {
-    label: "Payment received",
-    body: "We have received your payment. Thank you for paying on time.",
-  },
-  {
-    label: "Water shortage",
-    body: "Notice: water will be unavailable tomorrow from 8am to 2pm. Please store enough water.",
-    audience: "all",
-  },
-  {
-    label: "Inspection notice",
-    body: "Notice: a routine inspection of your unit will take place this week. Kindly be available.",
-    audience: "all",
-  },
-  {
-    label: "New payment number",
-    body: "Please note our rent payment details have changed. Pay via {method} to {number}.",
-    audience: "all",
-  },
-];
 
 export const Route = createFileRoute("/_authenticated/settings/payments")({
   head: () => ({
@@ -81,93 +33,12 @@ function RentPaymentSettingsPage() {
   const [method, setMethod] = useState("mpesa_send_money");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
-  const [urgent, setUrgent] = useState("");
-  const [sending, setSending] = useState(false);
-  const [viaPush, setViaPush] = useState(true);
-  const [viaSms, setViaSms] = useState(true);
-  const [audience, setAudience] = useState<Audience>("all");
-  const [picked, setPicked] = useState<string[]>([]);
-  const [propertyId, setPropertyId] = useState<string>("all");
-  const [unitIds, setUnitIds] = useState<string[]>([]);
-  const [docKind, setDocKind] = useState<"invoice" | "receipt" | "statement">("invoice");
-  const [docMonth, setDocMonth] = useState(() => new Date().toISOString().slice(0, 7));
-  const [docSending, setDocSending] = useState(false);
-  const [docPropertyId, setDocPropertyId] = useState<string>("all");
-  const [docUnitIds, setDocUnitIds] = useState<string[]>([]);
-
-
-
-
-  const { data: properties } = useQuery({
-    queryKey: ["properties", "message-picker"],
-    queryFn: async () => {
-      const { data } = await supabase.from("properties").select("id, name").order("name");
-      return data ?? [];
-    },
-  });
-
-  const { data: units } = useQuery({
-    queryKey: ["units", "message-picker"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("units")
-        .select("id, unit_number, property_id")
-        .order("unit_number");
-      return data ?? [];
-    },
-  });
-
-  const { data: tenants } = useQuery({
-    queryKey: ["tenants", "message-picker"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("tenants")
-        .select("id, full_name, phone_number, unit_id")
-        .eq("active", true)
-        .order("full_name");
-      return data ?? [];
-    },
-  });
-
-  // Units belonging to the chosen property, and the tenants living on the chosen units.
-  const scopedUnits = (units ?? []).filter(
-    (u: any) => propertyId === "all" || u.property_id === propertyId,
-  );
-  const scopedUnitIds = unitIds.length ? unitIds : scopedUnits.map((u: any) => u.id);
-  const scopedTenants = (tenants ?? []).filter(
-    (t: any) => propertyId === "all" && unitIds.length === 0
-      ? true
-      : t.unit_id && scopedUnitIds.includes(t.unit_id),
-  );
-  const unitScope = { propertyId: propertyId === "all" ? null : propertyId, unitIds };
-
-  // The bulk documents card keeps its own property / unit selection.
-  const docUnits = (units ?? []).filter(
-    (u: any) => docPropertyId === "all" || u.property_id === docPropertyId,
-  );
-  const docScopedUnitIds = docUnitIds.length ? docUnitIds : docUnits.map((u: any) => u.id);
-  const docTenants = (tenants ?? []).filter((t: any) =>
-    docPropertyId === "all" && docUnitIds.length === 0
-      ? true
-      : t.unit_id && docScopedUnitIds.includes(t.unit_id),
-  );
-
-
   useEffect(() => {
     if (!account) return;
     setNumber((account as any).rent_payment_number ?? "");
     setMethod((account as any).rent_payment_method ?? "mpesa_send_money");
     setNote((account as any).rent_payment_note ?? "");
   }, [account]);
-
-  const describeResult = (res: { sent: number; smsSent: number; smsFailed: number; smsSkippedNoCredit?: number }) => {
-    const parts: string[] = [];
-    if (viaPush) parts.push(`${res.sent} app alert${res.sent === 1 ? "" : "s"}`);
-    if (viaSms) parts.push(`${res.smsSent} SMS`);
-    if (res.smsSkippedNoCredit) parts.push(`${res.smsSkippedNoCredit} skipped (no SMS credit)`);
-    return parts.length ? parts.join(" + ") : "no channels selected";
-  };
-
 
   const save = async () => {
     if (!account) return;
@@ -282,8 +153,6 @@ function RentPaymentSettingsPage() {
           <Button asChild variant="outline"><Link to="/messages">Open SMS Tenants</Link></Button>
         </CardContent>
       </Card>
-
-      <SmsCreditCard />
       </div>
     </div>
   );

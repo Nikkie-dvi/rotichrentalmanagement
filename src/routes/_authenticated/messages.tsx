@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Wallet, Save, BellRing, Send, Users, Receipt, Building2 } from "lucide-react";
+import { Loader2, BellRing, Send, Users, Receipt, Building2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
+import { useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { sendBulkTenantDocsSms } from "@/lib/bulk-docs.functions";
-import { SmsCreditCard } from "@/components/sms-credit-card";
 import { ModeTabs } from "@/components/mode-tabs";
 import { AutoTextingPanel } from "@/components/auto-texting-panel";
 import { AnimatePresence, motion } from "framer-motion";
@@ -77,11 +76,9 @@ export const Route = createFileRoute("/_authenticated/messages")({
 
 function MessagesPage() {
   const { data: account, isLoading } = useLandlordAccount();
-  const qc = useQueryClient();
   const [number, setNumber] = useState("");
   const [method, setMethod] = useState("mpesa_send_money");
   const [note, setNote] = useState("");
-  const [saving, setSaving] = useState(false);
   const [urgent, setUrgent] = useState("");
   const [sending, setSending] = useState(false);
   const [viaPush, setViaPush] = useState(true);
@@ -175,42 +172,6 @@ function MessagesPage() {
     return parts.length ? parts.join(" + ") : "no channels selected";
   };
 
-
-  const save = async () => {
-    if (!account) return;
-    setSaving(true);
-    const { error } = await supabase
-      .from("landlord_accounts")
-      .update({
-        rent_payment_number: number.trim() || null,
-        rent_payment_method: method,
-        rent_payment_note: note.trim() || null,
-      } as any)
-      .eq("id", account.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    qc.invalidateQueries({ queryKey: ["landlord-account"] });
-
-    // Push + SMS the change to every tenant right away.
-    const details = `Pay rent via ${paymentMethodLabel(method)}${number.trim() ? ` to ${number.trim()}` : ""}.`;
-    try {
-      const res = await notifyMyTenants({
-        data: {
-          title: "Payment details updated",
-          body: note.trim() ? `${details} ${note.trim()}` : details,
-          tag: `pay-details-${Date.now()}`,
-          push: viaPush,
-          sms: viaSms,
-        },
-      });
-      toast.success(`Saved — sent ${describeResult(res)}`);
-    } catch {
-      toast.success("Saved — your tenants will see this in their app");
-    }
-  };
 
   if (isLoading) {
     return (
@@ -514,9 +475,6 @@ function MessagesPage() {
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send now
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Saving your payment details above also sends an update to all tenants using these same channels.
-          </p>
         </CardContent>
       </Card>
 
@@ -667,8 +625,6 @@ function MessagesPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <SmsCreditCard />
     </div>
   );
 }
