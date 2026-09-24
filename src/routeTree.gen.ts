@@ -27,6 +27,7 @@ import { Route as AuthenticatedPropertiesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedPerformanceRouteImport } from './routes/_authenticated/performance'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedMetersRouteImport } from './routes/_authenticated/meters'
+import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
 import { Route as AuthenticatedLeasesRouteImport } from './routes/_authenticated/leases'
 import { Route as AuthenticatedLandlordsRouteImport } from './routes/_authenticated/landlords'
@@ -141,6 +142,11 @@ const AuthenticatedPaymentsRoute = AuthenticatedPaymentsRouteImport.update({
 const AuthenticatedMetersRoute = AuthenticatedMetersRouteImport.update({
   id: '/meters',
   path: '/meters',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMaintenanceRoute =
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/landlords': typeof AuthenticatedLandlordsRoute
   '/leases': typeof AuthenticatedLeasesRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
+  '/messages': typeof AuthenticatedMessagesRoute
   '/meters': typeof AuthenticatedMetersRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/performance': typeof AuthenticatedPerformanceRoute
@@ -351,6 +358,7 @@ export interface FileRoutesByTo {
   '/landlords': typeof AuthenticatedLandlordsRoute
   '/leases': typeof AuthenticatedLeasesRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
+  '/messages': typeof AuthenticatedMessagesRoute
   '/meters': typeof AuthenticatedMetersRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/performance': typeof AuthenticatedPerformanceRoute
@@ -397,6 +405,7 @@ export interface FileRoutesById {
   '/_authenticated/landlords': typeof AuthenticatedLandlordsRoute
   '/_authenticated/leases': typeof AuthenticatedLeasesRoute
   '/_authenticated/maintenance': typeof AuthenticatedMaintenanceRoute
+  '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/meters': typeof AuthenticatedMetersRoute
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/performance': typeof AuthenticatedPerformanceRoute
@@ -444,6 +453,7 @@ export interface FileRouteTypes {
     | '/landlords'
     | '/leases'
     | '/maintenance'
+    | '/messages'
     | '/meters'
     | '/payments'
     | '/performance'
@@ -488,6 +498,7 @@ export interface FileRouteTypes {
     | '/landlords'
     | '/leases'
     | '/maintenance'
+    | '/messages'
     | '/meters'
     | '/payments'
     | '/performance'
@@ -533,6 +544,7 @@ export interface FileRouteTypes {
     | '/_authenticated/landlords'
     | '/_authenticated/leases'
     | '/_authenticated/maintenance'
+    | '/_authenticated/messages'
     | '/_authenticated/meters'
     | '/_authenticated/payments'
     | '/_authenticated/performance'
@@ -716,6 +728,13 @@ declare module '@tanstack/react-router' {
       path: '/meters'
       fullPath: '/meters'
       preLoaderRoute: typeof AuthenticatedMetersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/messages': {
+      id: '/_authenticated/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/maintenance': {
@@ -911,6 +930,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLandlordsRoute: typeof AuthenticatedLandlordsRoute
   AuthenticatedLeasesRoute: typeof AuthenticatedLeasesRoute
   AuthenticatedMaintenanceRoute: typeof AuthenticatedMaintenanceRoute
+  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedMetersRoute: typeof AuthenticatedMetersRoute
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedPerformanceRoute: typeof AuthenticatedPerformanceRoute
@@ -935,6 +955,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLandlordsRoute: AuthenticatedLandlordsRoute,
   AuthenticatedLeasesRoute: AuthenticatedLeasesRoute,
   AuthenticatedMaintenanceRoute: AuthenticatedMaintenanceRoute,
+  AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedMetersRoute: AuthenticatedMetersRoute,
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedPerformanceRoute: AuthenticatedPerformanceRoute,
