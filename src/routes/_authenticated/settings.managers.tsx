@@ -248,6 +248,14 @@ function ManagersPage() {
                     {(recorded.data?.get(m.manager_user_id)?.total ?? 0).toLocaleString()}
                   </div>
                 )}
+                <label className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
+                  <Switch
+                    checked={!!m.can_edit_units}
+                    onCheckedChange={(v) => toggleEdit(m, v)}
+                    aria-label="Allow editing units and properties"
+                  />
+                  Can edit & delete units / properties
+                </label>
                 <div className="truncate text-sm text-muted-foreground">
                   {m.email}
                   {m.phone ? ` · ${m.phone}` : ""}
