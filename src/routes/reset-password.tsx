@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, KeyRound, MailCheck } from "lucide-react";
+import { Loader2, KeyRound, MailCheck, Smartphone } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { requestLandlordResetCode, resetLandlordPasswordWithCode } from "@/lib/landlord-reset.functions";
 import { PasswordField } from "@/components/password-field";
 import { toast } from "sonner";
 
@@ -33,6 +35,12 @@ function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  const [method, setMethod] = useState<"sms" | "email">("sms");
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [smsSent, setSmsSent] = useState<string | null>(null);
+  const requestCode = useServerFn(requestLandlordResetCode);
+  const resetCode = useServerFn(resetLandlordPasswordWithCode);
 
   // The reset link can arrive in three shapes depending on how the mail client
   // opens it: PKCE (?code=), token hash (?token_hash=&type=recovery) or the
@@ -88,6 +96,38 @@ function ResetPasswordPage() {
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  const sendCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await requestCode({ data: { phone } });
+      setSmsSent(res.masked);
+      toast.success("Code sent — check your messages");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetWithCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error("Passwords don't match — check both boxes");
+      return;
+    }
+    setLoading(true);
+    try {
+      await resetCode({ data: { phone, code, newPassword: password } });
+      toast.success("Password updated — sign in with your new password");
+      navigate({ to: "/auth" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not reset password");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sendLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,31 +211,106 @@ function ResetPasswordPage() {
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save new password
               </Button>
             </form>
-          ) : sent ? (
-            <div className="flex items-start gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-3 text-sm">
-              <MailCheck className="mt-0.5 h-4 w-4 text-emerald-600" />
-              <span>
-                We sent a reset link to <span className="font-medium">{email}</span>. Open it on this device to set a new
-                password.
-              </span>
-            </div>
           ) : (
-            <form onSubmit={sendLink} className="grid gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="reset-email">Email</Label>
-                <Input
-                  id="reset-email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+            <>
+              <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 text-sm">
+                {(["sms", "email"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMethod(m)}
+                    className={`rounded-md py-1.5 font-medium transition ${method === m ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+                  >
+                    {m === "sms" ? "Text me a code" : "Email link"}
+                  </button>
+                ))}
               </div>
-              <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Send reset link
-              </Button>
-            </form>
+              {method === "sms" ? (
+                smsSent ? (
+                  <form onSubmit={resetWithCode} className="grid gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      We texted a 6-digit code to {smsSent}. Enter it and choose a new password.
+                    </p>
+                    <div className="grid gap-2">
+                      <Label htmlFor="sms-code">Code</Label>
+                      <Input
+                        id="sms-code"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                        required
+                        value={code}
+                        onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                      />
+                    </div>
+                    <PasswordField
+                      id="sms-new-password"
+                      label="New password"
+                      value={password}
+                      onChange={setPassword}
+                      minLength={8}
+                      autoComplete="new-password"
+                      required
+                      confirm
+                      confirmValue={confirmPassword}
+                      onConfirmChange={setConfirmPassword}
+                      confirmLabel="Confirm new password"
+                      hint="At least 8 characters."
+                    />
+                    <Button type="submit" disabled={loading}>
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Reset password
+                    </Button>
+                    <button type="button" className="text-xs text-primary underline" onClick={() => setSmsSent(null)}>
+                      Didn't get it? Send again
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={sendCode} className="grid gap-3">
+                    <div className="grid gap-2">
+                      <Label htmlFor="reset-phone">Phone number on your account</Label>
+                      <Input
+                        id="reset-phone"
+                        type="tel"
+                        required
+                        autoComplete="tel"
+                        placeholder="07XX XXX XXX"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </div>
+                    <Button type="submit" disabled={loading}>
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      <Smartphone className="mr-2 h-4 w-4" />Send code
+                    </Button>
+                  </form>
+                )
+              ) : sent ? (
+                <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
+                  <MailCheck className="mt-0.5 h-4 w-4 text-primary" />
+                  <span>
+                    We sent a reset link to <span className="font-medium">{email}</span>. Open it on this device to set a
+                    new password.
+                  </span>
+                </div>
+              ) : (
+                <form onSubmit={sendLink} className="grid gap-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="reset-email">Email</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Send reset link
+                  </Button>
+                </form>
+              )}
+            </>
           )}
           <div className="flex justify-between text-xs text-muted-foreground">
             <Link to="/tenant/login" className="underline">
