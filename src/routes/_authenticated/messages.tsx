@@ -224,15 +224,6 @@ function MessagesPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold">Rent payment details</h1>
-        <p className="text-sm text-muted-foreground">
-          This is shown to every one of your tenants inside their portal.
-        </p>
-      </div>
-
-  return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <div>
         <h1 className="text-2xl font-semibold">SMS Tenants</h1>
         <p className="text-sm text-muted-foreground">
           Every tenant message in one place — text by apartment, chase rent that's due, send notices like a water
