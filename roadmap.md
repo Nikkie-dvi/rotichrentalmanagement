@@ -11,6 +11,8 @@
 - [x] Dashboard simplified to one portfolio performance chart
 - [x] Detailed building performance moved to Properties & Units
 - [x] Landlord code and subscription moved to My Account
+- [x] SMS credit and recharge tools consolidated in My Account
+- [x] Low SMS balance alerts sent to the landlord's saved phone
 
 ## Open
 - [ ] Signed-in check of the new dashboard sections (blocked: no test account available to sign in with)

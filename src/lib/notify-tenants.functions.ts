@@ -87,6 +87,7 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
     const userIds = Array.from(new Set(rows.map((t) => t.auth_user_id).filter(Boolean))) as string[];
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
     const logs: Record<string, unknown>[] = [];
 
     let sent = 0;
@@ -140,13 +141,13 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
       }
       const funded = new Set<string>();
       for (const [ownerId, list] of byOwner) {
-        const { data: balance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
-          _owner: ownerId,
-          _count: list.length,
-          _reason: "broadcast",
-          _note: data.title,
-        } as never);
-        if (chargeErr || balance === null) {
+        const balance = await chargeSmsWallet(supabaseAdmin, {
+          ownerId,
+          count: list.length,
+          reason: "broadcast",
+          note: data.title,
+        });
+        if (balance === null) {
           smsSkippedNoCredit += list.length;
           continue;
         }

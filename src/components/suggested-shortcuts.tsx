@@ -46,7 +46,7 @@ export function SuggestedShortcuts() {
               </p>
             </div>
             <Button asChild size="sm" variant={empty ? "default" : "outline"} className={empty ? "glow-red" : ""}>
-              <Link to="/settings/payments" hash="sms-credit">
+              <Link to="/settings/account" hash="sms-credit">
                 {empty || low ? "Top up SMS" : "Manage SMS"} <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

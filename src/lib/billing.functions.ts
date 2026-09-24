@@ -255,11 +255,21 @@ export const smsTenant = createServerFn({ method: "POST" })
       .eq("id", data.tenantId)
       .maybeSingle();
     if (error || !tenant) throw new Error(error?.message ?? "Tenant not found");
+    if (!(tenant as any).phone_number) throw new Error("This tenant has no phone number saved");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
+    const walletBalance = await chargeSmsWallet(supabaseAdmin, {
+      ownerId: (tenant as any).owner_id,
+      count: 1,
+      reason: "tenant_message",
+      note: "One-off tenant message",
+    });
+    if (walletBalance === null) throw new Error("Not enough SMS credit. Open My Account to request a recharge.");
 
     const { sendSms } = await import("@/lib/sms.server");
     const res = await sendSms((tenant as any).phone_number, data.message);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("notification_logs").insert({
       owner_id: (tenant as any).owner_id,
       tenant_id: tenant.id,

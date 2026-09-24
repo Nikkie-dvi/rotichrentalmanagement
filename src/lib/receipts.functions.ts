@@ -71,15 +71,16 @@ export const sendPaymentReceiptSms = createServerFn({ method: "POST" })
 
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
 
     // Flat 1.2 KES per SMS from the landlord's wallet.
-    const { data: walletBalance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
-      _owner: (tenant as any).owner_id,
-      _count: 1,
-      _reason: "receipt",
-      _note: `Receipt ${money(data.amount)}`,
-    } as never);
-    if (chargeErr || walletBalance === null) {
+    const walletBalance = await chargeSmsWallet(supabaseAdmin, {
+      ownerId: (tenant as any).owner_id,
+      count: 1,
+      reason: "receipt",
+      note: `Receipt ${money(data.amount)}`,
+    });
+    if (walletBalance === null) {
       throw new Error("Not enough SMS credit. Request a recharge to send receipts.");
     }
 
@@ -138,13 +139,14 @@ export const sendLateFeeNoticeSms = createServerFn({ method: "POST" })
         : `Hi ${first}, your ${(invoice as any).month_year} rent of ${money(balance)} is still outstanding.${duePart}${detail} Kindly clear it to avoid a late payment fee.`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: walletBalance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
-      _owner: (invoice as any).owner_id,
-      _count: 1,
-      _reason: "late_fee_notice",
-      _note: `Late fee notice ${(invoice as any).month_year}`,
-    } as never);
-    if (chargeErr || walletBalance === null) {
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
+    const walletBalance = await chargeSmsWallet(supabaseAdmin, {
+      ownerId: (invoice as any).owner_id,
+      count: 1,
+      reason: "late_fee_notice",
+      note: `Late fee notice ${(invoice as any).month_year}`,
+    });
+    if (walletBalance === null) {
       throw new Error("Not enough SMS credit. Request a recharge to send notices.");
     }
 
@@ -201,13 +203,14 @@ export const sendInvoiceSms = createServerFn({ method: "POST" })
       `Total ${money(Number((invoice as any).total_due) || 0)}, balance ${money(Number((invoice as any).balance_remaining) || 0)}.${duePart}`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: walletBalance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
-      _owner: (invoice as any).owner_id,
-      _count: 1,
-      _reason: "invoice",
-      _note: `Invoice ${(invoice as any).month_year}`,
-    } as never);
-    if (chargeErr || walletBalance === null) {
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
+    const walletBalance = await chargeSmsWallet(supabaseAdmin, {
+      ownerId: (invoice as any).owner_id,
+      count: 1,
+      reason: "invoice",
+      note: `Invoice ${(invoice as any).month_year}`,
+    });
+    if (walletBalance === null) {
       throw new Error("Not enough SMS credit. Request a recharge to text invoices.");
     }
 
@@ -256,6 +259,7 @@ export const sendBulkOverdueNoticesSms = createServerFn({ method: "POST" })
     const byTenant = new Map<string, any>(((tenants ?? []) as any[]).map((t) => [t.id, t]));
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
     const { invoiceBreakdown } = await import("@/lib/invoice-breakdown.server");
     const { sendSms } = await import("@/lib/sms.server");
 
@@ -282,13 +286,13 @@ export const sendBulkOverdueNoticesSms = createServerFn({ method: "POST" })
           ? `Hi ${first}, a late payment fee of ${money(penalty)} has been added to your ${inv.month_year} rent.${duePart}${detail} Your outstanding balance is now ${money(balance)}. Kindly clear it as soon as possible.`
           : `Hi ${first}, your ${inv.month_year} rent of ${money(balance)} is still outstanding.${duePart}${detail} Kindly clear it to avoid a late payment fee.`;
 
-      const { data: walletBalance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
-        _owner: inv.owner_id,
-        _count: 1,
-        _reason: "late_fee_notice",
-        _note: `Bulk overdue notice ${inv.month_year}`,
-      } as never);
-      if (chargeErr || walletBalance === null) {
+      const walletBalance = await chargeSmsWallet(supabaseAdmin, {
+        ownerId: inv.owner_id,
+        count: 1,
+        reason: "late_fee_notice",
+        note: `Bulk overdue notice ${inv.month_year}`,
+      });
+      if (walletBalance === null) {
         throw new Error(
           sent > 0
             ? `SMS credit ran out after ${sent} message(s). Request a recharge to finish.`

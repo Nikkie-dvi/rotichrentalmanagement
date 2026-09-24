@@ -68,6 +68,7 @@ export const sendBulkTenantDocsSms = createServerFn({ method: "POST" })
     const allPayments = (payments ?? []) as any[];
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
     const { invoiceBreakdown } = await import("@/lib/invoice-breakdown.server");
     const { sendSms } = await import("@/lib/sms.server");
 
@@ -140,13 +141,13 @@ export const sendBulkTenantDocsSms = createServerFn({ method: "POST" })
           `. ${balance > 0 ? `Outstanding balance ${money(balance)}.` : "No balance outstanding. Thank you!"}`;
       }
 
-      const { data: walletBalance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
-        _owner: tenant.owner_id,
-        _count: 1,
-        _reason: `bulk_${data.kind}`,
-        _note: `Bulk ${data.kind} ${data.month}`,
-      } as never);
-      if (chargeErr || walletBalance === null) {
+      const walletBalance = await chargeSmsWallet(supabaseAdmin, {
+        ownerId: tenant.owner_id,
+        count: 1,
+        reason: `bulk_${data.kind}`,
+        note: `Bulk ${data.kind} ${data.month}`,
+      });
+      if (walletBalance === null) {
         if (logs.length) await supabaseAdmin.from("notification_logs").insert(logs as never);
         throw new Error(
           sent > 0
