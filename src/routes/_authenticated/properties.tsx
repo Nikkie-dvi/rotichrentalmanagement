@@ -56,6 +56,8 @@ function PropertiesPage() {
   // Property managers work read-only here: they cannot add, edit or delete stock.
   const isManager = useIsPropertyManager();
   const { data: account } = useLandlordAccount();
+  const { data: managerLinks } = useManagerLinks();
+  const canEditStock = !isManager || !!(managerLinks ?? []).find((l) => l.active && l.landlord_user_id === account?.user_id)?.can_edit_units;
 
   const { data: properties } = useQuery(propertiesQuery);
   const { data: units } = useQuery(unitsFullQuery);
@@ -227,7 +229,7 @@ function PropertiesPage() {
                     <TableCell>{p.location ?? "—"}</TableCell>
                     <TableCell className="text-right">{unitCount}</TableCell>
                     <TableCell>
-                      {!isManager && (
+                      {canEditStock && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button size="icon" variant="ghost" aria-label={`Delete property ${p.name}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -294,7 +296,7 @@ function PropertiesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">
-                      {!isManager && (<>
+                      {canEditStock && (<>
                       <Button size="icon" variant="ghost" aria-label={`Edit unit ${u.unit_number}`} onClick={() => { setEditing(u); setUnitOpen(true); }}>
                         <Pencil className="h-4 w-4" />
                       </Button>
