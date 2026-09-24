@@ -278,6 +278,7 @@ function MessagesPage() {
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
             className="space-y-4"
           >
+      <Card className="glass-card border-primary/40 ring-1 ring-primary/20">
         <CardHeader className="rounded-t-xl border-b border-primary/20 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent">
           <CardTitle className="flex items-center gap-2 text-lg font-semibold">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-primary ring-1 ring-primary/30">
