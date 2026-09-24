@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import { PasswordField } from "@/components/password-field";
 import { toast } from "sonner";
 import { tenantSignInWithPhone } from "@/lib/tenant-auth.functions";
+import { requestTenantLoginCode, verifyTenantLoginCode } from "@/lib/tenant-otp.functions";
 import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/tenant/login")({
