@@ -22,6 +22,7 @@ import { accruedRent, buildLedger, type Ledger } from "@/lib/ledger";
 
 import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
 import { createFirstRentInvoice } from "@/lib/first-invoice";
+import { sendTenantWelcomeNow } from "@/lib/welcome.functions";
 import { SectionSwitcher, SectionPanel, PEOPLE_TABS } from "@/components/section-switcher";
 import {
   tenantsFullQuery,
@@ -187,6 +188,7 @@ function TenantsPage() {
         } catch {
           /* never block the assignment on billing */
         }
+        await sendTenantWelcomeNow({ data: { tenantId: inserted.id } }).catch(() => {});
       }
       return { invoiced };
     },

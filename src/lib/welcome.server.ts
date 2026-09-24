@@ -18,6 +18,46 @@ async function alreadyLogged(subject: string, key: { tenant_id?: string; owner_i
   return (data ?? []).length > 0;
 }
 
+export async function sendTenantWelcome(tenantId: string) {
+  const { data: t } = await supabaseAdmin
+    .from("tenants")
+    .select("id, owner_id, full_name, phone_number, auth_user_id, approval_status, active, unit_id")
+    .eq("id", tenantId)
+    .maybeSingle();
+  if (!t || !t.active || t.approval_status === "declined") return { sent: false as const, reason: "not_active" };
+  if (!t.phone_number && !t.auth_user_id) return { sent: false as const, reason: "no_recipient" };
+  if (await alreadyLogged("tenant_welcome", { tenant_id: t.id })) return { sent: false as const, reason: "already_sent" };
+
+  let unitLabel = "";
+  if (t.unit_id) {
+    const { data: u } = await supabaseAdmin
+      .from("units").select("unit_number, properties(name)").eq("id", t.unit_id).maybeSingle();
+    if (u) unitLabel = ` ${(u as any).properties?.name ?? ""} ${(u as any).unit_number}`.replace(/\s+/g, " ");
+  }
+  const msg = `Welcome${unitLabel ? " to" + unitLabel : ""}, ${first(t.full_name)}! Your tenant portal is ready: see rent, payments, receipts and report repairs at ${PORTAL_LINK} - sign in with this phone number.`;
+  let status = "skipped";
+  let error: string | null = null;
+  if (t.phone_number) {
+    const res = await sendSms(t.phone_number, msg, { portalLink: false });
+    status = res.ok ? "delivered" : "failed";
+    error = res.error ?? null;
+  }
+  if (t.auth_user_id) {
+    await pushToUsers([t.auth_user_id], { title: "Welcome to your tenant portal", body: msg, url: "/tenant/dashboard", tag: `welcome-${t.id}` }).catch(() => {});
+  }
+  await supabaseAdmin.from("notification_logs").insert({
+    owner_id: t.owner_id,
+    tenant_id: t.id,
+    channel: "sms",
+    recipient: t.phone_number,
+    subject: "tenant_welcome",
+    message: msg,
+    status,
+    error,
+  } as never);
+  return { sent: status === "delivered", reason: error ?? status };
+}
+
 export async function runWelcomeSweep() {
   const since = new Date(Date.now() - WINDOW_MS).toISOString();
   const logs: Record<string, unknown>[] = [];
@@ -35,25 +75,8 @@ export async function runWelcomeSweep() {
   for (const t of (tenants ?? []) as any[]) {
     if (!t.phone_number && !t.auth_user_id) continue;
     if (await alreadyLogged("tenant_welcome", { tenant_id: t.id })) continue;
-    let unitLabel = "";
-    if (t.unit_id) {
-      const { data: u } = await supabaseAdmin
-        .from("units").select("unit_number, properties(name)").eq("id", t.unit_id).maybeSingle();
-      if (u) unitLabel = ` ${(u as any).properties?.name ?? ""} ${(u as any).unit_number}`.replace(/\s+/g, " ");
-    }
-    const msg = `Welcome${unitLabel ? " to" + unitLabel : ""}, ${first(t.full_name)}! Your tenant portal is ready: see rent, payments, receipts and report repairs at ${PORTAL_LINK} - sign in with this phone number.`;
-    let status = "skipped";
-    let error: string | null = null;
-    if (t.phone_number) {
-      const res = await sendSms(t.phone_number, msg, { portalLink: false });
-      status = res.ok ? "delivered" : "failed";
-      error = res.error ?? null;
-    }
-    if (t.auth_user_id) {
-      await pushToUsers([t.auth_user_id], { title: "Welcome to your tenant portal", body: msg, url: "/tenant/dashboard", tag: `welcome-${t.id}` }).catch(() => {});
-    }
-    logs.push({ owner_id: t.owner_id, tenant_id: t.id, channel: "sms", recipient: t.phone_number, subject: "tenant_welcome", message: msg, status, error });
-    tenantsWelcomed++;
+    const result = await sendTenantWelcome(t.id);
+    if (result.sent) tenantsWelcomed++;
   }
 
   // Landlords
