@@ -320,8 +320,8 @@ function TenantsPage() {
 
 
   return (
-    <div className="space-y-6">
-      <div className="sticky top-0 z-30 -mx-4 mb-2 flex items-center gap-2 border-b bg-background/95 px-4 py-2 backdrop-blur md:-mx-6 md:px-6">
+    <div className="min-w-0 space-y-4 overflow-x-clip sm:space-y-6">
+      <div className="sticky top-0 z-30 mb-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b bg-background/95 py-2 backdrop-blur md:-mx-6 md:px-6">
         <Button
           variant="outline"
           size="sm"
@@ -334,22 +334,22 @@ function TenantsPage() {
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
         <span className="truncate text-sm font-medium">Tenants</span>
-        <Button asChild variant="outline" size="sm" className="ml-auto">
+        <Button asChild variant="outline" size="sm" className="shrink-0 px-2.5 sm:px-3">
           <Link to="/">
-            <Home className="h-4 w-4" /> Dashboard
+            <Home className="h-4 w-4" /> <span className="hidden sm:inline">Dashboard</span>
           </Link>
         </Button>
       </div>
       <SectionSwitcher items={PEOPLE_TABS} />
       <SectionPanel items={PEOPLE_TABS}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Tenants</h2>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <div className="min-w-0">
+          <h2 className="truncate text-xl font-bold tracking-tight sm:text-2xl">Tenants</h2>
           <p className="text-sm text-muted-foreground">Assign, track and offboard tenants.</p>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><UserPlus className="h-4 w-4" />Assign Tenant</Button></DialogTrigger>
+          <DialogTrigger asChild><Button size="sm" className="shrink-0 px-2.5 sm:h-10 sm:px-4"><UserPlus className="h-4 w-4" /><span className="hidden min-[360px]:inline">Assign Tenant</span><span className="min-[360px]:hidden">Add</span></Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Assign New Tenant</DialogTitle></DialogHeader>
             <TenantForm
@@ -388,13 +388,13 @@ function TenantsPage() {
         />
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="hidden text-xs text-muted-foreground sm:block">
         Tap a tenant to see their full statement — what was invoiced, what they paid, arrears still owed and any credit
         that will be taken off their next invoice.
       </p>
 
       {creditHeld > 0 && (
-        <div className="space-y-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
+        <div className="space-y-2 rounded-lg border bg-muted/40 px-3 py-2 text-xs sm:text-sm">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span>
@@ -413,9 +413,9 @@ function TenantsPage() {
 
 
       {groups.map(([groupName, members]) => (
-      <section key={groupName} className="space-y-2">
-        <div className="flex items-baseline justify-between border-b pb-1">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{groupName}</h3>
+      <section key={groupName} className="min-w-0 space-y-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 border-b pb-1">
+          <h3 className="truncate text-sm font-semibold uppercase tracking-wide text-muted-foreground">{groupName}</h3>
           <span className="text-xs text-muted-foreground">{members.length} tenant{members.length === 1 ? "" : "s"}</span>
         </div>
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -494,12 +494,12 @@ function TenantCard({
 
 
   return (
-    <Card className={`glass-card relative ${flagged ? "border-l-2 border-l-destructive/60" : ""}`}>
+    <Card className={`glass-card relative min-w-0 overflow-hidden ${flagged ? "border-l-2 border-l-destructive/60" : ""}`}>
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="w-full rounded-xl p-4 text-left"
+        className="w-full p-3 text-left sm:p-4"
       >
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
           <div className="min-w-0">
@@ -508,7 +508,7 @@ function TenantCard({
               {t.phone_number ?? "No phone"} · {t.units?.unit_number ?? "No unit"}
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5">
             <span
               className={
                 balance > 0
@@ -539,7 +539,7 @@ function TenantCard({
       </button>
 
       {expanded && (
-        <CardContent className="space-y-2 p-4 pt-0 text-sm">
+        <CardContent className="space-y-2 p-3 pt-0 text-sm sm:p-4 sm:pt-0">
           {!flagged && !inCredit && <div className="pb-1"><RiskBadge risk={risk} /></div>}
 
           <div className="rounded-lg border bg-muted/30 p-3">
@@ -587,7 +587,7 @@ function TenantCard({
           <Row label="Move-in" value={t.move_in_date ?? "—"} />
           <Row label="Due Day" value={t.rent_due_day ? `${t.rent_due_day} of month` : "—"} />
 
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="mt-2 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
             <RecordPaymentButton
               tenantId={t.id}
               defaultAmount={balance > 0 ? balance : Number(t.units?.rent_amount ?? 0)}
@@ -597,13 +597,13 @@ function TenantCard({
             <Button size="sm" variant="outline" className="w-full" onClick={onMoveOut}>
               <LogOut className="h-4 w-4" />Move Out
             </Button>
-            <div className="col-span-2">
+            <div className="min-[380px]:col-span-2">
               <EditTenantDatesDialog tenant={t} />
             </div>
-            <div className="col-span-2">
+            <div className="min-[380px]:col-span-2">
               <TenantCreditDialog tenant={t} credit={ledger.credit} arrears={ledger.arrears} />
             </div>
-            <div className="col-span-2">
+            <div className="min-[380px]:col-span-2">
               {t.auth_user_id ? <ResetTenantPasswordDialog tenant={t} /> : <CreateTenantLoginDialog tenant={t} />}
             </div>
           </div>
