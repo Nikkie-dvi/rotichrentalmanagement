@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as McpRouteImport } from './routes/mcp'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as TenantauthRouteRouteImport } from './routes/_tenantauth/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -35,8 +34,6 @@ import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated/applications'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
-import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as TenantauthTenantDashboardRouteImport } from './routes/_tenantauth/tenant.dashboard'
 import { Route as AuthenticatedSettingsPaymentsRouteImport } from './routes/_authenticated/settings.payments'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
@@ -45,7 +42,6 @@ import { Route as AuthenticatedSettingsLeaseRouteImport } from './routes/_authen
 import { Route as AuthenticatedSettingsBrandingRouteImport } from './routes/_authenticated/settings.branding'
 import { Route as AuthenticatedSettingsBillingRouteImport } from './routes/_authenticated/settings.billing'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings.account'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
@@ -58,11 +54,6 @@ import { Route as ApiPublicHooksApplyLatePenaltiesRouteImport } from './routes/a
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -186,18 +177,6 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const TenantauthTenantDashboardRoute =
   TenantauthTenantDashboardRouteImport.update({
     id: '/tenant/dashboard',
@@ -245,12 +224,6 @@ const AuthenticatedSettingsAccountRoute =
     id: '/settings/account',
     path: '/settings/account',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
-    getParentRoute: () => rootRouteImport,
   } as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
@@ -302,10 +275,7 @@ const ApiPublicHooksApplyLatePenaltiesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
-  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/billing': typeof AuthenticatedBillingRoute
@@ -327,7 +297,6 @@ export interface FileRoutesByFullPath {
   '/tenant/status': typeof TenantStatusRoute
   '/tenant/': typeof TenantIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
-  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/billing': typeof AuthenticatedSettingsBillingRoute
   '/settings/branding': typeof AuthenticatedSettingsBrandingRoute
@@ -347,10 +316,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
-  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/billing': typeof AuthenticatedBillingRoute
@@ -372,7 +338,6 @@ export interface FileRoutesByTo {
   '/tenant/status': typeof TenantStatusRoute
   '/tenant': typeof TenantIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
-  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/billing': typeof AuthenticatedSettingsBillingRoute
   '/settings/branding': typeof AuthenticatedSettingsBrandingRoute
@@ -394,10 +359,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_tenantauth': typeof TenantauthRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
-  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/applications': typeof AuthenticatedApplicationsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
@@ -420,7 +382,6 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/tenant/': typeof TenantIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
-  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/settings/billing': typeof AuthenticatedSettingsBillingRoute
   '/_authenticated/settings/branding': typeof AuthenticatedSettingsBrandingRoute
@@ -442,10 +403,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/mcp'
     | '/reset-password'
-    | '/.mcp/list-tools'
-    | '/.well-known/oauth-protected-resource'
     | '/analytics'
     | '/applications'
     | '/billing'
@@ -467,7 +425,6 @@ export interface FileRouteTypes {
     | '/tenant/status'
     | '/tenant/'
     | '/.lovable/oauth/consent'
-    | '/.mcp/invoke-tool/$tool'
     | '/settings/account'
     | '/settings/billing'
     | '/settings/branding'
@@ -487,10 +444,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/mcp'
     | '/reset-password'
-    | '/.mcp/list-tools'
-    | '/.well-known/oauth-protected-resource'
     | '/analytics'
     | '/applications'
     | '/billing'
@@ -512,7 +466,6 @@ export interface FileRouteTypes {
     | '/tenant/status'
     | '/tenant'
     | '/.lovable/oauth/consent'
-    | '/.mcp/invoke-tool/$tool'
     | '/settings/account'
     | '/settings/billing'
     | '/settings/branding'
@@ -533,10 +486,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/_tenantauth'
     | '/auth'
-    | '/mcp'
     | '/reset-password'
-    | '/.mcp/list-tools'
-    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/analytics'
     | '/_authenticated/applications'
     | '/_authenticated/billing'
@@ -559,7 +509,6 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/tenant/'
     | '/.lovable/oauth/consent'
-    | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/billing'
     | '/_authenticated/settings/branding'
@@ -581,10 +530,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   TenantauthRouteRoute: typeof TenantauthRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  McpRoute: typeof McpRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
-  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   TenantClaimRoute: typeof TenantClaimRoute
   TenantLoginRoute: typeof TenantLoginRoute
   TenantRegisterRoute: typeof TenantRegisterRoute
@@ -592,7 +538,6 @@ export interface RootRouteChildren {
   TenantStatusRoute: typeof TenantStatusRoute
   TenantIndexRoute: typeof TenantIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
-  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicHooksApplyLatePenaltiesRoute: typeof ApiPublicHooksApplyLatePenaltiesRoute
   ApiPublicHooksCreditWatchRoute: typeof ApiPublicHooksCreditWatchRoute
   ApiPublicHooksGenerateMonthlyInvoicesRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
@@ -609,13 +554,6 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -786,20 +724,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/.mcp/list-tools': {
-      id: '/.mcp/list-tools'
-      path: '/.mcp/list-tools'
-      fullPath: '/.mcp/list-tools'
-      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_tenantauth/tenant/dashboard': {
       id: '/_tenantauth/tenant/dashboard'
       path: '/tenant/dashboard'
@@ -855,13 +779,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/account'
       preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'
@@ -992,11 +909,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   TenantauthRouteRoute: TenantauthRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  McpRoute: McpRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
-  Char91DotwellKnownChar93OauthProtectedResourceRoute:
-    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   TenantClaimRoute: TenantClaimRoute,
   TenantLoginRoute: TenantLoginRoute,
   TenantRegisterRoute: TenantRegisterRoute,
@@ -1004,7 +917,6 @@ const rootRouteChildren: RootRouteChildren = {
   TenantStatusRoute: TenantStatusRoute,
   TenantIndexRoute: TenantIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
-  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicHooksApplyLatePenaltiesRoute: ApiPublicHooksApplyLatePenaltiesRoute,
   ApiPublicHooksCreditWatchRoute: ApiPublicHooksCreditWatchRoute,
   ApiPublicHooksGenerateMonthlyInvoicesRoute:
