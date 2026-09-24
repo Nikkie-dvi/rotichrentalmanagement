@@ -30,7 +30,7 @@ export function TenantModeSwitcher({
   };
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
       <motion.div
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
@@ -39,7 +39,7 @@ export function TenantModeSwitcher({
           if (info.offset.x < -40) move(1);
           else if (info.offset.x > 40) move(-1);
         }}
-        className="pointer-events-auto flex max-w-[95vw] items-center gap-1 overflow-hidden rounded-full border border-border/50 bg-background/70 p-1 shadow-2xl ring-1 ring-inset ring-foreground/10 backdrop-blur-2xl backdrop-saturate-150"
+        className="pointer-events-auto mx-auto grid h-16 w-full max-w-3xl grid-cols-3 items-stretch px-2"
         role="tablist"
         aria-label="Tenant portal modes"
       >
@@ -52,15 +52,15 @@ export function TenantModeSwitcher({
               role="tab"
               aria-selected={active}
               onClick={() => onChange(item.key)}
-              className={`relative shrink-0 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-colors duration-300 sm:text-sm ${
-                active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              className={`relative min-w-0 px-1 py-2 text-[11px] font-semibold transition-colors duration-200 sm:text-sm ${
+                active ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {active && (
                 <motion.span
                   layoutId="active-mode-pill"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                  className="absolute inset-0 -z-10 rounded-full bg-primary shadow-lg"
+                  className="absolute inset-x-3 top-0 h-0.5 bg-primary"
                 />
               )}
               <span className="relative whitespace-nowrap">{item.label}</span>

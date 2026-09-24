@@ -87,7 +87,7 @@ export const vacantUnitsQuery = queryOptions({
 export const activeTenantsQuery = queryOptions({
   queryKey: ["active-tenants"],
   queryFn: async () =>
-    (await supabase.from("tenants").select("id,full_name,units(unit_number)").eq("active", true).order("full_name"))
+    (await supabase.from("tenants").select("id,full_name,units(unit_number,properties(name))").eq("active", true).order("full_name"))
       .data ?? [],
   staleTime: FRESH,
 });

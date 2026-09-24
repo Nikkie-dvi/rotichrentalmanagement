@@ -113,12 +113,10 @@ function TenantLoginPage() {
 
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-background to-muted/40" />
-      <div className="tenant-watermark -z-10" />
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-4 p-6">
+    <div className="min-h-screen w-full overflow-x-hidden bg-background">
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-4 px-3 py-16 sm:px-6">
       <TenantBackBar title="Tenant sign in" />
-      <Card>
+      <Card className="overflow-hidden border-primary/20 border-t-4 border-t-primary">
         <CardHeader>
           <h1 className="text-lg font-semibold leading-none tracking-tight">Tenant Sign In</h1>
           <CardDescription>Use the email and password you registered with.</CardDescription>
