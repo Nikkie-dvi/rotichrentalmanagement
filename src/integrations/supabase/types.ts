@@ -430,6 +430,48 @@ export type Database = {
           },
         ]
       }
+      manager_accounts: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string
+          monthly_fee: number | null
+          paid_until: string | null
+          phone: string | null
+          property_count: number
+          rate_per_property: number
+          trial_ends_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name: string
+          monthly_fee?: number | null
+          paid_until?: string | null
+          phone?: string | null
+          property_count?: number
+          rate_per_property?: number
+          trial_ends_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          monthly_fee?: number | null
+          paid_until?: string | null
+          phone?: string | null
+          property_count?: number
+          rate_per_property?: number
+          trial_ends_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       move_out_requests: {
         Row: {
           created_at: string
@@ -608,6 +650,7 @@ export type Database = {
           owner_id: string
           payment_date: string
           payment_method: string
+          recorded_by: string | null
           reference_no: string | null
           tenant_id: string
         }
@@ -621,6 +664,7 @@ export type Database = {
           owner_id?: string
           payment_date?: string
           payment_method?: string
+          recorded_by?: string | null
           reference_no?: string | null
           tenant_id: string
         }
@@ -634,6 +678,7 @@ export type Database = {
           owner_id?: string
           payment_date?: string
           payment_method?: string
+          recorded_by?: string | null
           reference_no?: string | null
           tenant_id?: string
         }
@@ -721,6 +766,8 @@ export type Database = {
           landlord_user_id: string
           manager_user_id: string | null
           phone: string | null
+          property_names: string[]
+          source: string
           updated_at: string
         }
         Insert: {
@@ -732,6 +779,8 @@ export type Database = {
           landlord_user_id: string
           manager_user_id?: string | null
           phone?: string | null
+          property_names?: string[]
+          source?: string
           updated_at?: string
         }
         Update: {
@@ -743,6 +792,8 @@ export type Database = {
           landlord_user_id?: string
           manager_user_id?: string | null
           phone?: string | null
+          property_names?: string[]
+          source?: string
           updated_at?: string
         }
         Relationships: []
