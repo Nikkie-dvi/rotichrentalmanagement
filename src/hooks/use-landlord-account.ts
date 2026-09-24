@@ -210,20 +210,21 @@ export function useLandlordAccount() {
 
       // Property managers work under a landlord who already pays: show that
       // landlord's account (same landlord code, same payment details), no gate.
-      const { data: managerRow } = await (supabase as any)
+      const { data: managerRows } = await (supabase as any)
         .from("property_managers")
         .select("id,landlord_user_id,active")
-        .eq("manager_user_id", user.id)
-        .order("active", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (managerRow && !isSuper) {
+        .eq("manager_user_id", user.id);
+      const mRows = (managerRows ?? []) as { landlord_user_id: string; active: boolean }[];
+      if (mRows.length > 0 && !isSuper) {
+        const activeRows = mRows.filter((r) => r.active);
         // A switched-off manager keeps no access at all.
-        if (!(managerRow as any).active) return null;
+        if (activeRows.length === 0) return null;
+        const chosen = getActiveLandlordId();
+        const pick = activeRows.find((r) => r.landlord_user_id === chosen) ?? activeRows[0];
         const { data: employer } = await supabase
           .from("landlord_accounts")
           .select("*")
-          .eq("user_id", (managerRow as any).landlord_user_id)
+          .eq("user_id", pick.landlord_user_id)
           .maybeSingle();
         return (employer as LandlordAccount) ?? null;
       }
@@ -255,25 +256,68 @@ export function useLandlordAccount() {
   });
 }
 
+const ACTIVE_LANDLORD_KEY = "rms-active-landlord";
+
+/** Landlord a multi-landlord manager is currently working for. */
+export function getActiveLandlordId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ACTIVE_LANDLORD_KEY);
+}
+export function setActiveLandlordId(id: string) {
+  window.localStorage.setItem(ACTIVE_LANDLORD_KEY, id);
+}
+
+export type ManagerLink = {
+  id: string;
+  landlord_user_id: string;
+  active: boolean;
+  source: string;
+  property_names: string[];
+  landlord_name: string | null;
+};
+
+/** Every landlord this manager works for, with the property names they listed. */
+export function useManagerLinks() {
+  return useQuery({
+    queryKey: ["manager-links"],
+    queryFn: async (): Promise<ManagerLink[]> => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return [];
+      const { data: rows } = await (supabase as any)
+        .from("property_managers")
+        .select("id,landlord_user_id,active,source,property_names")
+        .eq("manager_user_id", auth.user.id);
+      const list = (rows ?? []) as Omit<ManagerLink, "landlord_name">[];
+      const ids = list.filter((r) => r.active).map((r) => r.landlord_user_id);
+      const { data: accts } = ids.length
+        ? await supabase.from("landlord_accounts").select("user_id,full_name,email").in("user_id", ids)
+        : { data: [] as any[] };
+      const names = new Map((accts ?? []).map((a: any) => [a.user_id, a.full_name ?? a.email]));
+      return list.map((r) => ({ ...r, landlord_name: names.get(r.landlord_user_id) ?? null }));
+    },
+    staleTime: 30_000,
+  });
+}
+
 /** Manager record state for the signed-in user: active, switched off, or none. */
 export function useManagerStatus() {
   const { data } = useQuery({
     queryKey: ["manager-status"],
-    queryFn: async (): Promise<{ isManager: boolean; isDisabled: boolean }> => {
+    queryFn: async (): Promise<{ isManager: boolean; isDisabled: boolean; isPending: boolean }> => {
       const { data: auth } = await supabase.auth.getUser();
-      if (!auth.user) return { isManager: false, isDisabled: false };
+      if (!auth.user) return { isManager: false, isDisabled: false, isPending: false };
       const { data: rows } = await (supabase as any)
         .from("property_managers")
-        .select("id,active")
+        .select("id,active,source")
         .eq("manager_user_id", auth.user.id);
-      const list = (rows ?? []) as { active: boolean }[];
-      if (list.length === 0) return { isManager: false, isDisabled: false };
+      const list = (rows ?? []) as { active: boolean; source: string }[];
+      if (list.length === 0) return { isManager: false, isDisabled: false, isPending: false };
       const active = list.some((r) => r.active);
-      return { isManager: active, isDisabled: !active };
+      return { isManager: active, isDisabled: !active, isPending: !active && list.some((r) => r.source === "self") };
     },
     staleTime: 30_000,
   });
-  return data ?? { isManager: false, isDisabled: false };
+  return data ?? { isManager: false, isDisabled: false, isPending: false };
 }
 
 /** True when the signed-in user is a property manager working for a landlord. */

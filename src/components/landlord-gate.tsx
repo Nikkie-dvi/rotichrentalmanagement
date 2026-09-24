@@ -40,7 +40,7 @@ async function copyText(value: string) {
 export function LandlordGate({ children }: { children: ReactNode }) {
   const { data: account, isLoading, refetch, isRefetching } = useLandlordAccount();
   const isSuper = useIsSuperAdmin();
-  const { isManager, isDisabled: managerDisabled } = useManagerStatus();
+  const { isManager, isDisabled: managerDisabled, isPending: managerPending } = useManagerStatus();
   const { data: pricing } = usePlatformPricing();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -53,6 +53,18 @@ export function LandlordGate({ children }: { children: ReactNode }) {
     );
   }
 
+  if (managerPending && !isSuper) {
+    return (
+      <div className="mx-auto max-w-md space-y-3 py-16 text-center">
+        <h2 className="text-xl font-semibold">Waiting for landlord approval</h2>
+        <p className="text-sm text-muted-foreground">
+          We've texted and emailed the landlord about your registration. You'll see their property here as soon as they
+          switch your access on in Settings → Property Managers.
+        </p>
+        <Button variant="outline" onClick={() => refetch()} disabled={isRefetching}>Check again</Button>
+      </div>
+    );
+  }
   if (managerDisabled && !isSuper) return <ManagerAccessRevoked />;
 
   if (!account || isSuper || isManager) return <>{children}</>;
