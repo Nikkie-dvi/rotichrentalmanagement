@@ -7,6 +7,7 @@
 - [x] Tenants grouped by property on the dashboard
 - [x] Property performance section (per building)
 - [x] Messaging shortcuts made direct from the dashboard
+- [x] Sidebar navigation grouped into collapsible SaaS sections
 
 ## Open
 - [ ] Signed-in check of the new dashboard sections (blocked: no test account available to sign in with)
