@@ -226,13 +226,6 @@ function RentPaymentSettingsPage() {
       </div>
 
       <div className="space-y-4">
-            key="details"
-            initial={{ opacity: 0, x: 28 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -28 }}
-            transition={{ type: "spring", stiffness: 420, damping: 34 }}
-            className="space-y-4"
-          >
       <Card className="glass-card">
 
         <CardHeader>
