@@ -61,6 +61,7 @@ type ManagerRow = {
   source?: string;
   property_names?: string[];
   manager_user_id?: string | null;
+  can_edit_units?: boolean;
 };
 
 function ManagersPage() {
@@ -82,7 +83,7 @@ function ManagersPage() {
     queryFn: async (): Promise<ManagerRow[]> => {
       const { data, error } = await (supabase as any)
         .from("property_managers")
-        .select("id, email, full_name, phone, active, created_at, source, property_names, manager_user_id")
+        .select("id, email, full_name, phone, active, created_at, source, property_names, manager_user_id, can_edit_units")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ManagerRow[];
@@ -146,6 +147,15 @@ function ManagersPage() {
     if (error) toast.error(error.message);
     else {
       toast.success(active ? "Access restored" : "Access paused");
+      qc.invalidateQueries({ queryKey: ["property-managers"] });
+    }
+  };
+
+  const toggleEdit = async (row: ManagerRow, can_edit_units: boolean) => {
+    const { error } = await (supabase as any).from("property_managers").update({ can_edit_units }).eq("id", row.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(can_edit_units ? "Manager can now edit units" : "Unit editing turned off");
       qc.invalidateQueries({ queryKey: ["property-managers"] });
     }
   };
