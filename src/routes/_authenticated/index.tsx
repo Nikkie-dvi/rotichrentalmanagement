@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
-import { accruedRent, buildLedger } from "@/lib/ledger";
+import { loadTenantLedgers } from "@/lib/dashboard-ledgers";
 import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
 import { DashboardFocus } from "@/components/dashboard-focus";
 import { SimplePropertyPerformance } from "@/components/property-performance";
@@ -52,50 +52,6 @@ export const Route = createFileRoute("/_authenticated/")({
 // Tenants page and the tenant portal disagree with each other.
 
 
-
-/**
- * Rebuilds every active tenant's balance with the shared ledger, so the
- * dashboard arrears total is exactly what the Tenants page and the tenant
- * portal show (including rent that fell due but was never invoiced).
- */
-async function loadTenantLedgers() {
-  const [{ data: tenants }, { data: invoices }, { data: payments }, { data: events }] = await Promise.all([
-    supabase
-      .from("tenants")
-      .select("id,full_name,active,move_in_date,rent_due_day,units(unit_number,rent_amount,properties(name,location))"),
-    supabase.from("invoices").select("id,tenant_id,total_due,balance_remaining,month_year"),
-    supabase.from("payments").select("tenant_id,amount_paid"),
-    supabase.from("tenant_credit_events").select("tenant_id,delta"),
-  ]);
-
-  const sum = (rows: any[] | null, key: string, field: string) => {
-    const m = new Map<string, number>();
-    for (const r of rows ?? []) m.set(r[key], (m.get(r[key]) ?? 0) + Number(r[field] ?? 0));
-    return m;
-  };
-  const invoicedBy = sum(invoices as any[], "tenant_id", "total_due");
-  const paidBy = sum(payments as any[], "tenant_id", "amount_paid");
-  const adjBy = sum(events as any[], "tenant_id", "delta");
-
-  const openBy = new Map<string, number>();
-  for (const i of (invoices ?? []) as any[]) {
-    const bal = Math.max(0, Number(i.balance_remaining ?? 0));
-    if (bal > 0) openBy.set(i.tenant_id, (openBy.get(i.tenant_id) ?? 0) + bal);
-  }
-
-  return ((tenants ?? []) as any[]).map((t) => {
-    const accrued = t.active
-      ? accruedRent({ rentAmount: t.units?.rent_amount, moveInDate: t.move_in_date, rentDueDay: t.rent_due_day })
-      : 0;
-    const ledger = buildLedger({
-      invoiced: invoicedBy.get(t.id) ?? 0,
-      paid: paidBy.get(t.id) ?? 0,
-      adjustments: adjBy.get(t.id) ?? 0,
-      accrued,
-    });
-    return { tenant: t, ledger, openInvoiceBalance: openBy.get(t.id) ?? 0 };
-  });
-}
 
 function Dashboard() {
   const { data: stats } = useQuery({
