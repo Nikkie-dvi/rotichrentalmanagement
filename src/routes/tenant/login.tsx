@@ -35,11 +35,56 @@ function TenantLoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Code-by-text sign in
+  const [codeMode, setCodeMode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [codePhone, setCodePhone] = useState("");
+  const [code, setCode] = useState("");
+  const [codeBusy, setCodeBusy] = useState(false);
+  const [wait, setWait] = useState(0);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/tenant/dashboard" });
     });
   }, [navigate]);
+
+  useEffect(() => {
+    if (wait <= 0) return;
+    const t = setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => clearTimeout(t);
+  }, [wait]);
+
+  const sendCode = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setCodeBusy(true);
+    try {
+      const res = await requestTenantLoginCode({ data: { phone: codePhone } });
+      setCodeSent(true);
+      setWait(60);
+      toast.success(`Code sent to ${res.masked}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send the code");
+    } finally {
+      setCodeBusy(false);
+    }
+  };
+
+  const submitCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCodeBusy(true);
+    try {
+      const session = await verifyTenantLoginCode({ data: { phone: codePhone, code } });
+      const { error } = await supabase.auth.setSession(session);
+      if (error) throw error;
+      toast.success("Signed in");
+      navigate({ to: "/tenant/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sign in failed");
+    } finally {
+      setCodeBusy(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +109,7 @@ function TenantLoginPage() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
