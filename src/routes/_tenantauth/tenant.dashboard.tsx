@@ -80,17 +80,6 @@ function nextDueDate(rentDueDay: number | null): { date: Date; label: string; di
   return { date: due, label, diffDays };
 }
 
-function dueUrgencyColor(daysToDue: number) {
-  const maxDays = 30;
-  const urgency = Math.max(0, Math.min(1, 1 - daysToDue / maxDays));
-  const hue = Math.round(140 - urgency * 140);
-  return {
-    text: `hsl(${hue}, 85%, 55%)`,
-    bg: `hsla(${hue}, 80%, 55%, 0.15)`,
-    border: `hsla(${hue}, 80%, 55%, 0.4)`,
-  };
-}
-
 function statusBadge(status: string) {
   const map: Record<string, { label: string; className: string }> = {
     pending: { label: "Pending", className: "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200" },
@@ -186,7 +175,6 @@ function DashboardPage() {
   const unit = (t as any)?.units;
   const property = unit?.properties;
   const nextDue = useMemo(() => (t ? nextDueDate(t.rent_due_day ?? null) : null), [t]);
-  const urgency = useMemo(() => dueUrgencyColor(nextDue?.diffDays ?? 0), [nextDue]);
 
   // Rent accrues automatically on every anniversary of the move-in / due day,
   // even before the landlord issues an invoice.
@@ -304,51 +292,24 @@ function DashboardPage() {
     "bg-amber-500/10 text-amber-700 dark:text-amber-300";
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Futuristic animated background */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-muted/60 via-background to-muted/70" />
-      {/* Darkening veil so the glass cards and content pop */}
-      <div className="absolute inset-0 -z-10 bg-slate-950/25 dark:bg-slate-950/55" />
-      <div
-        className="tenant-bg-grid absolute inset-0 -z-10 opacity-20"
-        style={{ animation: "tenant-grid-fade 8s ease-in-out infinite" }}
-      />
-
-
-      {/* "ROTICH / RENTALS" square watermark */}
-      <div className="tenant-watermark -z-10" />
-      <div
-        className="tenant-bg-orb -z-10 h-72 w-72 bg-primary/30"
-        style={{ top: "-8%", left: "-12%", animation: "tenant-orb-1 14s ease-in-out infinite" }}
-      />
-      <div
-        className="tenant-bg-orb -z-10 h-64 w-64 bg-accent/25"
-        style={{ bottom: "-5%", right: "-10%", animation: "tenant-orb-2 16s ease-in-out infinite" }}
-      />
-      <div
-        className="tenant-bg-orb -z-10 h-48 w-48 bg-primary/20"
-        style={{ top: "45%", left: "55%", animation: "tenant-orb-3 12s ease-in-out infinite" }}
-      />
-
-      {/* Same layout, glass-styled cards */}
-      <div className="mx-auto w-full max-w-3xl p-4 pb-32 md:p-6 md:pb-32">
+    <div className="min-h-screen w-full overflow-x-hidden bg-background">
+      <div className="mx-auto w-full max-w-3xl px-3 pb-24 sm:px-4 md:px-6">
       <TenantBackBar title="Tenant dashboard" />
 
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between gap-3 rounded-xl glass-card px-4 py-3">
-        <div>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Tenant</div>
-          <h1 className="text-xl font-bold leading-tight">{t.full_name}</h1>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <Building2 className="h-3.5 w-3.5" />
-            {property?.name ?? "—"} · Unit {unit?.unit_number ?? "—"}
-            <Badge variant="outline" className={leaseClass}>{leaseStatus}</Badge>
+      <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 border-b pb-4">
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="shrink-0 rounded bg-foreground px-2 py-0.5 text-[10px] font-bold text-background">UNIT {unit?.unit_number ?? "—"}</span>
+            <span className="truncate text-sm font-semibold">{property?.name ?? "Property"}</span>
           </div>
+          <h1 className="mt-2 truncate text-xl font-bold leading-tight">{t.full_name}</h1>
+          <Badge variant="outline" className={`mt-1 ${leaseClass}`}>{leaseStatus}</Badge>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <QuickStartGuide audience="tenant" steps={TENANT_GUIDE} compact />
-          <Button variant="outline" size="sm" onClick={signOut} className="glass-btn glow-red">
-            <LogOut className="mr-1 h-4 w-4" /> Sign out
+          <Button variant="outline" size="icon" onClick={signOut} aria-label="Sign out">
+            <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -403,11 +364,7 @@ function DashboardPage() {
 
       {/* Rent due summary — floating, detached bar */}
       <div className="relative z-10 mb-6 px-0.5">
-        <Card
-          className={`floating-panel glass-card border-0 !p-0 ${
-            rentSettled ? "!bg-emerald-500/12" : "!bg-red-500/12"
-          }`}
-        >
+        <Card className="overflow-hidden border-primary/20 border-l-4 border-l-primary">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base"><CalendarClock className="h-4 w-4" /> Next rent due</CardTitle>
             <CardDescription className={rentSettled ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}>
@@ -417,14 +374,13 @@ function DashboardPage() {
           <CardContent className="flex flex-wrap items-baseline justify-between gap-3">
             <div>
               <div className="text-2xl font-bold">{unit ? KES(Number(unit.rent_amount)) : "—"}</div>
-              <div className="text-sm transition-colors duration-500" style={{ color: urgency.text }}>
+              <div className="text-sm text-muted-foreground">
                 {nextDue ? nextDue.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "—"}
               </div>
             </div>
             <Badge
               variant="outline"
-              className="text-sm backdrop-blur transition-colors duration-500"
-              style={{ color: urgency.text, backgroundColor: urgency.bg, borderColor: urgency.border }}
+              className="text-sm"
             >
               <Wallet className="mr-1 h-3.5 w-3.5" /> {nextDue?.label ?? "—"}
             </Badge>
@@ -434,13 +390,7 @@ function DashboardPage() {
 
 
       {/* Account balance */}
-      <Card
-        className={`mb-4 glass-card backdrop-blur-xl ${
-          net < 0
-            ? "!border-red-500/30 !bg-red-500/5"
-            : "!border-emerald-500/30 !bg-emerald-500/5"
-        }`}
-      >
+      <Card className="mb-4 overflow-hidden">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-base"><Wallet className="h-4 w-4" /> My account balance</CardTitle>
@@ -462,11 +412,7 @@ function DashboardPage() {
           ) : (
             <>
               {/* Detached, floating balance panel — sits above the invoice list */}
-              <div
-                className={`floating-panel relative z-10 grid gap-2 p-4 ${
-                  net < 0 ? "bg-red-500/12" : "bg-emerald-500/12"
-                }`}
-              >
+               <div className="grid gap-2 rounded-md border-l-4 border-l-primary bg-muted/50 p-4">
                 <div className="flex items-baseline justify-between gap-3">
                   <div className={`text-3xl font-bold tracking-tight ${net < 0 ? "text-destructive" : net > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
                     {net > 0 ? "+" : net < 0 ? "-" : ""}
@@ -492,21 +438,20 @@ function DashboardPage() {
                 <div className="grid gap-1.5">
                   <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Invoices</div>
                   {accountQuery.data.invoices.slice(0, 6).map((i: any) => (
-                    <div key={i.id} className="rounded-md border p-2 text-sm">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium">
-                            {i.month_year} · {(i as any).kind === "service" ? "Services" : "Rent"}
-                          </div>
+                     <div key={i.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b py-3 text-sm last:border-b-0">
+                         <div className="min-w-0">
+                           <div className="flex items-center gap-2 font-medium">
+                             <span className="shrink-0 rounded bg-foreground px-2 py-0.5 text-[10px] font-bold text-background">{(i as any).kind === "service" ? "SERVICES" : "RENT"}</span>
+                             <span className="truncate">{i.month_year}</span>
+                           </div>
 
                           <div className="text-xs capitalize text-muted-foreground">{String(i.status).replace("_", " ")}</div>
                         </div>
-                        <div className="text-right">
+                         <div className="shrink-0 text-right">
                           <div className="font-semibold">{KES(Number(i.balance_remaining))}</div>
                           <div className="text-xs text-muted-foreground">of {KES(Number(i.total_due))}</div>
                         </div>
-                      </div>
-                      <div className="mt-2 border-t pt-2 text-xs">
+                       <div className="col-span-2 text-xs">
                         <InvoiceCharges invoice={i} />
                       </div>
                     </div>
