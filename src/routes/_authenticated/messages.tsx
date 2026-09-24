@@ -78,7 +78,6 @@ function MessagesPage() {
   const { data: account, isLoading } = useLandlordAccount();
   const [number, setNumber] = useState("");
   const [method, setMethod] = useState("mpesa_send_money");
-  const [note, setNote] = useState("");
   const [urgent, setUrgent] = useState("");
   const [sending, setSending] = useState(false);
   const [viaPush, setViaPush] = useState(true);
@@ -161,7 +160,6 @@ function MessagesPage() {
     if (!account) return;
     setNumber((account as any).rent_payment_number ?? "");
     setMethod((account as any).rent_payment_method ?? "mpesa_send_money");
-    setNote((account as any).rent_payment_note ?? "");
   }, [account]);
 
   const describeResult = (res: { sent: number; smsSent: number; smsFailed: number; smsSkippedNoCredit?: number }) => {

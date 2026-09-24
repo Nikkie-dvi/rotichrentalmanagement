@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { PAYMENT_METHODS, useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-account";
+import { PAYMENT_METHODS, useLandlordAccount } from "@/hooks/use-landlord-account";
 
 export const Route = createFileRoute("/_authenticated/settings/payments")({
   head: () => ({
@@ -58,22 +58,7 @@ function RentPaymentSettingsPage() {
     }
     qc.invalidateQueries({ queryKey: ["landlord-account"] });
 
-    // Push + SMS the change to every tenant right away.
-    const details = `Pay rent via ${paymentMethodLabel(method)}${number.trim() ? ` to ${number.trim()}` : ""}.`;
-    try {
-      const res = await notifyMyTenants({
-        data: {
-          title: "Payment details updated",
-          body: note.trim() ? `${details} ${note.trim()}` : details,
-          tag: `pay-details-${Date.now()}`,
-          push: viaPush,
-          sms: viaSms,
-        },
-      });
-      toast.success(`Saved — sent ${describeResult(res)}`);
-    } catch {
-      toast.success("Saved — your tenants will see this in their app");
-    }
+    toast.success("Payment details saved");
   };
 
   if (isLoading) {
