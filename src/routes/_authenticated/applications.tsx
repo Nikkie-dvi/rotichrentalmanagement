@@ -15,6 +15,7 @@ import { LeaseDialog } from "@/components/lease-document";
 import { useLandlordAccount } from "@/hooks/use-landlord-account";
 import { resolveLeaseTemplate } from "@/lib/lease-template";
 import { createFirstRentInvoice } from "@/lib/first-invoice";
+import { sendTenantWelcomeNow } from "@/lib/welcome.functions";
 import { SectionSwitcher, SectionPanel, PEOPLE_TABS } from "@/components/section-switcher";
 
 export const Route = createFileRoute("/_authenticated/applications")({
@@ -125,6 +126,7 @@ function ApplicationsPage() {
       } catch {
         /* approval must not fail because of billing */
       }
+      await sendTenantWelcomeNow({ data: { tenantId: t.id } }).catch(() => {});
       return { merged: dupes?.length ?? 0, invoiced };
     },
 
