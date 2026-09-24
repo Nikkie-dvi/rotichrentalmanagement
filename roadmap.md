@@ -16,6 +16,8 @@
 - [x] Utility readings reorganized into apartment and property feeds
 - [x] Tenant pages redesigned for compact mobile screens
 - [x] Published-page startup crash removed by lazy-loading Worker-incompatible integrations
+- [x] Portfolio Performance and monthly Reports unified in one shared workspace
+- [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
-- [ ] Signed-in check of the new dashboard sections (blocked: no test account available to sign in with)
+- None

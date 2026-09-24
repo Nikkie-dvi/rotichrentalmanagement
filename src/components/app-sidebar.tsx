@@ -59,11 +59,18 @@ const sections: NavSection[] = [
     items: [
       { title: "Dashboard", description: "Portfolio at a glance", url: "/", icon: LayoutDashboard },
       {
+        title: "Portfolio Performance",
+        description: "Insights, trends & reports",
+        url: "/performance",
+        icon: BarChart3,
+        matches: ["/performance", "/reports"],
+      },
+      {
         title: "Analytics & Landlords",
         description: "Performance, landlords & branding",
         url: "/analytics",
         icon: BarChart3,
-        matches: ["/analytics", "/landlords", "/settings/branding", "/performance"],
+        matches: ["/analytics", "/landlords", "/settings/branding"],
         superOnly: true,
       },
     ],
@@ -103,11 +110,11 @@ const sections: NavSection[] = [
     label: "Financials",
     items: [
       {
-        title: "Billing & Reports",
-        description: "Invoices & accounting reports",
+        title: "Billing & Invoices",
+        description: "Rent & service invoices",
         url: "/billing",
         icon: ReceiptText,
-        matches: ["/billing", "/reports"],
+        matches: ["/billing"],
         badge: "4",
       },
       {

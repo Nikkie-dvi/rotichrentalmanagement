@@ -115,7 +115,7 @@ export function SimplePropertyPerformance({ arrearsByTenant }: { arrearsByTenant
           <CardDescription>A simple view of expected rent, collections, and arrears this month.</CardDescription>
         </div>
         <Button asChild variant="ghost" size="sm" className="shrink-0">
-          <Link to="/properties">Details <ArrowRight className="h-4 w-4" /></Link>
+          <Link to="/performance">Details <ArrowRight className="h-4 w-4" /></Link>
         </Button>
       </CardHeader>
       <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
