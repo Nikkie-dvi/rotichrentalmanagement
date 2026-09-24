@@ -94,9 +94,7 @@ function RentPaymentSettingsPage() {
   const [docSending, setDocSending] = useState(false);
   const [docPropertyId, setDocPropertyId] = useState<string>("all");
   const [docUnitIds, setDocUnitIds] = useState<string[]>([]);
-  const [mode, setMode] = useState<"details" | "message">(
-    typeof window !== "undefined" && window.location.hash === "#sms-tenants" ? "message" : "details",
-  );
+
 
 
 

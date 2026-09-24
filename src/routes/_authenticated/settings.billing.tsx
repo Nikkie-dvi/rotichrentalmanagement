@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -254,6 +254,7 @@ function BillingSettingsPage() {
           <CardTitle className="flex items-center gap-2 text-base"><AlarmClock className="h-4 w-4" />Rent reminders to tenants</CardTitle>
           <CardDescription>
             Checked daily. Tenants get a heads-up before rent is due, and a follow-up if payment still hasn't come in.
+            {" "}Also available in <Link to="/messages" search={{ tab: "auto" } as never} className="text-primary underline">SMS Tenants</Link>.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
