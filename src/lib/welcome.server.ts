@@ -55,9 +55,29 @@ export async function runWelcomeSweep() {
 
   // Landlords
   const { data: landlords } = await supabaseAdmin
-    .from("landlord_accounts").select("user_id, full_name, phone, landlord_code, created_at, status");
+    .from("landlord_accounts").select("user_id, full_name, phone, email, landlord_code, created_at, status");
   for (const l of (landlords ?? []) as any[]) {
-    if (!l.phone || l.created_at < since) continue;
+    if (l.created_at < since) continue;
+    if (l.email && !(await alreadyLogged("landlord_welcome_email", { owner_id: l.user_id }))) {
+      let status = "delivered";
+      let error: string | null = null;
+      try {
+        const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+        const r = await sendTemplateEmail("landlord-welcome", l.email, {
+          templateData: { name: first(l.full_name, ""), landlordCode: l.landlord_code ?? undefined },
+          idempotencyKey: `landlord-welcome-${l.user_id}`,
+        });
+        if (!r.sent) status = "skipped";
+      } catch (e: any) {
+        status = "failed";
+        error = e?.code ?? e?.message ?? "failed";
+      }
+      // Leave unverified-domain failures unlogged so they retry next hour.
+      if (error !== "domain_not_verified") {
+        logs.push({ owner_id: l.user_id, channel: "email", recipient: l.email, subject: "landlord_welcome_email", message: "Welcome email", status, error });
+      }
+    }
+    if (!l.phone) continue;
     if (await alreadyLogged("landlord_welcome", { owner_id: l.user_id })) continue;
     const msg = `Welcome to Rotich Management Systems, ${first(l.full_name)}!${l.landlord_code ? ` Your landlord code is ${l.landlord_code}.` : ""} Add your properties and tenants at homebasemanager.app to start collecting rent.`;
     const res = await sendSms(l.phone, msg, { portalLink: false });
