@@ -46,6 +46,7 @@ function AuthPage() {
   const { next } = Route.useSearch();
   const redirected = useRef(false);
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -352,7 +353,7 @@ function AuthPage() {
                                 <Link to="/reset-password" className="text-primary underline">
                                   Reset it
                                 </Link>{" "}
-                                and we'll email you a link.
+                                and we'll text you a code.
                               </span>
                             </li>
                             <li className="flex items-start gap-2">
