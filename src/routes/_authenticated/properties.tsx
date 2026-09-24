@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { UNIT_TYPES, unitTypeLabel } from "@/lib/unit-types";
-import { useIsPropertyManager, useLandlordAccount } from "@/hooks/use-landlord-account";
+import { useIsPropertyManager, useLandlordAccount, useManagerLinks } from "@/hooks/use-landlord-account";
 import { assignableTenantsQuery, propertiesQuery, unitsFullQuery } from "@/lib/property-queries";
 import { DetailedPropertyPerformance } from "@/components/property-performance";
 import { loadTenantLedgers } from "@/lib/dashboard-ledgers";
