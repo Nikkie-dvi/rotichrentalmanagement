@@ -2,6 +2,7 @@
 // notification to every tenant device under that landlord.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { chargeSmsWallet } from "@/lib/sms-wallet.server";
 
 export const notifyMyTenants = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -140,13 +141,13 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
       }
       const funded = new Set<string>();
       for (const [ownerId, list] of byOwner) {
-        const { data: balance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
-          _owner: ownerId,
-          _count: list.length,
-          _reason: "broadcast",
-          _note: data.title,
-        } as never);
-        if (chargeErr || balance === null) {
+        const balance = await chargeSmsWallet(supabaseAdmin, {
+          ownerId,
+          count: list.length,
+          reason: "broadcast",
+          note: data.title,
+        });
+        if (balance === null) {
           smsSkippedNoCredit += list.length;
           continue;
         }

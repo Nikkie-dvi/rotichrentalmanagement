@@ -1,6 +1,7 @@
 // Tenant rent reminders: "X days before due" and "Y days after due if unpaid".
 // Driven by each landlord's billing_settings. Server-only.
 import { sendSms } from "./sms.server";
+import { chargeSmsWallet } from "./sms-wallet.server";
 
 const DEFAULTS = {
   rent_reminders_enabled: true,
@@ -100,13 +101,13 @@ export async function runRentReminders(opts: { ownerId?: string } = {}) {
 
     // SMS (charged to the landlord's SMS wallet)
     if (s.reminder_sms_enabled && tenant.phone_number) {
-      const { data: balanceAfter, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
-        _owner: inv.owner_id,
-        _count: 1,
-        _reason: "rent_reminder",
-        _note: subject,
-      } as never);
-      if (chargeErr || balanceAfter === null) {
+      const balanceAfter = await chargeSmsWallet(supabaseAdmin, {
+        ownerId: inv.owner_id,
+        count: 1,
+        reason: "rent_reminder",
+        note: subject,
+      });
+      if (balanceAfter === null) {
         smsSkippedNoCredit++;
         logs.push({
           owner_id: inv.owner_id,

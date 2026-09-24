@@ -2,6 +2,7 @@
 // appends a penalty line item, and alerts the tenant by SMS + push.
 // Server-only — never import this from a component.
 import { sendSms } from "./sms.server";
+import { chargeSmsWallet } from "./sms-wallet.server";
 
 type Settings = {
   owner_id: string;
@@ -148,8 +149,16 @@ export async function runLatePenalties(opts: { ownerId?: string; today?: string 
 
     const logs: any[] = [];
 
-    if (s.sms_enabled) {
-      const res = await sendSms((tenant as any).phone_number, smsBody);
+    if (s.sms_enabled && (tenant as any).phone_number) {
+      const walletBalance = await chargeSmsWallet(supabaseAdmin, {
+        ownerId: inv.owner_id,
+        count: 1,
+        reason: "late_penalty",
+        note: `Late payment fee ${inv.month_year}`,
+      });
+      const res = walletBalance === null
+        ? { ok: false, status: "skipped", error: "Not enough SMS credit" }
+        : await sendSms((tenant as any).phone_number, smsBody);
       logs.push({
         owner_id: inv.owner_id,
         tenant_id: tenant.id,

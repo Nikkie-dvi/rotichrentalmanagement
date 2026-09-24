@@ -1,6 +1,7 @@
 // Instant tenant alerts when a charge or fee is assessed.
 // Server-only — SMS via SMS Leopard, plus phone push, plus a notification log entry.
 import { sendSms } from "./sms.server";
+import { chargeSmsWallet } from "./sms-wallet.server";
 
 const money = (n: number) => `KES ${Math.round(n).toLocaleString("en-US")}`;
 
@@ -39,13 +40,13 @@ export async function notifyTenantOfCharge(args: {
 
   if ((settings as any)?.sms_enabled !== false && (tenant as any).phone_number) {
     // Flat 1.2 KES per SMS from the landlord's wallet — no credit, no SMS.
-    const { data: walletBalance, error: chargeErr } = await supabaseAdmin.rpc("sms_charge" as never, {
-      _owner: args.ownerId,
-      _count: 1,
-      _reason: "charge_alert",
-      _note: args.label,
-    } as never);
-    if (chargeErr || walletBalance === null) {
+    const walletBalance = await chargeSmsWallet(supabaseAdmin, {
+      ownerId: args.ownerId,
+      count: 1,
+      reason: "charge_alert",
+      note: args.label,
+    });
+    if (walletBalance === null) {
       smsSkippedNoCredit = true;
     } else {
     const res = await sendSms((tenant as any).phone_number, message);
