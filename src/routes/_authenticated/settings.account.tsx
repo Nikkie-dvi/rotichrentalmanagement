@@ -9,6 +9,7 @@ import {
   paymentMethodLabel,
   subscriptionState,
   trialState,
+  useIsPropertyManager,
   useLandlordAccount,
   usePlatformPricing,
 } from "@/hooks/use-landlord-account";
@@ -30,8 +31,10 @@ export const Route = createFileRoute("/_authenticated/settings/account")({
 });
 
 function AccountPage() {
+  const isManager = useIsPropertyManager();
   const { data: account, isLoading } = useLandlordAccount();
   const { data: pricing } = usePlatformPricing();
+  if (isManager) return <p className="py-12 text-center text-sm text-muted-foreground">This page is available to the landlord only.</p>;
   if (isLoading) return <p className="py-12 text-center text-sm text-muted-foreground">Loading account…</p>;
   if (!account) return <p className="py-12 text-center text-sm text-muted-foreground">Account details are unavailable.</p>;
 
