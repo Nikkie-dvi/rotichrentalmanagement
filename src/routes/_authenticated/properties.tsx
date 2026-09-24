@@ -55,6 +55,7 @@ function PropertiesPage() {
   const [editing, setEditing] = useState<any>(null);
   // Property managers work read-only here: they cannot add, edit or delete stock.
   const isManager = useIsPropertyManager();
+  const { data: account } = useLandlordAccount();
 
   const { data: properties } = useQuery(propertiesQuery);
   const { data: units } = useQuery(unitsFullQuery);
@@ -73,7 +74,9 @@ function PropertiesPage() {
 
   const saveProperty = useMutation({
     mutationFn: async (v: { name: string; location: string }) => {
-      const { error } = await supabase.from("properties").insert(v);
+      const { error } = await supabase
+        .from("properties")
+        .insert(isManager && account?.user_id ? { ...v, owner_id: account.user_id } : v);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -164,11 +167,7 @@ function PropertiesPage() {
           <h2 className="text-2xl font-bold tracking-tight">Properties & Units</h2>
           <p className="text-sm text-muted-foreground">Buildings and their rentable units.</p>
         </div>
-        {isManager ? (
-          <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400">
-            View only — ask the landlord to add or remove units
-          </Badge>
-        ) : (
+        {false ? null : (
         <div className="flex gap-2">
           <Dialog open={propOpen} onOpenChange={setPropOpen}>
             <DialogTrigger asChild><Button variant="secondary"><Plus className="h-4 w-4" />Add Property</Button></DialogTrigger>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsPropertyManager, useLandlordAccount } from "@/hooks/use-landlord-account";
+import { setActiveLandlordId, useIsPropertyManager, useLandlordAccount, useManagerLinks } from "@/hooks/use-landlord-account";
 import { useTheme } from "@/lib/theme";
 import { money } from "@/lib/types";
 import {
@@ -50,6 +50,8 @@ export function AppHeader() {
   const counts = usePendingCounts();
   const isManager = useIsPropertyManager();
   const { data: account } = useLandlordAccount();
+  const { data: links } = useManagerLinks();
+  const activeLinks = (links ?? []).filter((l) => l.active);
 
   const signOut = async () => {
     await queryClient.cancelQueries();
@@ -115,6 +117,24 @@ export function AppHeader() {
           <UserCog className="h-3.5 w-3.5" />
           Manager
         </Badge>
+      )}
+      {isManager && activeLinks.length > 1 && (
+        <select
+          aria-label="Choose landlord"
+          className="h-8 max-w-[10rem] shrink-0 truncate rounded-md border bg-background px-2 text-xs"
+          value={account?.user_id ?? ""}
+          onChange={(e) => {
+            setActiveLandlordId(e.target.value);
+            queryClient.invalidateQueries();
+            toast.success("Switched landlord");
+          }}
+        >
+          {activeLinks.map((l) => (
+            <option key={l.id} value={l.landlord_user_id}>
+              {(l.landlord_name ?? "Landlord") + (l.property_names?.length ? ` · ${l.property_names.join(", ")}` : "")}
+            </option>
+          ))}
+        </select>
       )}
       <div className="ml-auto flex items-center gap-2 overflow-x-auto">
         {!isManager && <QuickStartGuide audience="landlord" steps={LANDLORD_GUIDE} compact />}

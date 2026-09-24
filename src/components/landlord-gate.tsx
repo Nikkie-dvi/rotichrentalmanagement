@@ -61,7 +61,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
           We've texted and emailed the landlord about your registration. You'll see their property here as soon as they
           switch your access on in Settings → Property Managers.
         </p>
-        <Button variant="outline" onClick={() => refetch()} disabled={isRefetching}>Check again</Button>
+        <Button variant="outline" onClick={() => qc.invalidateQueries()}>Check again</Button>
       </div>
     );
   }
