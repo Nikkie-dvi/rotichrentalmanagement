@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SmsRechargeAdmin } from "@/components/sms-recharge-admin";
+import { ManagerFeesAdmin } from "@/components/manager-fees-admin";
 
 import { SectionSwitcher, SectionPanel, ADMIN_TABS } from "@/components/section-switcher";
 import {
@@ -343,6 +344,7 @@ function LandlordsPage() {
       </div>
 
       <SmsRechargeAdmin />
+      <ManagerFeesAdmin />
 
 
 

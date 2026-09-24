@@ -68,6 +68,25 @@ export const registerPropertyManager = createServerFn({ method: "POST" })
     const managerMsisdn = toKenyanMsisdn(data.phone);
     if (!managerMsisdn) throw new Error("Your phone number doesn't look right");
 
+    // 0. Spam protection: max 3 sign-up attempts per phone/email per day, 20 overall per hour.
+    {
+      const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
+      const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
+      const email = data.email.trim().toLowerCase();
+      const [{ count: perKey }, { count: global }] = await Promise.all([
+        (supabaseAdmin as any).from("signup_attempts").select("id", { count: "exact", head: true })
+          .eq("kind", "manager").in("key", [managerMsisdn, email]).gte("created_at", dayAgo),
+        (supabaseAdmin as any).from("signup_attempts").select("id", { count: "exact", head: true })
+          .eq("kind", "manager").gte("created_at", hourAgo),
+      ]);
+      if ((perKey ?? 0) >= 6) throw new Error("Too many sign-up attempts with these details. Try again tomorrow.");
+      if ((global ?? 0) >= 40) throw new Error("Sign-ups are busy right now. Please try again in an hour.");
+      await (supabaseAdmin as any).from("signup_attempts").insert([
+        { kind: "manager", key: managerMsisdn },
+        { kind: "manager", key: email },
+      ]);
+    }
+
     // 1. Manager login
     const created = await supabaseAdmin.auth.admin.createUser({
       email: data.email,

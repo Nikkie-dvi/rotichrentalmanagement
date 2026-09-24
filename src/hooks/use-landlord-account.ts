@@ -273,6 +273,7 @@ export type ManagerLink = {
   active: boolean;
   source: string;
   property_names: string[];
+  can_edit_units?: boolean;
   landlord_name: string | null;
 };
 
@@ -285,7 +286,7 @@ export function useManagerLinks() {
       if (!auth.user) return [];
       const { data: rows } = await (supabase as any)
         .from("property_managers")
-        .select("id,landlord_user_id,active,source,property_names")
+        .select("id,landlord_user_id,active,source,property_names,can_edit_units")
         .eq("manager_user_id", auth.user.id);
       const list = (rows ?? []) as Omit<ManagerLink, "landlord_name">[];
       const ids = list.filter((r) => r.active).map((r) => r.landlord_user_id);
