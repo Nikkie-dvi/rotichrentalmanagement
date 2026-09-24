@@ -263,8 +263,10 @@ function TenantLoginPage() {
           <p className="mt-2 text-center text-xs text-muted-foreground">
             Landlord? <Link to="/auth" className="font-medium underline">Sign in here</Link>
           </p>
-
+            </>
+          )}
         </CardContent>
+
       </Card>
       </div>
     </div>
