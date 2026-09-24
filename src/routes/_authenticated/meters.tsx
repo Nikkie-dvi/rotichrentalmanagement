@@ -19,6 +19,8 @@ export const Route = createFileRoute("/_authenticated/meters")({
       { name: "description", content: "Log utility meter readings and compute per-tenant utility bills automatically." },
       { property: "og:title", content: "Meter Readings & Utilities — Rotich Management Systems" },
       { property: "og:description", content: "Log meter readings; auto-calc utility bills." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   loader: ({ context }) => {
