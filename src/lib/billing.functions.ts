@@ -255,6 +255,7 @@ export const smsTenant = createServerFn({ method: "POST" })
       .eq("id", data.tenantId)
       .maybeSingle();
     if (error || !tenant) throw new Error(error?.message ?? "Tenant not found");
+    if (!(tenant as any).phone_number) throw new Error("This tenant has no phone number saved");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");

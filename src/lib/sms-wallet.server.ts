@@ -20,6 +20,7 @@ async function notifyLowSmsBalance(
     .select("id")
     .eq("owner_id", ownerId)
     .eq("subject", "Low SMS credit")
+    .eq("status", "delivered")
     .gte("created_at", since)
     .limit(1)
     .maybeSingle();
