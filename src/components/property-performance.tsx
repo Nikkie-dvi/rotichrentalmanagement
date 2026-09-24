@@ -79,7 +79,17 @@ export async function loadPropertyPerformance(
   });
 }
 
-function usePropertyPerformance(arrearsByTenant: Map<string, number>) {
+function toArrearsMap(value: unknown): Map<string, number> {
+  if (value instanceof Map) return value as Map<string, number>;
+  if (Array.isArray(value)) return new Map(value as [string, number][]);
+  if (value && typeof value === "object") {
+    return new Map(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, Number(v) || 0]));
+  }
+  return new Map();
+}
+
+function usePropertyPerformance(input: Map<string, number>) {
+  const arrearsByTenant = toArrearsMap(input);
   return useQuery({
     queryKey: ["property-performance", Array.from(arrearsByTenant.entries())],
     queryFn: () => loadPropertyPerformance(arrearsByTenant),
