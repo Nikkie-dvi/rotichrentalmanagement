@@ -15,6 +15,7 @@
 - [x] Low SMS balance alerts sent to the landlord's saved phone
 - [x] Utility readings reorganized into apartment and property feeds
 - [x] Tenant pages redesigned for compact mobile screens
+- [x] Published-page startup crash removed by lazy-loading Worker-incompatible integrations
 
 ## Open
 - [ ] Signed-in check of the new dashboard sections (blocked: no test account available to sign in with)

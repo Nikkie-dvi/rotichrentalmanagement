@@ -2,7 +2,6 @@
 // for tenants whose rent is due today, in the next 3 days, or overdue with an
 // unpaid invoice for the current month.
 import { createFileRoute } from "@tanstack/react-router";
-import webpush from "web-push";
 
 type Sub = {
   id: string;
@@ -19,6 +18,9 @@ export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
     handlers: {
       POST: async () => {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        // web-push pulls in Node-oriented buffer helpers. Keep it out of the
+        // global route graph so ordinary page requests remain Worker-safe.
+        const webpush = (await import("web-push")).default;
 
         webpush.setVapidDetails(
           process.env.VAPID_SUBJECT || "mailto:reminders@example.com",
