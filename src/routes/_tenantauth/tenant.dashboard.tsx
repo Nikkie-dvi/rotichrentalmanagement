@@ -266,11 +266,12 @@ function DashboardPage() {
           <CardHeader>
             <CardTitle>Your tenancy has ended</CardTitle>
             <CardDescription>
-              You moved out{(t as any).move_out_date ? ` on ${(t as any).move_out_date}` : ""}, so this portal no longer
-              shows unit, rent or maintenance details. Contact your landlord if this is a mistake.
+              You moved out{(t as any).move_out_date ? ` on ${(t as any).move_out_date}` : ""}. Moving into a new home?
+              Register again as a new tenant.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
+            <Button asChild className="glass-btn glow-blue"><Link to="/tenant/register">Register as a new tenant</Link></Button>
             <Button variant="outline" onClick={signOut} className="glass-btn glow-red">
               <LogOut className="mr-2 h-4 w-4" /> Sign out
             </Button>

@@ -155,6 +155,8 @@ export const verifyTenantLoginCode = createServerFn({ method: "POST" })
       .from("tenants")
       .select("id, full_name, email, auth_user_id")
       .in("phone_number", phoneVariants(msisdn, data.phone))
+      .is("move_out_date", null)
+      .order("created_at", { ascending: false })
       .limit(1);
     const tenant = rows?.[0] as
       | { id: string; full_name: string | null; email: string | null; auth_user_id: string | null }
