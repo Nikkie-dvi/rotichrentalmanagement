@@ -10,9 +10,9 @@ const DEFAULTS = {
   reminder_sms_enabled: true,
   reminder_push_enabled: true,
   reminder_before_template:
-    "Hi {tenant_name}, your rent of {total_balance} is due on {due_date} ({days} day(s) from today). Kindly pay on time. Thank you.",
+    "Dear {tenant_name}, this is a polite reminder that your rent of {total_balance} falls due on {due_date}. To check your balance or make a payment, visit homebasemanager.app/tenant/login and sign in with your phone number. Thank you.",
   reminder_after_template:
-    "Hi {tenant_name}, we have not yet received your rent of {total_balance} which was due on {due_date} ({days} day(s) ago). Kindly settle it as soon as possible.",
+    "Dear {tenant_name}, our records show your rent of {total_balance}, due on {due_date}, is still outstanding. Kindly settle it at your earliest convenience. You can view your balance at homebasemanager.app/tenant/login - sign in with your phone number.",
 };
 
 const money = (n: number) => `KES ${Math.round(n).toLocaleString("en-US")}`;
@@ -142,7 +142,8 @@ export async function runRentReminders(opts: { ownerId?: string } = {}) {
     if (s.reminder_push_enabled && tenant.auth_user_id) {
       try {
         if (!webpush) {
-          webpush = (await import("web-push")).default;
+          const { loadWebpush } = await import("./push.server");
+          webpush = await loadWebpush();
           webpush.setVapidDetails(
             process.env["VAPID_SUBJECT"] || "mailto:reminders@example.com",
             process.env["VAPID_PUBLIC_KEY"]!,

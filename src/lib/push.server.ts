@@ -2,6 +2,16 @@
 // (landlords, property managers or tenants) and clean up dead subscriptions.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+// The web-push package is CommonJS; depending on how the server bundler
+// wraps it, the callable API is either the module itself or its .default.
+// Normalize once so webpush.setVapidDetails always exists.
+export async function loadWebpush() {
+  const mod: any = await import("web-push");
+  const wp = mod?.default?.setVapidDetails ? mod.default : mod;
+  if (!wp?.setVapidDetails) throw new Error("web-push failed to load");
+  return wp;
+}
+
 export type PushPayload = {
   title: string;
   body: string;
@@ -17,7 +27,7 @@ export async function pushToUsers(userIds: string[], payload: PushPayload) {
   const privateKey = process.env["VAPID_PRIVATE_KEY"];
   if (!publicKey || !privateKey) return { sent: 0, removed: 0 };
 
-  const webpush = (await import("web-push")).default;
+  const webpush = await loadWebpush();
   webpush.setVapidDetails(
     process.env["VAPID_SUBJECT"] || "mailto:reminders@example.com",
     publicKey,

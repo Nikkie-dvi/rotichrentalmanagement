@@ -45,9 +45,9 @@ const DEFAULTS = {
   reminder_sms_enabled: true,
   reminder_push_enabled: true,
   reminder_before_template:
-    "Hi {tenant_name}, your rent of {total_balance} is due on {due_date} ({days} day(s) from today). Kindly pay on time. Thank you.",
+    "Dear {tenant_name}, this is a polite reminder that your rent of {total_balance} falls due on {due_date}. To check your balance or make a payment, visit homebasemanager.app/tenant/login and sign in with your phone number. Thank you.",
   reminder_after_template:
-    "Hi {tenant_name}, we have not yet received your rent of {total_balance} which was due on {due_date} ({days} day(s) ago). Kindly settle it as soon as possible.",
+    "Dear {tenant_name}, our records show your rent of {total_balance}, due on {due_date}, is still outstanding. Kindly settle it at your earliest convenience. You can view your balance at homebasemanager.app/tenant/login - sign in with your phone number.",
   sms_template:
     "Hi {tenant_name}, a late fee of {penalty_amount} has been added to your rent. Your updated balance is {total_balance}, due by {due_date}.",
   email_subject: "Late payment fee added to your rent",

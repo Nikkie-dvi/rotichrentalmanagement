@@ -94,7 +94,8 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
     let devices = 0;
 
     if (data.push && userIds.length > 0) {
-      const webpush = (await import("web-push")).default;
+      const { loadWebpush } = await import("@/lib/push.server");
+      const webpush = await loadWebpush();
       webpush.setVapidDetails(
         process.env["VAPID_SUBJECT"] || "mailto:reminders@example.com",
         process.env["VAPID_PUBLIC_KEY"]!,
