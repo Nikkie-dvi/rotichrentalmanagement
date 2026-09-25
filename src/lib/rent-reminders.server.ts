@@ -142,7 +142,8 @@ export async function runRentReminders(opts: { ownerId?: string } = {}) {
     if (s.reminder_push_enabled && tenant.auth_user_id) {
       try {
         if (!webpush) {
-          webpush = (await import("web-push")).default;
+          const { loadWebpush } = await import("./push.server");
+          webpush = await loadWebpush();
           webpush.setVapidDetails(
             process.env["VAPID_SUBJECT"] || "mailto:reminders@example.com",
             process.env["VAPID_PUBLIC_KEY"]!,
