@@ -64,6 +64,17 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    // After a new version is published, an already-open tab asks for files that
+    // no longer exist. Reload once to pick up the new version instead of failing.
+    const msg = String((error as any)?.message ?? error);
+    const stale = /dynamically imported module|Importing a module script failed|Failed to fetch|Loading chunk|error loading dynamically/i.test(msg);
+    const key = "rms-stale-reload";
+    if (stale && !sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, "1");
+      window.location.reload();
+      return;
+    }
+    sessionStorage.removeItem(key);
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
   return (
