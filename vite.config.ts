@@ -20,6 +20,9 @@ export default defineConfig({
         "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),
         "entities/lib/encode.js": path.resolve(__dirname, "node_modules/entities/lib/encode.js"),
         entities: path.resolve(__dirname, "node_modules/entities"),
+        // safer-buffer crashes in the Worker bundle (buffer.hasOwnProperty on a
+        // null-prototype module namespace). Swap it for our Worker-safe shim.
+        "safer-buffer": path.resolve(__dirname, "src/shims/safer-buffer.ts"),
       },
     },
     plugins: [
