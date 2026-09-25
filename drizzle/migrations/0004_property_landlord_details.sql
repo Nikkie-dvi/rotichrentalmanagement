@@ -1,0 +1,1 @@
+ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS landlord_name text, ADD COLUMN IF NOT EXISTS landlord_phone text, ADD COLUMN IF NOT EXISTS landlord_email text;

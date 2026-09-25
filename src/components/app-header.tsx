@@ -52,6 +52,18 @@ export function AppHeader() {
   const { data: account } = useLandlordAccount();
   const { data: links } = useManagerLinks();
   const activeLinks = (links ?? []).filter((l) => l.active);
+  // Managers who still keep some properties on their own account can switch back to them.
+  const { data: ownProps } = useQuery({
+    queryKey: ["own-properties-count", isManager],
+    enabled: isManager,
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return null;
+      const { count } = await supabase.from("properties").select("id", { count: "exact", head: true }).eq("owner_id", u.user.id);
+      return { userId: u.user.id, count: count ?? 0 };
+    },
+  });
+  const showOwn = !!ownProps && ownProps.count > 0;
 
   const signOut = async () => {
     await queryClient.cancelQueries();
@@ -118,7 +130,7 @@ export function AppHeader() {
           Manager
         </Badge>
       )}
-      {isManager && activeLinks.length > 1 && (
+      {isManager && activeLinks.length + (showOwn ? 1 : 0) > 1 && (
         <select
           aria-label="Choose landlord"
           className="h-8 max-w-[10rem] shrink-0 truncate rounded-md border bg-background px-2 text-xs"
@@ -129,6 +141,7 @@ export function AppHeader() {
             toast.success("Switched landlord");
           }}
         >
+          {showOwn && <option value={ownProps!.userId}>My own properties</option>}
           {activeLinks.map((l) => (
             <option key={l.id} value={l.landlord_user_id}>
               {(l.landlord_name ?? "Landlord") + (l.property_names?.length ? ` · ${l.property_names.join(", ")}` : "")}

@@ -736,6 +736,9 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          landlord_email: string | null
+          landlord_name: string | null
+          landlord_phone: string | null
           location: string | null
           name: string
           owner_id: string
@@ -743,6 +746,9 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          landlord_email?: string | null
+          landlord_name?: string | null
+          landlord_phone?: string | null
           location?: string | null
           name: string
           owner_id?: string
@@ -750,6 +756,9 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          landlord_email?: string | null
+          landlord_name?: string | null
+          landlord_phone?: string | null
           location?: string | null
           name?: string
           owner_id?: string

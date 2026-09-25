@@ -2,7 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, UserRound } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { savePropertyLandlord } from "@/lib/property-handover.functions";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,7 +60,13 @@ function PropertiesPage() {
   const isManager = useIsPropertyManager();
   const { data: account } = useLandlordAccount();
   const { data: managerLinks } = useManagerLinks();
-  const canEditStock = !isManager || !!(managerLinks ?? []).find((l) => l.active && l.landlord_user_id === account?.user_id)?.can_edit_units;
+  const { data: myId } = useQuery({
+    queryKey: ["my-user-id"],
+    queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
+    staleTime: Infinity,
+  });
+  const onOwnAccount = !!myId && account?.user_id === myId;
+  const canEditStock = !isManager || onOwnAccount || !!(managerLinks ?? []).find((l) => l.active && l.landlord_user_id === account?.user_id)?.can_edit_units;
 
   const { data: properties } = useQuery(propertiesQuery);
   const { data: units } = useQuery(unitsFullQuery);
@@ -216,6 +225,7 @@ function PropertiesPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Location</TableHead>
+                <TableHead>Landlord</TableHead>
                 <TableHead className="text-right">Units</TableHead>
                 <TableHead className="w-16" />
               </TableRow>
@@ -227,6 +237,12 @@ function PropertiesPage() {
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell>{p.location ?? "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <span className="truncate text-sm">{p.landlord_name ?? (onOwnAccount || !isManager ? "Not set" : account?.full_name ?? "—")}</span>
+                        {p.owner_id === myId && <LandlordDialog property={p} />}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">{unitCount}</TableCell>
                     <TableCell>
                       {canEditStock && (
@@ -261,7 +277,7 @@ function PropertiesPage() {
                 );
               })}
               {(!properties || properties.length === 0) && (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">No properties yet. Add one to get started.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No properties yet. Add one to get started.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -338,6 +354,52 @@ function PropertiesPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function LandlordDialog({ property: p }: { property: any }) {
+  const qc = useQueryClient();
+  const save = useServerFn(savePropertyLandlord);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(p.landlord_name ?? "");
+  const [phone, setPhone] = useState(p.landlord_phone ?? "");
+  const [email, setEmail] = useState(p.landlord_email ?? "");
+  const [handOver, setHandOver] = useState(false);
+  const m = useMutation({
+    mutationFn: () => save({ data: { propertyId: p.id, landlordName: name, landlordPhone: phone, landlordEmail: email, handOver } }),
+    onSuccess: (r: any) => {
+      qc.invalidateQueries();
+      setOpen(false);
+      toast.success(r?.handedOver
+        ? `${p.name} moved to the landlord's account. Switch landlord at the top to manage it.`
+        : "Landlord details saved");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost" className="h-7 w-7" aria-label={`Landlord details for ${p.name}`}><UserRound className="h-4 w-4" /></Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Landlord of {p.name}</DialogTitle></DialogHeader>
+        <form onSubmit={(e) => { e.preventDefault(); m.mutate(); }} className="space-y-3">
+          <div><Label>Landlord full name</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
+          <div><Label>Landlord phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XXXXXXXX" required /></div>
+          <div><Label>Landlord email {handOver ? "" : "(optional)"}</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required={handOver} /></div>
+          <label className="flex items-start gap-3 rounded-md border p-3">
+            <Switch checked={handOver} onCheckedChange={setHandOver} />
+            <span className="text-sm">
+              <b>Give the landlord a login</b>
+              <span className="block text-xs text-muted-foreground">
+                Moves this property, its units, tenants and payment history to the landlord's account. You stay on as their property manager and can still edit everything. The landlord gets a text on how to sign in.
+              </span>
+            </span>
+          </label>
+          <DialogFooter><Button type="submit" disabled={m.isPending}>{m.isPending ? "Saving…" : handOver ? "Save & give login" : "Save"}</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

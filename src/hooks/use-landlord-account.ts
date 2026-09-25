@@ -215,7 +215,9 @@ export function useLandlordAccount() {
         .select("id,landlord_user_id,active")
         .eq("manager_user_id", user.id);
       const mRows = (managerRows ?? []) as { landlord_user_id: string; active: boolean }[];
-      if (mRows.length > 0 && !isSuper) {
+      // A manager who also has properties on their own account can pick "My own properties".
+      const chosenSelf = getActiveLandlordId() === user.id;
+      if (mRows.length > 0 && !isSuper && !chosenSelf) {
         const activeRows = mRows.filter((r) => r.active);
         // A switched-off manager keeps no access at all.
         if (activeRows.length === 0) return null;
