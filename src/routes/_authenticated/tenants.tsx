@@ -94,6 +94,11 @@ function TenantsPage() {
 
 
   const { data: tenants } = useQuery(tenantsFullQuery);
+  // Keep each building's tenants apart: pick one property to work on.
+  const [propFilter, setPropFilter] = useState<string>("all");
+  const propertyNames = Array.from(
+    new Set((tenants ?? []).filter((t: any) => t.active).map((t: any) => t.units?.properties?.name ?? "No unit assigned")),
+  ).sort((a: any, b: any) => (a === "No unit assigned" ? 1 : b === "No unit assigned" ? -1 : a.localeCompare(b))) as string[];
 
   const { data: unpaidInvoices } = useQuery(tenantBalancesQuery);
 
@@ -259,6 +264,7 @@ function TenantsPage() {
 
   const rank: Record<RiskLevel, number> = { high: 0, overdue: 1, soon: 2, clear: 3, credit: 4 };
   const matches = (t: any) => {
+    if (propFilter !== "all" && (t.units?.properties?.name ?? "No unit assigned") !== propFilter) return false;
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return [t.full_name, t.phone_number, t.email, t.units?.unit_number, t.units?.properties?.name]
@@ -356,6 +362,7 @@ function TenantsPage() {
             <DialogHeader><DialogTitle>Assign New Tenant</DialogTitle></DialogHeader>
             <TenantForm
               vacantUnits={vacantUnits ?? []}
+              defaultProperty={propFilter !== "all" && propFilter !== "No unit assigned" ? propFilter : ""}
               onSubmit={(payload) => assign.mutate(payload)}
             />
           </DialogContent>
@@ -376,6 +383,23 @@ function TenantsPage() {
           <span>
             <b>{duplicateCount}</b> tenant record{duplicateCount === 1 ? "" : "s"} look like duplicates (same name and phone). Move out the extra record to keep balances clean.
           </span>
+        </div>
+      )}
+
+      {propertyNames.length > 1 && (
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Filter by property">
+          {["all", ...propertyNames].map((name) => {
+            const count = name === "all"
+              ? (tenants ?? []).filter((t: any) => t.active).length
+              : (tenants ?? []).filter((t: any) => t.active && (t.units?.properties?.name ?? "No unit assigned") === name).length;
+            return (
+              <Button key={name} type="button" size="sm" role="tab" aria-selected={propFilter === name}
+                variant={propFilter === name ? "default" : "outline"} className="h-8 shrink-0 rounded-full px-3 text-xs"
+                onClick={() => setPropFilter(name)}>
+                {name === "all" ? "All properties" : name} <span className="ml-1 opacity-70">{count}</span>
+              </Button>
+            );
+          })}
         </div>
       )}
 
@@ -864,11 +888,16 @@ type TenantFormPayload = {
 
 function TenantForm({
   vacantUnits,
+  defaultProperty = "",
   onSubmit,
 }: {
   vacantUnits: any[];
+  defaultProperty?: string;
   onSubmit: (payload: TenantFormPayload) => void;
 }) {
+  const unitProps = Array.from(new Set(vacantUnits.map((u: any) => u.properties?.name ?? "Other"))).sort() as string[];
+  const [propName, setPropName] = useState(unitProps.includes(defaultProperty) ? defaultProperty : unitProps.length === 1 ? unitProps[0] : "");
+  const unitsHere = vacantUnits.filter((u: any) => (u.properties?.name ?? "Other") === propName);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [unitId, setUnitId] = useState("");
@@ -949,11 +978,20 @@ function TenantForm({
         <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+2547XXXXXXXX" />
       </div>
       <div>
-        <Label>Vacant Unit</Label>
-        <Select value={unitId} onValueChange={setUnitId} required>
-          <SelectTrigger><SelectValue placeholder="Select a vacant unit" /></SelectTrigger>
+        <Label>Property</Label>
+        <Select value={propName} onValueChange={(v) => { setPropName(v); setUnitId(""); }} required>
+          <SelectTrigger><SelectValue placeholder="Choose the property first" /></SelectTrigger>
           <SelectContent>
-            {vacantUnits.map((u: any) => (
+            {unitProps.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label>Vacant Unit</Label>
+        <Select value={unitId} onValueChange={setUnitId} required disabled={!propName}>
+          <SelectTrigger><SelectValue placeholder={propName ? "Select a vacant unit" : "Pick a property above"} /></SelectTrigger>
+          <SelectContent>
+            {unitsHere.map((u: any) => (
               <SelectItem key={u.id} value={u.id}>
                 {u.properties?.name} — {u.unit_number} ({money(Number(u.rent_amount))})
               </SelectItem>
