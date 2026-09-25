@@ -189,7 +189,8 @@ export async function runLatePenalties(opts: { ownerId?: string; today?: string 
     // Phone push notification for tenants with the app installed.
     if ((tenant as any).auth_user_id) {
       try {
-        const webpush = (await import("web-push")).default;
+        const { loadWebpush } = await import("./push.server");
+        const webpush = await loadWebpush();
         webpush.setVapidDetails(
           process.env["VAPID_SUBJECT"] || "mailto:reminders@example.com",
           process.env["VAPID_PUBLIC_KEY"]!,

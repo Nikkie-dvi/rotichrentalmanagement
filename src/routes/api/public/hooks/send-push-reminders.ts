@@ -20,7 +20,8 @@ export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         // web-push pulls in Node-oriented buffer helpers. Keep it out of the
         // global route graph so ordinary page requests remain Worker-safe.
-        const webpush = (await import("web-push")).default;
+        const { loadWebpush } = await import("@/lib/push.server");
+        const webpush = await loadWebpush();
 
         webpush.setVapidDetails(
           process.env.VAPID_SUBJECT || "mailto:reminders@example.com",
