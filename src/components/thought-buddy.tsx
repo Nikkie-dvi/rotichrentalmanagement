@@ -5,11 +5,25 @@ import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 
-type Thought = { id: string; emoji: string; text: string; to: string };
+type Thought = { id: string; emoji: string; text: string; to: string; weight: number };
 
 const DISMISS_KEY = "rms-buddy-off-until";
 const FIRST_DELAY = 20_000;
 const SHOW_FOR = 8_000;
+
+// Each day gets its own "mood" — some days the buddy is chatty, some days quiet.
+function dayMood(): number {
+  const day = new Date().toISOString().slice(0, 10);
+  let h = 0;
+  for (const c of day) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return 0.5 + (h % 100) / 100; // 0.5 (quiet day) … 1.5 (active day)
+}
+
+// Urgent data (lots of overdue rent) shortens the gap; calm data stretches it.
+function nextDelay(urgency: number): number {
+  const base = urgency >= 8 ? 60_000 : urgency >= 4 ? 120_000 : urgency >= 1 ? 300_000 : 600_000;
+  return (base / dayMood()) * (0.6 + Math.random() * 1.3);
+}
 const corners = [
   "bottom-5 right-5",
   "bottom-5 left-5 md:left-[calc(var(--sidebar-width,16rem)+1.25rem)]",
