@@ -92,7 +92,7 @@ function ManagersPage() {
 
   // Payments each manager recorded in the last 30 days, so the landlord can track their work.
   const recorded = useQuery({
-    queryKey: ["manager-recorded-payments"],
+    queryKey: ["manager-recorded-payments-v2"],
     queryFn: async () => {
       const since = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
       const { data } = await (supabase as any)
@@ -100,10 +100,10 @@ function ManagersPage() {
         .select("recorded_by, amount_paid")
         .gte("payment_date", since)
         .not("recorded_by", "is", null);
-      const map = new Map<string, { count: number; total: number }>();
+      const map: Record<string, { count: number; total: number }> = {};
       for (const p of (data ?? []) as { recorded_by: string; amount_paid: number }[]) {
-        const cur = map.get(p.recorded_by) ?? { count: 0, total: 0 };
-        map.set(p.recorded_by, { count: cur.count + 1, total: cur.total + Number(p.amount_paid || 0) });
+        const cur = map[p.recorded_by] ?? { count: 0, total: 0 };
+        map[p.recorded_by] = { count: cur.count + 1, total: cur.total + Number(p.amount_paid || 0) };
       }
       return map;
     },
@@ -254,8 +254,8 @@ function ManagersPage() {
                 )}
                 {m.manager_user_id && (
                   <div className="text-xs text-muted-foreground">
-                    Last 30 days: {recorded.data?.get(m.manager_user_id)?.count ?? 0} payments recorded · KES{" "}
-                    {(recorded.data?.get(m.manager_user_id)?.total ?? 0).toLocaleString()}
+                    Last 30 days: {recorded.data?.[m.manager_user_id]?.count ?? 0} payments recorded · KES{" "}
+                    {(recorded.data?.[m.manager_user_id]?.total ?? 0).toLocaleString()}
                   </div>
                 )}
                 <label className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
