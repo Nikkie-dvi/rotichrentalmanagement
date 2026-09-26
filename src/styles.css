@@ -309,3 +309,10 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ctext x='150' y='140' font-family='system-ui,sans-serif' font-size='58' font-weight='800' letter-spacing='2' text-anchor='middle' fill='%23e5e7eb' opacity='0.05'%3EROTICH%3C/text%3E%3Ctext x='150' y='175' font-family='system-ui,sans-serif' font-size='22' font-weight='600' letter-spacing='8' text-anchor='middle' fill='%23e5e7eb' opacity='0.06'%3ERENTALS%3C/text%3E%3C/svg%3E");
 }
 
+
+@keyframes thought-pop { from { opacity: 0; transform: scale(0.6) translateY(12px); } 60% { opacity: 1; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+@keyframes thought-fade { to { opacity: 0; transform: scale(0.8) translateY(8px); filter: blur(4px); } }
+@keyframes thought-bob { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-4px) rotate(4deg); } }
+@utility thought-in { animation: thought-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@utility thought-out { animation: thought-fade 0.4s ease-in forwards; }
+@utility thought-bob { animation: thought-bob 2.4s ease-in-out infinite; }
