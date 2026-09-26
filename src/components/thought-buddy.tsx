@@ -5,11 +5,25 @@ import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 
-type Thought = { id: string; emoji: string; text: string; to: string };
+type Thought = { id: string; emoji: string; text: string; to: string; weight: number };
 
 const DISMISS_KEY = "rms-buddy-off-until";
 const FIRST_DELAY = 20_000;
 const SHOW_FOR = 8_000;
+
+// Each day gets its own "mood" — some days the buddy is chatty, some days quiet.
+function dayMood(): number {
+  const day = new Date().toISOString().slice(0, 10);
+  let h = 0;
+  for (const c of day) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return 0.5 + (h % 100) / 100; // 0.5 (quiet day) … 1.5 (active day)
+}
+
+// Urgent data (lots of overdue rent) shortens the gap; calm data stretches it.
+function nextDelay(urgency: number): number {
+  const base = urgency >= 8 ? 60_000 : urgency >= 4 ? 120_000 : urgency >= 1 ? 300_000 : 600_000;
+  return (base / dayMood()) * (0.6 + Math.random() * 1.3);
+}
 const corners = [
   "bottom-5 right-5",
   "bottom-5 left-5 md:left-[calc(var(--sidebar-width,16rem)+1.25rem)]",
@@ -45,18 +59,19 @@ async function loadThoughts(): Promise<Thought[]> {
         emoji: d > 7 ? "😬" : "🤔",
         text: `Psst… ${name} hasn't paid for ${d} day${d === 1 ? "" : "s"} (${bal}). Hope you remember!`,
         to: "/tenants",
+        weight: d > 7 ? 4 : 3, // overdue rent is the most urgent
       });
     } else {
       const d = -daysSince(i.due_date);
-      if (d <= 3) out.push({ id: `soon-${i.id}`, emoji: "👀", text: `Heads up — ${name}'s rent (${bal}) is due ${d === 0 ? "today" : `in ${d} day${d === 1 ? "" : "s"}`}.`, to: "/tenants" });
+      if (d <= 3) out.push({ id: `soon-${i.id}`, emoji: "👀", text: `Heads up — ${name}'s rent (${bal}) is due ${d === 0 ? "today" : `in ${d} day${d === 1 ? "" : "s"}`}.`, to: "/tenants", weight: 2 });
     }
   }
   for (const u of (units ?? []) as any[]) {
-    out.push({ id: `vac-${u.id}`, emoji: "🏠", text: `Unit ${u.unit_number}${u.properties?.name ? ` at ${u.properties.name}` : ""} is still empty… someone should live there!`, to: "/properties" });
+    out.push({ id: `vac-${u.id}`, emoji: "🏠", text: `Unit ${u.unit_number}${u.properties?.name ? ` at ${u.properties.name}` : ""} is still empty… someone should live there!`, to: "/properties", weight: 1 });
   }
   for (const t of (tickets ?? []) as any[]) {
     const d = daysSince(t.created_at);
-    if (d >= 2) out.push({ id: `tk-${t.id}`, emoji: "🔧", text: `That ${t.category} repair has been waiting ${d} days. Just saying…`, to: "/maintenance" });
+    if (d >= 2) out.push({ id: `tk-${t.id}`, emoji: "🔧", text: `That ${t.category} repair has been waiting ${d} days. Just saying…`, to: "/maintenance", weight: d >= 5 ? 2 : 1 });
   }
   return out;
 }
@@ -71,11 +86,12 @@ export function ThoughtBuddy() {
 
   useEffect(() => {
     if (!thoughts.length) return;
+    const urgency = thoughts.reduce((s, t) => s + t.weight, 0);
     let timer: ReturnType<typeof setTimeout>;
     const schedule = (delay: number) => {
       timer = setTimeout(() => {
         const off = Number(localStorage.getItem(DISMISS_KEY) || 0);
-        if (Date.now() < off || document.hidden) return schedule(60_000);
+        if (Date.now() < off || document.hidden) return schedule(nextDelay(urgency));
         let pool = thoughts.filter((t) => !seen.current.has(t.id));
         if (!pool.length) {
           seen.current.clear();
@@ -90,7 +106,7 @@ export function ThoughtBuddy() {
           setLeaving(true);
           timer = setTimeout(() => {
             setCurrent(null);
-            schedule(60_000 + Math.random() * 120_000);
+            schedule(nextDelay(urgency));
           }, 400);
         }, SHOW_FOR);
       }, delay);
