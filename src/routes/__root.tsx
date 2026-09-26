@@ -9,6 +9,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useHydrated } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
@@ -212,6 +213,12 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   useOfflineCache(queryClient);
   useOnlineSync(queryClient);
+  const hydrated = useHydrated();
+  // The server can't know the sign-in state, so render nothing layout-specific
+  // until the browser takes over (avoids a mismatch when "/" redirects to /auth).
+  if (!hydrated) {
+    return <QueryClientProvider client={queryClient}><div className="min-h-svh" /></QueryClientProvider>;
+  }
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
