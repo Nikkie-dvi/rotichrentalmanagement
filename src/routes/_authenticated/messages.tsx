@@ -162,7 +162,7 @@ function MessagesPage() {
     setMethod((account as any).rent_payment_method ?? "mpesa_send_money");
   }, [account]);
 
-  const describeResult = (res: { sent: number; smsSent: number; smsFailed: number; smsSkippedNoCredit?: number }) => {
+  const describeResult = (res: { sent: number; pushFailed?: boolean; smsSent: number; smsFailed: number; smsSkippedNoCredit?: number }) => {
     const parts: string[] = [];
     if (viaPush) parts.push(`${res.sent} app alert${res.sent === 1 ? "" : "s"}`);
     if (viaSms) parts.push(`${res.smsSent} SMS`);
@@ -458,8 +458,12 @@ function MessagesPage() {
                 if ((res as any).recipients === 0) {
                   toast.info("No tenants matched that group — nothing was sent");
                 } else {
+                  const deliveryNotes = [
+                    res.smsFailed > 0 ? `${res.smsFailed} SMS could not be delivered. Check those tenants' phone numbers.` : null,
+                    res.pushFailed ? "Phone alerts were unavailable, but SMS delivery continued." : null,
+                  ].filter(Boolean).join(" ");
                   toast.success(`Sent to ${(res as any).recipients} tenant(s) — ${describeResult(res)}`, {
-                    description: res.smsFailed > 0 ? `${res.smsFailed} SMS could not be delivered` : undefined,
+                    description: deliveryNotes || undefined,
                   });
                   setUrgent("");
                 }

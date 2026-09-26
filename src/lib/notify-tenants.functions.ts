@@ -81,7 +81,7 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
     }
 
     if (rows.length === 0) {
-      return { ok: true, sent: 0, devices: 0, smsSent: 0, smsFailed: 0, smsSkippedNoCredit: 0, smsCost: 0, recipients: 0 };
+      return { ok: true, sent: 0, devices: 0, pushFailed: false, smsSent: 0, smsFailed: 0, smsSkippedNoCredit: 0, smsCost: 0, recipients: 0 };
     }
 
     const userIds = Array.from(new Set(rows.map((t) => t.auth_user_id).filter(Boolean))) as string[];
@@ -92,35 +92,48 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
 
     let sent = 0;
     let devices = 0;
+    let pushFailed = false;
 
     if (data.push && userIds.length > 0) {
-      const { loadWebpush } = await import("@/lib/push.server");
-      const webpush = await loadWebpush();
-      webpush.setVapidDetails(
-        process.env["VAPID_SUBJECT"] || "mailto:reminders@example.com",
-        process.env["VAPID_PUBLIC_KEY"]!,
-        process.env["VAPID_PRIVATE_KEY"]!,
-      );
+      try {
+        const { loadWebpush } = await import("@/lib/push.server");
+        const webpush = await loadWebpush();
+        const publicKey = process.env["VAPID_PUBLIC_KEY"];
+        const privateKey = process.env["VAPID_PRIVATE_KEY"];
+        if (!publicKey || !privateKey) throw new Error("Phone alerts are not configured");
+        webpush.setVapidDetails(
+          process.env["VAPID_SUBJECT"] || "mailto:reminders@example.com",
+          publicKey,
+          privateKey,
+        );
 
-      const { data: subs } = await supabaseAdmin
-        .from("push_subscriptions")
-        .select("id, endpoint, p256dh, auth")
-        .in("owner_id", userIds);
+        const { data: subs, error: subscriptionsError } = await supabaseAdmin
+          .from("push_subscriptions")
+          .select("id, endpoint, p256dh, auth")
+          .in("owner_id", userIds);
+        if (subscriptionsError) throw subscriptionsError;
 
-      devices = (subs ?? []).length;
-      for (const sub of (subs ?? []) as { id: string; endpoint: string; p256dh: string; auth: string }[]) {
-        try {
-          await webpush.sendNotification(
-            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            JSON.stringify({ title: data.title, body: data.body, tag: data.tag, url: data.url }),
-          );
-          sent++;
-        } catch (err: any) {
-          const status = err?.statusCode;
-          if (status === 404 || status === 410) {
-            await supabaseAdmin.from("push_subscriptions").delete().eq("id", sub.id);
+        devices = (subs ?? []).length;
+        for (const sub of (subs ?? []) as { id: string; endpoint: string; p256dh: string; auth: string }[]) {
+          try {
+            await webpush.sendNotification(
+              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+              JSON.stringify({ title: data.title, body: data.body, tag: data.tag, url: data.url }),
+            );
+            sent++;
+          } catch (err: any) {
+            const status = err?.statusCode;
+            if (status === 404 || status === 410) {
+              await supabaseAdmin.from("push_subscriptions").delete().eq("id", sub.id);
+            }
           }
         }
+      } catch (error) {
+        pushFailed = true;
+        console.error(
+          "tenant phone alerts failed; continuing with SMS",
+          error instanceof Error ? error.message : String(error),
+        );
       }
     }
 
@@ -159,7 +172,8 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
       const { sendSms } = await import("@/lib/sms.server");
       for (const t of withPhones) {
         if (!funded.has(t.owner_id)) continue;
-        const res = await sendSms(t.phone_number!, message);
+        if (!t.phone_number) continue;
+        const res = await sendSms(t.phone_number, message);
         if (res.ok) smsSent++;
         else smsFailed++;
         logs.push({
@@ -178,7 +192,7 @@ export const notifyMyTenants = createServerFn({ method: "POST" })
 
     if (logs.length) await supabaseAdmin.from("notification_logs").insert(logs as never);
 
-    return { ok: true, sent, devices, smsSent, smsFailed, smsSkippedNoCredit, smsCost: smsCost * 1.2, recipients: rows.length };
+    return { ok: true, sent, devices, pushFailed, smsSent, smsFailed, smsSkippedNoCredit, smsCost: smsCost * 1.2, recipients: rows.length };
   });
 
 
