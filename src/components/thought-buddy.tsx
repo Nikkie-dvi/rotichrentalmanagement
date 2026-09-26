@@ -59,18 +59,19 @@ async function loadThoughts(): Promise<Thought[]> {
         emoji: d > 7 ? "😬" : "🤔",
         text: `Psst… ${name} hasn't paid for ${d} day${d === 1 ? "" : "s"} (${bal}). Hope you remember!`,
         to: "/tenants",
+        weight: d > 7 ? 4 : 3, // overdue rent is the most urgent
       });
     } else {
       const d = -daysSince(i.due_date);
-      if (d <= 3) out.push({ id: `soon-${i.id}`, emoji: "👀", text: `Heads up — ${name}'s rent (${bal}) is due ${d === 0 ? "today" : `in ${d} day${d === 1 ? "" : "s"}`}.`, to: "/tenants" });
+      if (d <= 3) out.push({ id: `soon-${i.id}`, emoji: "👀", text: `Heads up — ${name}'s rent (${bal}) is due ${d === 0 ? "today" : `in ${d} day${d === 1 ? "" : "s"}`}.`, to: "/tenants", weight: 2 });
     }
   }
   for (const u of (units ?? []) as any[]) {
-    out.push({ id: `vac-${u.id}`, emoji: "🏠", text: `Unit ${u.unit_number}${u.properties?.name ? ` at ${u.properties.name}` : ""} is still empty… someone should live there!`, to: "/properties" });
+    out.push({ id: `vac-${u.id}`, emoji: "🏠", text: `Unit ${u.unit_number}${u.properties?.name ? ` at ${u.properties.name}` : ""} is still empty… someone should live there!`, to: "/properties", weight: 1 });
   }
   for (const t of (tickets ?? []) as any[]) {
     const d = daysSince(t.created_at);
-    if (d >= 2) out.push({ id: `tk-${t.id}`, emoji: "🔧", text: `That ${t.category} repair has been waiting ${d} days. Just saying…`, to: "/maintenance" });
+    if (d >= 2) out.push({ id: `tk-${t.id}`, emoji: "🔧", text: `That ${t.category} repair has been waiting ${d} days. Just saying…`, to: "/maintenance", weight: d >= 5 ? 2 : 1 });
   }
   return out;
 }
