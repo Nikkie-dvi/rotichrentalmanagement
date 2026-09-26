@@ -25,6 +25,7 @@ import { loadTenantLedgers } from "@/lib/dashboard-ledgers";
 import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
 import { DashboardFocus } from "@/components/dashboard-focus";
 import { SimplePropertyPerformance } from "@/components/property-performance";
+import { KpiOverview } from "@/components/kpi-overview";
 import { sendLateFeeNoticeSms, sendPaymentReceiptSms } from "@/lib/receipts.functions";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 
@@ -340,6 +341,8 @@ function Dashboard() {
           </Card>
         ))}
       </div>
+
+      <KpiOverview />
 
       <DashboardFocus collected={stats?.collected ?? 0} />
 
