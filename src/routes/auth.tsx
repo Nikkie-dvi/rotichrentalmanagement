@@ -55,6 +55,8 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [role, setRole] = useState<Role>("landlord");
   const [failure, setFailure] = useState<"credentials" | "unconfirmed" | null>(null);
+  const [stage, setStage] = useState<"welcome" | "choose" | "form">(next ? "form" : "welcome");
+  const [managerSignup, setManagerSignup] = useState(false);
 
   useEffect(() => {
     const go = () => {
@@ -169,6 +171,94 @@ function AuthPage() {
             </div>
           </div>
 
+          {stage !== "form" ? (
+            <Card className="border-border/60 bg-card/80 shadow-xl backdrop-blur-xl">
+              {stage === "welcome" ? (
+                <CardContent className="space-y-5 p-6 text-center">
+                  <AppLogo className="mx-auto h-16 w-16" />
+                  <div>
+                    <h2 className="text-2xl font-semibold tracking-tight">Welcome to Rotich Rental Management Systems</h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Rent, tenants and M-Pesa payments in one place.
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Button className="w-full" onClick={() => setStage("choose")}>
+                      <UserPlus className="mr-1.5 h-4 w-4" /> Create an account
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setRole("landlord");
+                        setMode("signin");
+                        setStage("form");
+                      }}
+                    >
+                      <LogIn className="mr-1.5 h-4 w-4" /> I already have an account
+                    </Button>
+                  </div>
+                </CardContent>
+              ) : (
+                <CardContent className="space-y-3 p-6">
+                  <div>
+                    <h2 className="text-xl font-semibold tracking-tight">Who are you?</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">Pick one to start registering.</p>
+                  </div>
+                  {[
+                    { k: "tenant" as Role, icon: User, t: "Tenant", d: "I rent a unit and want to see my balance and pay." },
+                    { k: "landlord" as Role, icon: Building2, t: "Landlord", d: "I own properties and manage my tenants." },
+                    { k: "manager" as Role, icon: ShieldCheck, t: "Property manager", d: "I manage properties for landlords — KES 250 per property per month." },
+                  ].map(({ k, icon: Icon, t, d }) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => {
+                        if (k === "tenant") {
+                          navigate({ to: "/tenant/register" });
+                          return;
+                        }
+                        setRole(k);
+                        setMode("signup");
+                        setManagerSignup(k === "manager");
+                        setStage("form");
+                      }}
+                      className="flex w-full items-center gap-3 rounded-xl border-2 border-border p-3 text-left transition hover:border-primary hover:bg-primary/5"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">{t}</span>
+                        <span className="block text-xs text-muted-foreground">{d}</span>
+                      </span>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  ))}
+                  <div className="flex justify-between pt-1 text-xs">
+                    <button type="button" className="text-muted-foreground underline" onClick={() => setStage("welcome")}>
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      className="text-primary underline"
+                      onClick={() => {
+                        setRole("landlord");
+                        setMode("signin");
+                        setStage("form");
+                      }}
+                    >
+                      I already have an account
+                    </button>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          ) : (
+          <>
+          <button type="button" className="mb-3 text-xs text-muted-foreground underline" onClick={() => setStage("welcome")}>
+            ← Back to start
+          </button>
           <Card className="border-border/60 bg-card/80 shadow-xl backdrop-blur-xl">
             <CardHeader className="space-y-3 pb-3">
               <div>
@@ -214,7 +304,7 @@ function AuthPage() {
 
             <CardContent className="space-y-4">
               {role === "manager" ? (
-                <ManagerTab />
+                <ManagerTab initialSignup={managerSignup} />
               ) : role === "tenant" ? (
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
@@ -425,6 +515,8 @@ function AuthPage() {
               )}
             </CardContent>
           </Card>
+          </>
+          )}
 
           <p className="mt-5 text-center text-xs text-muted-foreground">
             Kenyan-built rental management • M-Pesa ready • Works offline
@@ -435,8 +527,8 @@ function AuthPage() {
   );
 }
 
-function ManagerTab() {
-  const [signup, setSignup] = useState(false);
+function ManagerTab({ initialSignup = false }: { initialSignup?: boolean }) {
+  const [signup, setSignup] = useState(initialSignup);
   if (signup) {
     return (
       <div className="space-y-3">
