@@ -216,7 +216,7 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
   const hydrated = useHydrated();
   // The server can't know the sign-in state, so render nothing layout-specific
   // until the browser takes over (avoids a mismatch when "/" redirects to /auth).
-  if (!hydrated && !isAuthRoute) {
+  if (!hydrated) {
     return <QueryClientProvider client={queryClient}><div className="min-h-svh" /></QueryClientProvider>;
   }
   return (
