@@ -86,11 +86,12 @@ export function ThoughtBuddy() {
 
   useEffect(() => {
     if (!thoughts.length) return;
+    const urgency = thoughts.reduce((s, t) => s + t.weight, 0);
     let timer: ReturnType<typeof setTimeout>;
     const schedule = (delay: number) => {
       timer = setTimeout(() => {
         const off = Number(localStorage.getItem(DISMISS_KEY) || 0);
-        if (Date.now() < off || document.hidden) return schedule(60_000);
+        if (Date.now() < off || document.hidden) return schedule(nextDelay(urgency));
         let pool = thoughts.filter((t) => !seen.current.has(t.id));
         if (!pool.length) {
           seen.current.clear();
