@@ -17,6 +17,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
+import { ThoughtBuddy } from "@/components/thought-buddy";
 import { ThemeProvider } from "@/lib/theme";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
@@ -241,6 +242,7 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
                 </div>
               </main>
               <PaymentReminderPopup />
+              <ThoughtBuddy />
 
             </SidebarInset>
           </SidebarProvider>
