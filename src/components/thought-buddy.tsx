@@ -106,7 +106,7 @@ export function ThoughtBuddy() {
           setLeaving(true);
           timer = setTimeout(() => {
             setCurrent(null);
-            schedule(60_000 + Math.random() * 120_000);
+            schedule(nextDelay(urgency));
           }, 400);
         }, SHOW_FOR);
       }, delay);
