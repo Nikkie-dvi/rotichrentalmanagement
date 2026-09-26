@@ -16,6 +16,7 @@ import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { sendBulkTenantDocsSms } from "@/lib/bulk-docs.functions";
 import { ModeTabs } from "@/components/mode-tabs";
 import { AutoTextingPanel } from "@/components/auto-texting-panel";
+import { RecentAlertsPanel } from "@/components/recent-alerts-panel";
 import { AnimatePresence, motion } from "framer-motion";
 
 /** SMS Leopard messages are cut off past this length, so we stop typing there. */
@@ -91,7 +92,7 @@ function MessagesPage() {
   const [docSending, setDocSending] = useState(false);
   const [docPropertyId, setDocPropertyId] = useState<string>("all");
   const [docUnitIds, setDocUnitIds] = useState<string[]>([]);
-  const [mode, setMode] = useState<"send" | "auto">("send");
+  const [mode, setMode] = useState<"send" | "auto" | "alerts">("send");
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const a = p.get("audience");
@@ -211,10 +212,11 @@ function MessagesPage() {
       <ModeTabs
         items={[
           { key: "auto", label: "Automatic texting" },
+          { key: "alerts", label: "Recent alerts" },
           { key: "send", label: "Send a message" },
         ]}
         value={mode}
-        onChange={(k) => setMode(k as "send" | "auto")}
+        onChange={(k) => setMode(k as "send" | "auto" | "alerts")}
         layoutId="messages-mode-pill"
       />
 
@@ -616,14 +618,14 @@ function MessagesPage() {
           </motion.div>
         ) : (
           <motion.div
-            key="auto"
+            key={mode}
             initial={{ opacity: 0, x: 28 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -28 }}
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
             className="space-y-4"
           >
-            <AutoTextingPanel />
+            {mode === "alerts" ? <RecentAlertsPanel /> : <AutoTextingPanel />}
           </motion.div>
         )}
       </AnimatePresence>

@@ -68,17 +68,6 @@ function BillingSettingsPage() {
     },
   });
 
-  const { data: logs } = useQuery({
-    queryKey: ["notification-logs"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("notification_logs")
-        .select("id, channel, recipient, message, status, error, created_at, tenants(full_name)")
-        .order("created_at", { ascending: false })
-        .limit(30);
-      return data ?? [];
-    },
-  });
 
   useEffect(() => {
     if (settings) setForm({ ...DEFAULTS, ...settings, penalty_max: (settings as any).penalty_max ?? "" });
@@ -339,34 +328,11 @@ function BillingSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="text-base">Recent alerts</CardTitle>
-          <CardDescription>Every SMS and app alert sent to your tenants.</CardDescription>
-        </CardHeader>
-        <CardContent className="max-h-80 overflow-y-auto space-y-2 pr-1">
-          {(logs ?? []).length === 0 && <p className="text-sm text-muted-foreground">No alerts sent yet.</p>}
-          {(logs ?? []).map((l: any) => (
-            <div key={l.id} className="rounded-lg border p-3 text-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline" className="uppercase">{l.channel}</Badge>
-                <Badge
-                  className={
-                    l.status === "delivered" ? "bg-primary text-primary-foreground" : l.status === "failed" ? "bg-destructive text-destructive-foreground" : ""
-                  }
-                  variant={l.status === "skipped" ? "secondary" : "default"}
-                >
-                  {l.status}
-                </Badge>
-                <span className="font-medium">{l.tenants?.full_name ?? l.recipient ?? "—"}</span>
-                <span className="text-xs text-muted-foreground ml-auto">{new Date(l.created_at).toLocaleString()}</span>
-              </div>
-              <p className="mt-1 text-muted-foreground">{l.message}</p>
-              {l.error && <p className="mt-1 text-xs text-destructive">{l.error}</p>}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <p className="text-xs text-muted-foreground">
+        Delivery history is now under <Link to="/messages" className="text-primary underline">SMS → Recent alerts</Link>.
+      </p>
+
+
 
       <p className="text-xs text-muted-foreground">Money shown in the app uses {money(1000)} formatting.</p>
     </div>
