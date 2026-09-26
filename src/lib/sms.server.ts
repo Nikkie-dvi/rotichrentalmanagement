@@ -36,16 +36,21 @@ export function toKenyanMsisdn(raw: string | null | undefined): string | null {
   if (!raw) return null;
   const digits = String(raw).replace(/[^\d+]/g, "").replace(/^\+/, "");
   if (!digits) return null;
-  if (digits.startsWith("254")) return digits;
-  if (digits.startsWith("0")) return `254${digits.slice(1)}`;
-  if (digits.length === 9) return `254${digits}`;
-  return digits;
+  const normalized = digits.startsWith("254")
+    ? digits
+    : digits.startsWith("0")
+      ? `254${digits.slice(1)}`
+      : digits.length === 9
+        ? `254${digits}`
+        : "";
+  return /^254[17]\d{8}$/.test(normalized) ? normalized : null;
 }
 
 /** Public tenant portal sign-in page appended to tenant messages. */
 export const PORTAL_LINK = "homebasemanager.app/tenant/login";
 
 const segments = (text: string) => (text.length <= 160 ? 1 : Math.ceil(text.length / 153));
+const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 /**
  * Appends a portal link when it does not push the text into an extra
@@ -78,39 +83,57 @@ export async function sendSms(
 
   if (!safeMessage) return { ok: false, status: "failed", error: "SMS message has no supported characters" };
 
-  try {
-    const res = await fetch("https://api.smsleopard.com/v1/sms/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${btoa(`${key}:${secret}`)}`,
-      },
-      body: JSON.stringify({
-        source: sender,
-        message: safeMessage,
-        destination: [{ number: destination }],
-      }),
-    });
-
-    const text = await res.text();
-    if (!res.ok) {
-      return { ok: false, status: "failed", error: `SMS Leopard [${res.status}]: ${text.slice(0, 300)}` };
-    }
-    let body: any = {};
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      body = JSON.parse(text);
-    } catch {
-      /* provider returned non-JSON on success */
+      const res = await fetch("https://api.smsleopard.com/v1/sms/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${btoa(`${key}:${secret}`)}`,
+        },
+        body: JSON.stringify({
+          source: sender,
+          message: safeMessage,
+          destination: [{ number: destination }],
+        }),
+      });
+
+      const text = await res.text();
+      const retryable = res.status === 429 || res.status >= 500 || (res.status === 400 && /enqueue message failed/i.test(text));
+      if (!res.ok && retryable && attempt < 2) {
+        const retryAfter = Number(res.headers.get("retry-after"));
+        await wait(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1_000 : 750 * (attempt + 1));
+        continue;
+      }
+      if (!res.ok) {
+        return { ok: false, status: "failed", error: `SMS Leopard [${res.status}]: ${text.slice(0, 300)}` };
+      }
+      let responseBody: any = {};
+      try {
+        responseBody = JSON.parse(text);
+      } catch {
+        /* provider returned non-JSON on success */
+      }
+      if (responseBody?.success === false) {
+        return { ok: false, status: "failed", error: String(responseBody?.message ?? text).slice(0, 300) };
+      }
+      const recipient = responseBody?.recipients?.[0];
+      if (recipient?.status === "failed") {
+        return { ok: false, status: "failed", error: `Delivery rejected for ${recipient.number ?? destination}` };
+      }
+      return { ok: true, status: recipient?.status ?? "sent", id: recipient?.id ?? responseBody?.id };
+    } catch (error) {
+      if (attempt < 2) {
+        await wait(750 * (attempt + 1));
+        continue;
+      }
+      return {
+        ok: false,
+        status: "failed",
+        error: error instanceof Error ? error.message : "SMS request failed",
+      };
     }
-    if (body?.success === false) {
-      return { ok: false, status: "failed", error: String(body?.message ?? text).slice(0, 300) };
-    }
-    const recipient = body?.recipients?.[0];
-    if (recipient?.status === "failed") {
-      return { ok: false, status: "failed", error: `Delivery rejected for ${recipient.number ?? destination}` };
-    }
-    return { ok: true, status: recipient?.status ?? "sent", id: recipient?.id ?? body?.id };
-  } catch (e: any) {
-    return { ok: false, status: "failed", error: e?.message ?? "SMS request failed" };
   }
+
+  return { ok: false, status: "failed", error: "SMS request failed after retries" };
 }
