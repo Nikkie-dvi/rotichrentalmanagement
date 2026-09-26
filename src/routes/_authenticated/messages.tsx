@@ -210,8 +210,8 @@ function MessagesPage() {
 
       <ModeTabs
         items={[
-          { key: "send", label: "Send a message" },
           { key: "auto", label: "Automatic texting" },
+          { key: "send", label: "Send a message" },
         ]}
         value={mode}
         onChange={(k) => setMode(k as "send" | "auto")}
