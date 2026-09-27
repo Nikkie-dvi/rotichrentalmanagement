@@ -106,6 +106,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 export function KpiOverview() {
   const [open, setOpen] = useState<Detail | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const { data, isPending, isError, refetch } = useQuery({ queryKey: ["kpi-overview-v2"], queryFn: loadKpis, staleTime: 30_000, refetchOnWindowFocus: true });
   const tiles = [
     { key: "vacancy" as const, icon: DoorOpen, label: "Vacancy rate", value: data ? `${data.totalUnits ? Math.round(data.vacantUnits.length / data.totalUnits * 100) : 0}%` : "—", sub: data ? `${data.vacantUnits.length} of ${data.totalUnits} units vacant` : "" },
@@ -115,8 +116,32 @@ export function KpiOverview() {
   ];
   const totalBilled = data?.charges.reduce((sum, charge) => sum + charge.billed, 0) ?? 0;
 
+  const summary = data
+    ? [
+        `${data.totalUnits ? Math.round((data.vacantUnits.length / data.totalUnits) * 100) : 0}% vacant`,
+        `${money(data.arrears)} arrears`,
+        data.avgDays == null ? null : `${data.avgDays.toFixed(1)}d repairs`,
+        `${money(data.collected)} collected`,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
+
   return (
     <div className="space-y-3">
+      <Card className="glass-card">
+        <CardContent className="p-0">
+          <Button variant="ghost" type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="flex h-auto w-full min-w-0 flex-col items-stretch gap-0 whitespace-normal p-3 text-left hover:bg-muted/50 sm:p-4">
+            <span className="flex items-center justify-between gap-1.5">
+              <span className="flex min-w-0 items-center gap-1.5 text-sm font-semibold"><TrendingUp className="h-4 w-4 shrink-0" />Key performance figures</span>
+              <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
+            </span>
+            <span className="mt-0.5 text-[11px] font-normal leading-snug text-muted-foreground">{summary || "Tap to see vacancy, arrears, repairs and collections"}</span>
+          </Button>
+        </CardContent>
+      </Card>
+      {expanded && (
+      <>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {tiles.map((tile) => (
           <Card key={tile.key} className={`glass-card min-w-0 ${open === tile.key ? "border-primary" : ""}`}>
@@ -174,6 +199,8 @@ export function KpiOverview() {
             </div>
           )}
         </div>
+      )}
+      </>
       )}
       <Card className="glass-card">
         <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
