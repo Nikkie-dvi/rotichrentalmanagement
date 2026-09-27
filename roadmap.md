@@ -21,3 +21,6 @@
 
 ## Open
 - None
+
+## Done recently
+- [x] Dashboard vacancy, arrears, repair, and collection figures expand into unit, month, ticket, and payment details.
