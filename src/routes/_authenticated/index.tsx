@@ -39,6 +39,8 @@ export const Route = createFileRoute("/_authenticated/")({
       { name: "description", content: "Live view of your units, occupancy, rent collected this month and outstanding arrears." },
       { property: "og:title", content: "Landlord Dashboard — Rotich Rental Management" },
       { property: "og:description", content: "Live view of your units, occupancy, rent collected this month and outstanding arrears." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Landlord Dashboard — Rotich Rental Management" },
       { name: "twitter:description", content: "Live view of your units, occupancy, rent collected this month and outstanding arrears." },
       { name: "robots", content: "noindex" },
