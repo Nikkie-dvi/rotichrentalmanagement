@@ -24,3 +24,4 @@
 
 ## Done recently
 - [x] Dashboard vacancy, arrears, repair, and collection figures expand into unit, month, ticket, and payment details.
+- [x] KPI figures collapsed behind a single drop-down that reveals all four tabs.
