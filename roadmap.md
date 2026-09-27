@@ -20,4 +20,7 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
-- [ ] Make dashboard vacancy, arrears, repair, and income figures expand into useful details.
+- None
+
+## Done recently
+- [x] Dashboard vacancy, arrears, repair, and collection figures expand into unit, month, ticket, and payment details.

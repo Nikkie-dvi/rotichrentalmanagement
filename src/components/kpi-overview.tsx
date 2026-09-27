@@ -27,7 +27,7 @@ async function loadKpis() {
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const lastMonth = previousMonth(month);
   const [unitsResult, invoicesResult, paymentsResult, ticketsResult, ledgers] = await Promise.all([
-    supabase.from("units").select("id,unit_number,status,properties(name)").order("unit_number"),
+    supabase.from("units").select("id,unit_number,rent_amount,status,properties(name)").order("unit_number"),
     supabase.from("invoices").select("tenant_id,month_year,total_due,balance_remaining,water_amount,electricity_amount,garbage_amount,other_amount,late_penalty_amount,penalty_waived"),
     supabase.from("payments").select("id,amount_paid,payment_date,payment_method,tenants(full_name)").gte("payment_date", `${lastMonth}-01`).order("payment_date", { ascending: false }),
     supabase.from("maintenance_tickets").select("id,status,category,created_at,updated_at,tenants(full_name,units(unit_number,properties(name)))").order("created_at", { ascending: false }),
