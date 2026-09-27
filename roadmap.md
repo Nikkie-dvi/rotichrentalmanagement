@@ -20,4 +20,4 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
-- None
+- [ ] Make dashboard vacancy, arrears, repair, and income figures expand into useful details.
