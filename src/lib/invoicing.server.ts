@@ -204,7 +204,7 @@ export async function generateMonthlyInvoices(
     }
     // A due-date notice is sent only for a newly raised rent invoice, never
     // again when the daily reconciliation upserts the same invoice tomorrow.
-    if (kind === "rent" && !existingInvoice && due <= today && (saved as any)?.id) {
+    if (kind === "rent" && !opts.force && !existingInvoice && month === today.slice(0, 7) && due <= today && (saved as any)?.id) {
       try {
         const { notifyTenantOfDueInvoice } = await import("@/lib/tenant-balance.server");
         await notifyTenantOfDueInvoice({ ownerId, tenantId: t.id, invoiceId: (saved as any).id, month, total, applied });
