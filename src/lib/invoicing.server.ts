@@ -145,6 +145,7 @@ export async function generateMonthlyInvoices(
     );
     const applied = Math.min(credit, total);
     const balance = Math.max(0, total - applied);
+    const existingInvoice = invoices.some((i) => i.tenant_id === t.id && i.month_year === month && (i.kind ?? "rent") === kind);
 
     const { data: saved, error } = await supabaseAdmin
       .from("invoices")
@@ -199,6 +200,16 @@ export async function generateMonthlyInvoices(
         });
       } catch {
         /* alerts must never block invoicing */
+      }
+    }
+    // A due-date notice is sent only for a newly raised rent invoice, never
+    // again when the daily reconciliation upserts the same invoice tomorrow.
+    if (kind === "rent" && !existingInvoice && due <= today && (saved as any)?.id) {
+      try {
+        const { notifyTenantOfDueInvoice } = await import("@/lib/tenant-balance.server");
+        await notifyTenantOfDueInvoice({ ownerId, tenantId: t.id, invoiceId: (saved as any).id, month, total, applied });
+      } catch {
+        /* notification failure must not stop invoicing */
       }
     }
   }
