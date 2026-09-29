@@ -20,7 +20,8 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
-- None
+- [ ] Notify tenants when a due-date invoice applies prepaid credit, with an accurate credit or arrears position and rent-month context.
+- [ ] Send a professional updated-balance receipt when a landlord records a payment.
 
 ## Done recently
 - [x] Dashboard vacancy, arrears, repair, and collection figures expand into unit, month, ticket, and payment details.
