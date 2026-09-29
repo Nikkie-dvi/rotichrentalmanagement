@@ -18,7 +18,7 @@ import { TenantCreditDialog } from "@/components/tenant-credit-dialog";
 import { LedgerHealthCard } from "@/components/ledger-health-card";
 
 import { runCreditWatch } from "@/lib/credit.functions";
-import { accruedRent, buildLedger, businessTodayIso, type Ledger } from "@/lib/ledger";
+import { accruedRent, buildLedger, type Ledger } from "@/lib/ledger";
 
 import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
 import { createFirstRentInvoice } from "@/lib/first-invoice";

@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Use the shared tenant ledger for both due-date invoice SMS and payment receipts, so notices match the balances shown in landlord and tenant accounts.
+- Record opening rent during tenant assignment as a payment and offset the first invoice balance; deposit remains separate so both account views show prepaid rent accurately.
