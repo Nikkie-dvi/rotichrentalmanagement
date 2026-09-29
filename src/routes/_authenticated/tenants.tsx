@@ -39,6 +39,8 @@ export const Route = createFileRoute("/_authenticated/tenants")({
       { name: "description", content: "Manage active tenants: contacts, assigned units, deposits and arrears." },
       { property: "og:title", content: "Tenants — Rotich Management Systems" },
       { property: "og:description", content: "Active tenants and their status." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   // Warm the cache on hover/touch so the tab paints instantly when opened.
