@@ -18,7 +18,7 @@ import { TenantCreditDialog } from "@/components/tenant-credit-dialog";
 import { LedgerHealthCard } from "@/components/ledger-health-card";
 
 import { runCreditWatch } from "@/lib/credit.functions";
-import { accruedRent, buildLedger, type Ledger } from "@/lib/ledger";
+import { accruedRent, buildLedger, businessTodayIso, type Ledger } from "@/lib/ledger";
 
 import { createTenantLogin, resetTenantPassword } from "@/lib/account.functions";
 import { createFirstRentInvoice } from "@/lib/first-invoice";
@@ -155,7 +155,7 @@ function TenantsPage() {
   const { data: vacantUnits } = useQuery(vacantUnitsQuery);
 
   const assign = useMutation({
-    mutationFn: async (v: any) => {
+    mutationFn: async (v: TenantFormPayload) => {
       const { data: unit } = await supabase
         .from("units")
         .select("id,status,rent_amount")
@@ -176,31 +176,49 @@ function TenantsPage() {
         .select("id")
         .single();
       if (tErr) throw tErr;
+      // Rent paid at move-in is a real payment, not a deposit or a credit edit.
+      // Record it before billing so both portals use the same ledger immediately.
+      const openingPaid = Number(v.opening_rent_paid);
+      if (openingPaid > 0) {
+        const { error: pErr } = await supabase.from("payments").insert({
+          tenant_id: inserted.id,
+          amount_paid: openingPaid,
+          payment_method: v.payment_method,
+          reference_no: v.payment_reference || null,
+          payment_date: v.move_in_date,
+        });
+        if (pErr) {
+          const { error: cleanupError } = await supabase.from("tenants").delete().eq("id", inserted.id);
+          if (cleanupError) throw new Error(`Opening payment failed. Check the tenant list before retrying: ${pErr.message}`);
+          throw new Error(`Opening payment was not saved; tenant was not assigned: ${pErr.message}`);
+        }
+      }
       const { error: uErr } = await supabase.from("units").update({ status: "occupied" }).eq("id", v.unit_id);
       if (uErr) throw uErr;
 
-      // Open the tenant with the first month's rent already owed so it lands
-      // in arrears until the landlord records a payment.
       let invoiced = false;
+      let invoiceFailed = false;
       if (inserted?.id) {
         try {
           const res = await createFirstRentInvoice({
             tenantId: inserted.id,
             rentAmount: Number(unit?.rent_amount ?? 0),
             moveInDate: v.move_in_date || null,
+            openingPaid,
           });
           invoiced = res.created;
         } catch {
-          /* never block the assignment on billing */
+          invoiceFailed = true;
         }
         await sendTenantWelcomeNow({ data: { tenantId: inserted.id } }).catch(() => {});
       }
-      return { invoiced };
+      return { invoiced, invoiceFailed, openingPaid };
     },
     onSuccess: (res) => {
       qc.invalidateQueries();
       setOpen(false);
-      toast.success(res?.invoiced ? "Tenant assigned — first rent invoice added" : "Tenant assigned");
+      if (res.invoiceFailed) toast.warning("Tenant and opening payment saved, but the first rent invoice could not be created. Check billing.");
+      else toast.success(res.openingPaid > 0 ? `Tenant assigned — ${money(res.openingPaid)} opening rent recorded` : res.invoiced ? "Tenant assigned — first rent invoice added" : "Tenant assigned");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -358,12 +376,13 @@ function TenantsPage() {
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm" className="shrink-0 px-2.5 sm:h-10 sm:px-4"><UserPlus className="h-4 w-4" /><span className="hidden min-[360px]:inline">Assign Tenant</span><span className="min-[360px]:hidden">Add</span></Button></DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Assign New Tenant</DialogTitle></DialogHeader>
             <TenantForm
               vacantUnits={vacantUnits ?? []}
               defaultProperty={propFilter !== "all" && propFilter !== "No unit assigned" ? propFilter : ""}
               onSubmit={(payload) => assign.mutate(payload)}
+              saving={assign.isPending}
             />
           </DialogContent>
         </Dialog>
@@ -884,16 +903,21 @@ type TenantFormPayload = {
   deposit_paid: number;
   move_in_date: string;
   rent_due_day: string;
+  opening_rent_paid: number;
+  payment_method: string;
+  payment_reference: string;
 };
 
 function TenantForm({
   vacantUnits,
   defaultProperty = "",
   onSubmit,
+  saving = false,
 }: {
   vacantUnits: any[];
   defaultProperty?: string;
   onSubmit: (payload: TenantFormPayload) => void;
+  saving?: boolean;
 }) {
   const unitProps = Array.from(new Set(vacantUnits.map((u: any) => u.properties?.name ?? "Other"))).sort() as string[];
   const [propName, setPropName] = useState(unitProps.includes(defaultProperty) ? defaultProperty : unitProps.length === 1 ? unitProps[0] : "");
@@ -906,6 +930,16 @@ function TenantForm({
   // existing tenants (from the Edit tenant dialog).
   const [moveInDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [rentDueDay, setRentDueDay] = useState("");
+  const [step, setStep] = useState<"details" | "payment">("details");
+  const [paymentMode, setPaymentMode] = useState<"months" | "amount">("months");
+  const [months, setMonths] = useState("0");
+  const [openingAmount, setOpeningAmount] = useState("0");
+  const [paymentMethod, setPaymentMethod] = useState("mpesa");
+  const [paymentReference, setPaymentReference] = useState("");
+  const monthlyRent = Number(vacantUnits.find((u: any) => u.id === unitId)?.rent_amount) || 0;
+  const openingPaid = paymentMode === "months" ? Number(months) * monthlyRent : Number(openingAmount);
+  const remaining = Math.max(0, monthlyRent - openingPaid);
+  const credit = Math.max(0, openingPaid - monthlyRent);
 
   const contactsSupported =
     typeof navigator !== "undefined" &&
@@ -940,6 +974,14 @@ function TenantForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        if (step === "details") {
+          setStep("payment");
+          return;
+        }
+        if (!Number.isFinite(openingPaid) || openingPaid < 0 || (openingPaid > 0 && !monthlyRent)) {
+          toast.error("Enter a valid opening rent payment");
+          return;
+        }
         onSubmit({
           full_name: fullName,
           phone_number: phone,
@@ -947,10 +989,14 @@ function TenantForm({
           deposit_paid: Number(deposit) || 0,
           move_in_date: moveInDate,
           rent_due_day: rentDueDay,
+          opening_rent_paid: openingPaid,
+          payment_method: paymentMethod,
+          payment_reference: paymentReference.trim(),
         });
       }}
       className="space-y-3"
     >
+      {step === "details" ? <>
       <div className="flex justify-end">
         <Button
           type="button"
@@ -1027,9 +1073,39 @@ function TenantForm({
           </p>
         </div>
       </div>
-      <DialogFooter>
-        <Button type="submit">Assign</Button>
-      </DialogFooter>
+      <DialogFooter><Button type="submit">Next: opening rent</Button></DialogFooter>
+      </> : <>
+        <div className="space-y-1 border-b pb-3">
+          <p className="font-medium">Opening rent · {fullName}</p>
+          <p className="text-sm text-muted-foreground">{propName} · {vacantUnits.find((u: any) => u.id === unitId)?.unit_number} · {money(monthlyRent)} per month</p>
+        </div>
+        <div className="space-y-2">
+          <Label>How much rent has the tenant already paid?</Label>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" variant={paymentMode === "months" ? "default" : "outline"} onClick={() => setPaymentMode("months")}>Months</Button>
+            <Button type="button" size="sm" variant={paymentMode === "amount" ? "default" : "outline"} onClick={() => setPaymentMode("amount")}>Exact amount</Button>
+          </div>
+          {paymentMode === "months" ? (
+            <div><Label htmlFor="opening-months">Months of rent paid</Label><Input id="opening-months" type="number" min="0" max="120" step="1" value={months} onChange={(e) => setMonths(e.target.value)} required /></div>
+          ) : (
+            <div><Label htmlFor="opening-amount">Rent paid (KES)</Label><Input id="opening-amount" type="number" min="0" step="0.01" value={openingAmount} onChange={(e) => setOpeningAmount(e.target.value)} required /></div>
+          )}
+          <p className="text-xs text-muted-foreground">The deposit of {money(Number(deposit) || 0)} is kept separate from rent.</p>
+        </div>
+        {openingPaid > 0 && <>
+          <div><Label>Payment method</Label><Select value={paymentMethod} onValueChange={setPaymentMethod}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="mpesa">M-Pesa</SelectItem><SelectItem value="bank">Bank</SelectItem><SelectItem value="cash">Cash</SelectItem></SelectContent></Select></div>
+          <div><Label htmlFor="opening-reference">Reference (optional)</Label><Input id="opening-reference" maxLength={40} value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} placeholder="M-Pesa code or bank reference" /></div>
+        </>}
+        <div className="border-t pt-3 text-sm space-y-1" aria-live="polite">
+          <div className="flex justify-between"><span>First rent due</span><strong>{money(monthlyRent)}</strong></div>
+          <div className="flex justify-between"><span>Opening rent paid</span><strong>{money(Number.isFinite(openingPaid) ? openingPaid : 0)}</strong></div>
+          <div className="flex justify-between"><span>{credit > 0 ? "Paid-ahead credit" : "Balance still due"}</span><strong>{money(credit > 0 ? credit : remaining)}</strong></div>
+        </div>
+        <DialogFooter className="gap-2 sm:justify-between">
+          <Button type="button" variant="outline" onClick={() => setStep("details")} disabled={saving}>Back</Button>
+          <Button type="submit" disabled={saving || !Number.isFinite(openingPaid) || openingPaid < 0 || (openingPaid > 0 && !monthlyRent)}>{saving ? "Assigning…" : "Assign tenant"}</Button>
+        </DialogFooter>
+      </>}
     </form>
   );
 }
