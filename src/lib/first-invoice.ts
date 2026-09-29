@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Creates the tenant's opening rent invoice so their balance shows in arrears
- * immediately when they join, until the landlord logs a payment.
+ * Creates the tenant's opening rent invoice, applying any opening rent payment
+ * recorded during assignment. The deposit is never treated as rent.
  * Safe to call twice — the same tenant/month is upserted, never duplicated,
  * and an existing invoice for that month is left untouched.
  */
@@ -10,6 +10,7 @@ export async function createFirstRentInvoice(opts: {
   tenantId: string;
   rentAmount: number;
   moveInDate?: string | null;
+  openingPaid?: number;
 }) {
   const rent = Number(opts.rentAmount) || 0;
   if (rent <= 0) return { created: false as const };
@@ -27,15 +28,16 @@ export async function createFirstRentInvoice(opts: {
     .maybeSingle();
   if (existing) return { created: false as const };
 
+  const balance = Math.max(0, rent - Math.max(0, Number(opts.openingPaid) || 0));
   const { error } = await supabase.from("invoices").insert({
     tenant_id: opts.tenantId,
     month_year: monthYear,
     base_rent: rent,
     utility_amount: 0,
     total_due: rent,
-    balance_remaining: rent,
+    balance_remaining: balance,
     due_date: dueDate,
-    status: "unpaid",
+    status: balance === 0 ? "paid" : balance < rent ? "partial" : "unpaid",
   });
   if (error) throw error;
   return { created: true as const };

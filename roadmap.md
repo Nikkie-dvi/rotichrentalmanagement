@@ -23,6 +23,7 @@
 - None
 
 ## Done recently
+- [x] Tenant assignment now asks for opening rent paid in months or an exact amount, records it as a payment, and previews credit or balance due separately from the deposit.
 - [x] Due-date invoices text tenants their prepaid-credit application and updated balance; logged payments text the resulting credit or arrears.
 - [x] Dashboard vacancy, arrears, repair, and collection figures expand into unit, month, ticket, and payment details.
 - [x] KPI figures collapsed behind a single drop-down that reveals all four tabs.
