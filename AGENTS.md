@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Use the shared tenant ledger for both due-date invoice SMS and payment receipts, so notices match the balances shown in landlord and tenant accounts.

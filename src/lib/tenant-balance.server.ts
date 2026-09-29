@@ -30,7 +30,7 @@ export async function tenantBalancePosition(tenantId: string) {
 export function balancePositionText(credit: number, arrears: number, monthlyRent: number) {
   if (arrears > 0) {
     const months = monthlyRent > 0 ? Math.floor(arrears / monthlyRent) : 0;
-    return `Your outstanding balance is ${money(arrears)}.${months >= 1 ? ` This is at least ${months} full month${months === 1 ? "" : "s"} of rent.` : ""}`;
+    return `Your outstanding balance is ${money(arrears)}.${months >= 1 ? ` This is equivalent to at least ${months} full month${months === 1 ? "" : "s"} of rent at your current rate.` : ""}`;
   }
   if (credit > 0) {
     const months = monthlyRent > 0 ? Math.floor(credit / monthlyRent) : 0;
