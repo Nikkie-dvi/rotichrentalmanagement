@@ -38,16 +38,14 @@ export const sendPaymentReceiptSms = createServerFn({ method: "POST" })
     const phone = (tenant as any).phone_number as string | null;
     if (!phone) throw new Error("This tenant has no phone number saved");
 
-    // Outstanding balance after the payment, so the receipt is useful.
+    // Include accrued rent and prepaid credit, as both portals do.
+    const { tenantBalancePosition, balancePositionText } = await import("@/lib/tenant-balance.server");
+    const { rent, ledger } = await tenantBalancePosition(data.tenantId);
     const { data: invoices } = await context.supabase
       .from("invoices")
       .select("month_year, balance_remaining, late_penalty_amount, penalty_waived")
       .eq("tenant_id", data.tenantId)
       .gt("balance_remaining", 0);
-    const balance = (invoices ?? []).reduce(
-      (sum: number, i: any) => sum + (Number(i.balance_remaining) || 0),
-      0,
-    );
     // Spell out any late fees still sitting on the tenant's unpaid invoices.
     const penaltyRows = (invoices ?? []).filter(
       (i: any) => !i.penalty_waived && (Number(i.late_penalty_amount) || 0) > 0,
@@ -60,14 +58,13 @@ export const sendPaymentReceiptSms = createServerFn({ method: "POST" })
             .join(", ")}).`
         : "";
 
-    const first = (((tenant as any).full_name as string) ?? "there").split(" ")[0];
+    const first = (((tenant as any).full_name as string) ?? "Tenant").trim().split(/\s+/)[0];
     const refPart = data.reference ? ` Ref ${data.reference}.` : "";
     const message =
-      `Hi ${first}, we have received your payment of ${money(data.amount)} on ${data.paymentDate}` +
+      `Dear ${first}, we have received your payment of ${money(data.amount)} on ${data.paymentDate}` +
       `${data.method ? ` via ${data.method}` : ""}.${refPart} ` +
-      (balance > 0
-        ? `Outstanding balance: ${money(balance)}.${penaltyPart}`
-        : `Your account is fully settled. Thank you!`);
+      `${balancePositionText(ledger.credit, ledger.arrears, rent)}${ledger.arrears > 0 ? penaltyPart : ""} ` +
+      `Thank you. View your account at homebasemanager.app/tenant/login using your phone number.`;
 
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -85,7 +82,7 @@ export const sendPaymentReceiptSms = createServerFn({ method: "POST" })
     }
 
     const { sendSms } = await import("@/lib/sms.server");
-    const res = await sendSms(phone, message);
+    const res = await sendSms(phone, message, { portalLink: false });
 
     await supabaseAdmin.from("notification_logs").insert({
       owner_id: (tenant as any).owner_id,

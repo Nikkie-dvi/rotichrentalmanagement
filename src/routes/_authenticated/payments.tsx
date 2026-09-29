@@ -157,12 +157,24 @@ function PaymentsPage() {
       if (error) throw error;
       return inserted;
     },
-    onSuccess: (p) => {
+    onSuccess: async (p) => {
       qc.invalidateQueries();
       setAmount("");
       setRef("");
       toast.success("Payment logged");
       setReceipt(p);
+      try {
+        await sendPaymentReceiptSms({ data: {
+          tenantId: p.tenant_id,
+          amount: Number(p.amount_paid),
+          paymentDate: p.payment_date,
+          method: p.payment_method === "mpesa" ? "M-Pesa" : p.payment_method === "bank" ? "Bank" : "Cash",
+          reference: p.reference_no ?? null,
+        } });
+        toast.success("Updated balance texted to the tenant");
+      } catch (error) {
+        toast.warning(error instanceof Error ? `Payment saved, but the text could not be sent: ${error.message}` : "Payment saved, but the text could not be sent");
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
