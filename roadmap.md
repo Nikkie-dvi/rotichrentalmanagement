@@ -20,7 +20,7 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
-- None
+- [ ] Add a guided opening-rent payment step when assigning a tenant; show prepaid credit instead of arrears.
 
 ## Done recently
 - [x] Due-date invoices text tenants their prepaid-credit application and updated balance; logged payments text the resulting credit or arrears.
