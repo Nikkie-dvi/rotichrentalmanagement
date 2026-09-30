@@ -34,6 +34,7 @@ import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated/applications'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as TenantauthTenantSignLeaseRouteImport } from './routes/_tenantauth/tenant.sign-lease'
 import { Route as TenantauthTenantDashboardRouteImport } from './routes/_tenantauth/tenant.dashboard'
 import { Route as AuthenticatedSettingsPaymentsRouteImport } from './routes/_authenticated/settings.payments'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
@@ -181,6 +182,12 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const TenantauthTenantSignLeaseRoute =
+  TenantauthTenantSignLeaseRouteImport.update({
+    id: '/tenant/sign-lease',
+    path: '/tenant/sign-lease',
+    getParentRoute: () => TenantauthRouteRoute,
+  } as any)
 const TenantauthTenantDashboardRoute =
   TenantauthTenantDashboardRouteImport.update({
     id: '/tenant/dashboard',
@@ -331,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
+  '/tenant/sign-lease': typeof TenantauthTenantSignLeaseRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
   '/api/public/hooks/credit-watch': typeof ApiPublicHooksCreditWatchRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
@@ -376,6 +384,7 @@ export interface FileRoutesByTo {
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
+  '/tenant/sign-lease': typeof TenantauthTenantSignLeaseRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
   '/api/public/hooks/credit-watch': typeof ApiPublicHooksCreditWatchRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
@@ -424,6 +433,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
   '/_tenantauth/tenant/dashboard': typeof TenantauthTenantDashboardRoute
+  '/_tenantauth/tenant/sign-lease': typeof TenantauthTenantSignLeaseRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
   '/api/public/hooks/credit-watch': typeof ApiPublicHooksCreditWatchRoute
   '/api/public/hooks/generate-monthly-invoices': typeof ApiPublicHooksGenerateMonthlyInvoicesRoute
@@ -471,6 +481,7 @@ export interface FileRouteTypes {
     | '/settings/notifications'
     | '/settings/payments'
     | '/tenant/dashboard'
+    | '/tenant/sign-lease'
     | '/api/public/hooks/apply-late-penalties'
     | '/api/public/hooks/credit-watch'
     | '/api/public/hooks/generate-monthly-invoices'
@@ -516,6 +527,7 @@ export interface FileRouteTypes {
     | '/settings/notifications'
     | '/settings/payments'
     | '/tenant/dashboard'
+    | '/tenant/sign-lease'
     | '/api/public/hooks/apply-late-penalties'
     | '/api/public/hooks/credit-watch'
     | '/api/public/hooks/generate-monthly-invoices'
@@ -563,6 +575,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/payments'
     | '/_tenantauth/tenant/dashboard'
+    | '/_tenantauth/tenant/sign-lease'
     | '/api/public/hooks/apply-late-penalties'
     | '/api/public/hooks/credit-watch'
     | '/api/public/hooks/generate-monthly-invoices'
@@ -778,6 +791,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_tenantauth/tenant/sign-lease': {
+      id: '/_tenantauth/tenant/sign-lease'
+      path: '/tenant/sign-lease'
+      fullPath: '/tenant/sign-lease'
+      preLoaderRoute: typeof TenantauthTenantSignLeaseRouteImport
+      parentRoute: typeof TenantauthRouteRoute
+    }
     '/_tenantauth/tenant/dashboard': {
       id: '/_tenantauth/tenant/dashboard'
       path: '/tenant/dashboard'
@@ -977,10 +997,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface TenantauthRouteRouteChildren {
   TenantauthTenantDashboardRoute: typeof TenantauthTenantDashboardRoute
+  TenantauthTenantSignLeaseRoute: typeof TenantauthTenantSignLeaseRoute
 }
 
 const TenantauthRouteRouteChildren: TenantauthRouteRouteChildren = {
   TenantauthTenantDashboardRoute: TenantauthTenantDashboardRoute,
+  TenantauthTenantSignLeaseRoute: TenantauthTenantSignLeaseRoute,
 }
 
 const TenantauthRouteRouteWithChildren = TenantauthRouteRoute._addFileChildren(
