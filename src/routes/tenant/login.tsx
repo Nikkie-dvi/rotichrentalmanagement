@@ -15,6 +15,10 @@ import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/tenant/login")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>): { redirect?: string } => {
+    const r = typeof s.redirect === "string" ? s.redirect : "";
+    return r.startsWith("/tenant/") && !r.startsWith("//") ? { redirect: r } : {};
+  },
   head: () => ({
     meta: [
       { title: "Tenant sign in — Rotich Management Systems" },
@@ -31,6 +35,8 @@ export const Route = createFileRoute("/tenant/login")({
 
 function TenantLoginPage() {
   const navigate = useNavigate();
+  const { redirect: back } = Route.useSearch();
+  const dest = back ?? "/tenant/dashboard";
   const [email, setEmail] = useState("");
   const [google, setGoogle] = useState(false);
   const [password, setPassword] = useState("");
@@ -46,9 +52,9 @@ function TenantLoginPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/tenant/dashboard" });
+      if (data.session) navigate({ to: dest as any });
     });
-  }, [navigate]);
+  }, [navigate, dest]);
 
   useEffect(() => {
     if (wait <= 0) return;
@@ -79,7 +85,7 @@ function TenantLoginPage() {
       const { error } = await supabase.auth.setSession(session);
       if (error) throw error;
       toast.success("Signed in");
-      navigate({ to: "/tenant/dashboard" });
+      navigate({ to: dest as any });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign in failed");
     } finally {
@@ -103,7 +109,7 @@ function TenantLoginPage() {
         if (error) throw error;
       }
       toast.success("Signed in");
-      navigate({ to: "/tenant/dashboard" });
+      navigate({ to: dest as any });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign in failed");
     } finally {
