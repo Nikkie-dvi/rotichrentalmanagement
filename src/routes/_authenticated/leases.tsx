@@ -99,17 +99,16 @@ function LeasesPage() {
 
   const remind = async (tenant: any, channel: "sms" | "push") => {
     setSendingId(`${tenant.id}-${channel}`);
-    const link =
-      typeof window !== "undefined" ? `${window.location.origin}/tenant/dashboard` : "/tenant/dashboard";
+    const link = "homebasemanager.app/tenant/sign-lease";
     try {
       const res: any = await notify({
         data: {
           title: "Please sign your lease",
           body:
             channel === "sms"
-              ? `Hi ${tenant.full_name}, please sign your lease agreement here: ${link}`
-              : `Hi ${tenant.full_name}, your lease agreement is waiting for your signature. Open your portal to sign it.`,
-          url: "/tenant/dashboard",
+              ? `Dear ${tenant.full_name}, please sign your lease agreement here: ${link} - sign in with your phone number and you'll go straight to the signing page.`
+              : `Hi ${tenant.full_name}, your lease agreement is waiting for your signature. Tap to sign it now.`,
+          url: "/tenant/sign-lease",
           tag: `lease-sign-${tenant.id}`,
           sms: channel === "sms",
           push: channel === "push",

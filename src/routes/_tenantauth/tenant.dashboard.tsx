@@ -499,6 +499,11 @@ function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
+            {!(t as any).lease_signature && !landlordInfoQuery.data?.mySignedLeaseUrl && (
+              <Button size="sm" onClick={() => navigate({ to: "/tenant/sign-lease" })}>
+                Sign my lease now
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => setLeaseOpen(true)} className="glass-btn glow-blue">
               View full lease &amp; signature
             </Button>
