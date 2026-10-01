@@ -127,13 +127,9 @@ export async function runWelcomeSweep() {
   }
 
   if (logs.length) await supabaseAdmin.from("notification_logs").insert(logs as never);
-  let leaseReminders = 0;
-  try {
-    leaseReminders = await sendLeaseSignReminders();
-  } catch (e) {
-    console.error("lease reminders failed", e);
-  }
-  return { ok: true, tenantsWelcomed, landlordsWelcomed, checkins, leaseReminders };
+  // Lease-signing reminders are manual only: the landlord sends them from the
+  // Leases page ("Remind" button). Nothing automatic goes out from here.
+  return { ok: true, tenantsWelcomed, landlordsWelcomed, checkins };
 }
 
 // Automatic lease-signing reminders: active tenants without a signed lease get
