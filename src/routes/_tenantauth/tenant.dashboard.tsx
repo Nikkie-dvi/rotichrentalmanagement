@@ -309,6 +309,9 @@ function DashboardPage() {
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <QuickStartGuide audience="tenant" steps={TENANT_GUIDE} compact />
+          <Button variant="outline" size="sm" onClick={() => navigate({ to: "/tenant/account" })}>
+            My account
+          </Button>
           <Button variant="outline" size="icon" onClick={signOut} aria-label="Sign out">
             <LogOut className="h-4 w-4" />
           </Button>
