@@ -127,5 +127,69 @@ export async function runWelcomeSweep() {
   }
 
   if (logs.length) await supabaseAdmin.from("notification_logs").insert(logs as never);
-  return { ok: true, tenantsWelcomed, landlordsWelcomed, checkins };
+  let leaseReminders = 0;
+  try {
+    leaseReminders = await sendLeaseSignReminders();
+  } catch (e) {
+    console.error("lease reminders failed", e);
+  }
+  return { ok: true, tenantsWelcomed, landlordsWelcomed, checkins, leaseReminders };
+}
+
+// Automatic lease-signing reminders: active tenants without a signed lease get
+// a text + phone alert linking straight to the signing page. Starts 1 day after
+// they're added, repeats every 3 days, at most 3 times.
+const LEASE_SUBJECT = "lease_sign_reminder";
+export async function sendLeaseSignReminders() {
+  const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
+  const dayAgo = new Date(Date.now() - 86400000).toISOString();
+  const { data: tenants } = await supabaseAdmin
+    .from("tenants")
+    .select("id, owner_id, full_name, phone_number, auth_user_id")
+    .eq("active", true)
+    .eq("approval_status", "approved")
+    .is("move_out_date", null)
+    .is("lease_signature", null)
+    .is("signed_lease_path", null)
+    .lte("created_at", dayAgo)
+    .limit(200);
+  let sent = 0;
+  for (const t of (tenants ?? []) as any[]) {
+    if (!t.phone_number && !t.auth_user_id) continue;
+    const { data: prev } = await supabaseAdmin
+      .from("notification_logs").select("created_at").eq("tenant_id", t.id).eq("subject", LEASE_SUBJECT)
+      .order("created_at", { ascending: false });
+    const list = prev ?? [];
+    if (list.length >= 3) continue;
+    if (list[0] && Date.now() - new Date(list[0].created_at as string).getTime() < 3 * 86400000) continue;
+
+    const msg = `Dear ${first(t.full_name)}, your lease agreement is awaiting your signature. Please sign it here: homebasemanager.app/tenant/sign-lease - sign in with your phone number and you'll go straight to the signing page. Thank you.`;
+    let status = "skipped";
+    let error: string | null = null;
+    if (t.phone_number) {
+      const bal = await chargeSmsWallet(supabaseAdmin as any, { ownerId: t.owner_id, count: 1, reason: "lease_reminder" });
+      if (bal === null) {
+        error = "no_sms_credit";
+      } else {
+        const res = await sendSms(t.phone_number, msg, { portalLink: false });
+        status = res.ok ? "delivered" : "failed";
+        error = res.error ?? null;
+      }
+    }
+    if (t.auth_user_id) {
+      await pushToUsers([t.auth_user_id], {
+        title: "Please sign your lease",
+        body: "Your lease agreement is waiting for your signature. Tap to sign it now.",
+        url: "/tenant/sign-lease",
+        tag: `lease-sign-${t.id}`,
+      }).catch(() => {});
+      if (status === "skipped") status = "delivered";
+    }
+    await supabaseAdmin.from("notification_logs").insert({
+      owner_id: t.owner_id, tenant_id: t.id, channel: "sms", recipient: t.phone_number,
+      subject: LEASE_SUBJECT, message: msg, status, error,
+    } as never);
+    sent++;
+  }
+  return sent;
 }

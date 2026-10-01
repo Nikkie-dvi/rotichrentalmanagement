@@ -58,7 +58,7 @@ const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resol
  */
 export function withPortalLink(message: string): string {
   if (!message) return message;
-  if (message.includes(PORTAL_LINK) || /https?:\/\//i.test(message)) return message;
+  if (message.includes("homebasemanager.app/") || /https?:\/\//i.test(message)) return message;
   const candidate = `${message} Open your portal: ${PORTAL_LINK}`;
   return segments(candidate) > segments(message) ? message : candidate;
 }
