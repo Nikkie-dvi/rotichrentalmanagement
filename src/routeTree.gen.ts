@@ -42,6 +42,7 @@ import { Route as AuthenticatedSettingsLeaseRouteImport } from './routes/_authen
 import { Route as AuthenticatedSettingsManagersRouteImport } from './routes/_authenticated/settings.managers'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedSettingsPaymentsRouteImport } from './routes/_authenticated/settings.payments'
+import { Route as TenantauthTenantAccountRouteImport } from './routes/_tenantauth/tenant.account'
 import { Route as TenantauthTenantDashboardRouteImport } from './routes/_tenantauth/tenant.dashboard'
 import { Route as TenantauthTenantSignLeaseRouteImport } from './routes/_tenantauth/tenant.sign-lease'
 import { Route as ApiPublicHooksApplyLatePenaltiesRouteImport } from './routes/api/public/hooks/apply-late-penalties'
@@ -229,6 +230,11 @@ const AuthenticatedSettingsPaymentsRoute =
     path: '/settings/payments',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const TenantauthTenantAccountRoute = TenantauthTenantAccountRouteImport.update({
+  id: '/tenant/account',
+  path: '/tenant/account',
+  getParentRoute: () => TenantauthRouteRoute,
+} as any)
 const TenantauthTenantDashboardRoute =
   TenantauthTenantDashboardRouteImport.update({
     id: '/tenant/dashboard',
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
+  '/tenant/account': typeof TenantauthTenantAccountRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/tenant/sign-lease': typeof TenantauthTenantSignLeaseRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
@@ -383,6 +390,7 @@ export interface FileRoutesByTo {
   '/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
+  '/tenant/account': typeof TenantauthTenantAccountRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/tenant/sign-lease': typeof TenantauthTenantSignLeaseRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
@@ -432,6 +440,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
+  '/_tenantauth/tenant/account': typeof TenantauthTenantAccountRoute
   '/_tenantauth/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/_tenantauth/tenant/sign-lease': typeof TenantauthTenantSignLeaseRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
@@ -480,6 +489,7 @@ export interface FileRouteTypes {
     | '/settings/managers'
     | '/settings/notifications'
     | '/settings/payments'
+    | '/tenant/account'
     | '/tenant/dashboard'
     | '/tenant/sign-lease'
     | '/api/public/hooks/apply-late-penalties'
@@ -526,6 +536,7 @@ export interface FileRouteTypes {
     | '/settings/managers'
     | '/settings/notifications'
     | '/settings/payments'
+    | '/tenant/account'
     | '/tenant/dashboard'
     | '/tenant/sign-lease'
     | '/api/public/hooks/apply-late-penalties'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/managers'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/payments'
+    | '/_tenantauth/tenant/account'
     | '/_tenantauth/tenant/dashboard'
     | '/_tenantauth/tenant/sign-lease'
     | '/api/public/hooks/apply-late-penalties'
@@ -847,6 +859,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsPaymentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_tenantauth/tenant/account': {
+      id: '/_tenantauth/tenant/account'
+      path: '/tenant/account'
+      fullPath: '/tenant/account'
+      preLoaderRoute: typeof TenantauthTenantAccountRouteImport
+      parentRoute: typeof TenantauthRouteRoute
+    }
     '/_tenantauth/tenant/dashboard': {
       id: '/_tenantauth/tenant/dashboard'
       path: '/tenant/dashboard'
@@ -996,11 +1015,13 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface TenantauthRouteRouteChildren {
+  TenantauthTenantAccountRoute: typeof TenantauthTenantAccountRoute
   TenantauthTenantDashboardRoute: typeof TenantauthTenantDashboardRoute
   TenantauthTenantSignLeaseRoute: typeof TenantauthTenantSignLeaseRoute
 }
 
 const TenantauthRouteRouteChildren: TenantauthRouteRouteChildren = {
+  TenantauthTenantAccountRoute: TenantauthTenantAccountRoute,
   TenantauthTenantDashboardRoute: TenantauthTenantDashboardRoute,
   TenantauthTenantSignLeaseRoute: TenantauthTenantSignLeaseRoute,
 }
