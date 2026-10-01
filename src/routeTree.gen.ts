@@ -9,59 +9,57 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as TenantauthRouteRouteImport } from './routes/_tenantauth/route'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated/applications'
-import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
-import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
-import { Route as AuthenticatedLandlordsRouteImport } from './routes/_authenticated/landlords'
-import { Route as AuthenticatedLeasesRouteImport } from './routes/_authenticated/leases'
-import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
-import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
-import { Route as AuthenticatedMetersRouteImport } from './routes/_authenticated/meters'
-import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
-import { Route as AuthenticatedPerformanceRouteImport } from './routes/_authenticated/performance'
-import { Route as AuthenticatedPropertiesRouteImport } from './routes/_authenticated/properties'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
-import { Route as AuthenticatedTenantsRouteImport } from './routes/_authenticated/tenants'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as TenantauthRouteRouteImport } from './routes/_tenantauth/route'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as TenantIndexRouteImport } from './routes/tenant/index'
-import { Route as TenantClaimRouteImport } from './routes/tenant/claim'
-import { Route as TenantLoginRouteImport } from './routes/tenant/login'
-import { Route as TenantRegisterRouteImport } from './routes/tenant/register'
-import { Route as TenantRequestAccessRouteImport } from './routes/tenant/request-access'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as TenantStatusRouteImport } from './routes/tenant/status'
-import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
-import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings.account'
-import { Route as AuthenticatedSettingsBillingRouteImport } from './routes/_authenticated/settings.billing'
-import { Route as AuthenticatedSettingsBrandingRouteImport } from './routes/_authenticated/settings.branding'
-import { Route as AuthenticatedSettingsLeaseRouteImport } from './routes/_authenticated/settings.lease'
-import { Route as AuthenticatedSettingsManagersRouteImport } from './routes/_authenticated/settings.managers'
-import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
-import { Route as AuthenticatedSettingsPaymentsRouteImport } from './routes/_authenticated/settings.payments'
-import { Route as TenantauthTenantDashboardRouteImport } from './routes/_tenantauth/tenant.dashboard'
+import { Route as TenantRequestAccessRouteImport } from './routes/tenant/request-access'
+import { Route as TenantRegisterRouteImport } from './routes/tenant/register'
+import { Route as TenantLoginRouteImport } from './routes/tenant/login'
+import { Route as TenantClaimRouteImport } from './routes/tenant/claim'
+import { Route as AuthenticatedTenantsRouteImport } from './routes/_authenticated/tenants'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedPropertiesRouteImport } from './routes/_authenticated/properties'
+import { Route as AuthenticatedPerformanceRouteImport } from './routes/_authenticated/performance'
+import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
+import { Route as AuthenticatedMetersRouteImport } from './routes/_authenticated/meters'
+import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
+import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
+import { Route as AuthenticatedLeasesRouteImport } from './routes/_authenticated/leases'
+import { Route as AuthenticatedLandlordsRouteImport } from './routes/_authenticated/landlords'
+import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
+import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated/applications'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as TenantauthTenantSignLeaseRouteImport } from './routes/_tenantauth/tenant.sign-lease'
-import { Route as ApiPublicHooksApplyLatePenaltiesRouteImport } from './routes/api/public/hooks/apply-late-penalties'
-import { Route as ApiPublicHooksCreditWatchRouteImport } from './routes/api/public/hooks/credit-watch'
-import { Route as ApiPublicHooksGenerateMonthlyInvoicesRouteImport } from './routes/api/public/hooks/generate-monthly-invoices'
-import { Route as ApiPublicHooksSendPushRemindersRouteImport } from './routes/api/public/hooks/send-push-reminders'
-import { Route as ApiPublicHooksSendRentRemindersRouteImport } from './routes/api/public/hooks/send-rent-reminders'
-import { Route as ApiPublicHooksWelcomeSweepRouteImport } from './routes/api/public/hooks/welcome-sweep'
-import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
-import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as TenantauthTenantDashboardRouteImport } from './routes/_tenantauth/tenant.dashboard'
+import { Route as TenantauthTenantAccountRouteImport } from './routes/_tenantauth/tenant.account'
+import { Route as AuthenticatedSettingsPaymentsRouteImport } from './routes/_authenticated/settings.payments'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
+import { Route as AuthenticatedSettingsManagersRouteImport } from './routes/_authenticated/settings.managers'
+import { Route as AuthenticatedSettingsLeaseRouteImport } from './routes/_authenticated/settings.lease'
+import { Route as AuthenticatedSettingsBrandingRouteImport } from './routes/_authenticated/settings.branding'
+import { Route as AuthenticatedSettingsBillingRouteImport } from './routes/_authenticated/settings.billing'
+import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings.account'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
+import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
+import { Route as ApiPublicHooksWelcomeSweepRouteImport } from './routes/api/public/hooks/welcome-sweep'
+import { Route as ApiPublicHooksSendRentRemindersRouteImport } from './routes/api/public/hooks/send-rent-reminders'
+import { Route as ApiPublicHooksSendPushRemindersRouteImport } from './routes/api/public/hooks/send-push-reminders'
+import { Route as ApiPublicHooksGenerateMonthlyInvoicesRouteImport } from './routes/api/public/hooks/generate-monthly-invoices'
+import { Route as ApiPublicHooksCreditWatchRouteImport } from './routes/api/public/hooks/credit-watch'
+import { Route as ApiPublicHooksApplyLatePenaltiesRouteImport } from './routes/api/public/hooks/apply-late-penalties'
 
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TenantauthRouteRoute = TenantauthRouteRouteImport.update({
-  id: '/_tenantauth',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -69,9 +67,17 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const TenantauthRouteRoute = TenantauthRouteRouteImport.update({
+  id: '/_tenantauth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TenantIndexRoute = TenantIndexRouteImport.update({
+  id: '/tenant/',
+  path: '/tenant/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -79,56 +85,44 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
+const TenantStatusRoute = TenantStatusRouteImport.update({
+  id: '/tenant/status',
+  path: '/tenant/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TenantRequestAccessRoute = TenantRequestAccessRouteImport.update({
+  id: '/tenant/request-access',
+  path: '/tenant/request-access',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TenantRegisterRoute = TenantRegisterRouteImport.update({
+  id: '/tenant/register',
+  path: '/tenant/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TenantLoginRoute = TenantLoginRouteImport.update({
+  id: '/tenant/login',
+  path: '/tenant/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TenantClaimRoute = TenantClaimRouteImport.update({
+  id: '/tenant/claim',
+  path: '/tenant/claim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTenantsRoute = AuthenticatedTenantsRouteImport.update({
+  id: '/tenants',
+  path: '/tenants',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedApplicationsRoute =
-  AuthenticatedApplicationsRouteImport.update({
-    id: '/applications',
-    path: '/applications',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
-  id: '/billing',
-  path: '/billing',
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedLandlordsRoute = AuthenticatedLandlordsRouteImport.update({
-  id: '/landlords',
-  path: '/landlords',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedLeasesRoute = AuthenticatedLeasesRouteImport.update({
-  id: '/leases',
-  path: '/leases',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMaintenanceRoute =
-  AuthenticatedMaintenanceRouteImport.update({
-    id: '/maintenance',
-    path: '/maintenance',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMetersRoute = AuthenticatedMetersRouteImport.update({
-  id: '/meters',
-  path: '/meters',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPaymentsRoute = AuthenticatedPaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
+const AuthenticatedPropertiesRoute = AuthenticatedPropertiesRouteImport.update({
+  id: '/properties',
+  path: '/properties',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPerformanceRoute =
@@ -137,84 +131,79 @@ const AuthenticatedPerformanceRoute =
     path: '/performance',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPropertiesRoute = AuthenticatedPropertiesRouteImport.update({
-  id: '/properties',
-  path: '/properties',
+const AuthenticatedPaymentsRoute = AuthenticatedPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
+const AuthenticatedMetersRoute = AuthenticatedMetersRouteImport.update({
+  id: '/meters',
+  path: '/meters',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedTenantsRoute = AuthenticatedTenantsRouteImport.update({
-  id: '/tenants',
-  path: '/tenants',
+const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const TenantIndexRoute = TenantIndexRouteImport.update({
-  id: '/tenant/',
-  path: '/tenant/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TenantClaimRoute = TenantClaimRouteImport.update({
-  id: '/tenant/claim',
-  path: '/tenant/claim',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TenantLoginRoute = TenantLoginRouteImport.update({
-  id: '/tenant/login',
-  path: '/tenant/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TenantRegisterRoute = TenantRegisterRouteImport.update({
-  id: '/tenant/register',
-  path: '/tenant/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TenantRequestAccessRoute = TenantRequestAccessRouteImport.update({
-  id: '/tenant/request-access',
-  path: '/tenant/request-access',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TenantStatusRoute = TenantStatusRouteImport.update({
-  id: '/tenant/status',
-  path: '/tenant/status',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedSettingsAccountRoute =
-  AuthenticatedSettingsAccountRouteImport.update({
-    id: '/settings/account',
-    path: '/settings/account',
+const AuthenticatedMaintenanceRoute =
+  AuthenticatedMaintenanceRouteImport.update({
+    id: '/maintenance',
+    path: '/maintenance',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSettingsBillingRoute =
-  AuthenticatedSettingsBillingRouteImport.update({
-    id: '/settings/billing',
-    path: '/settings/billing',
+const AuthenticatedLeasesRoute = AuthenticatedLeasesRouteImport.update({
+  id: '/leases',
+  path: '/leases',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLandlordsRoute = AuthenticatedLandlordsRouteImport.update({
+  id: '/landlords',
+  path: '/landlords',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedApplicationsRoute =
+  AuthenticatedApplicationsRouteImport.update({
+    id: '/applications',
+    path: '/applications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSettingsBrandingRoute =
-  AuthenticatedSettingsBrandingRouteImport.update({
-    id: '/settings/branding',
-    path: '/settings/branding',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const TenantauthTenantSignLeaseRoute =
+  TenantauthTenantSignLeaseRouteImport.update({
+    id: '/tenant/sign-lease',
+    path: '/tenant/sign-lease',
+    getParentRoute: () => TenantauthRouteRoute,
   } as any)
-const AuthenticatedSettingsLeaseRoute =
-  AuthenticatedSettingsLeaseRouteImport.update({
-    id: '/settings/lease',
-    path: '/settings/lease',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const TenantauthTenantDashboardRoute =
+  TenantauthTenantDashboardRouteImport.update({
+    id: '/tenant/dashboard',
+    path: '/tenant/dashboard',
+    getParentRoute: () => TenantauthRouteRoute,
   } as any)
-const AuthenticatedSettingsManagersRoute =
-  AuthenticatedSettingsManagersRouteImport.update({
-    id: '/settings/managers',
-    path: '/settings/managers',
+const TenantauthTenantAccountRoute = TenantauthTenantAccountRouteImport.update({
+  id: '/tenant/account',
+  path: '/tenant/account',
+  getParentRoute: () => TenantauthRouteRoute,
+} as any)
+const AuthenticatedSettingsPaymentsRoute =
+  AuthenticatedSettingsPaymentsRouteImport.update({
+    id: '/settings/payments',
+    path: '/settings/payments',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSettingsNotificationsRoute =
@@ -223,52 +212,66 @@ const AuthenticatedSettingsNotificationsRoute =
     path: '/settings/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSettingsPaymentsRoute =
-  AuthenticatedSettingsPaymentsRouteImport.update({
-    id: '/settings/payments',
-    path: '/settings/payments',
+const AuthenticatedSettingsManagersRoute =
+  AuthenticatedSettingsManagersRouteImport.update({
+    id: '/settings/managers',
+    path: '/settings/managers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const TenantauthTenantDashboardRoute =
-  TenantauthTenantDashboardRouteImport.update({
-    id: '/tenant/dashboard',
-    path: '/tenant/dashboard',
-    getParentRoute: () => TenantauthRouteRoute,
+const AuthenticatedSettingsLeaseRoute =
+  AuthenticatedSettingsLeaseRouteImport.update({
+    id: '/settings/lease',
+    path: '/settings/lease',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const TenantauthTenantSignLeaseRoute =
-  TenantauthTenantSignLeaseRouteImport.update({
-    id: '/tenant/sign-lease',
-    path: '/tenant/sign-lease',
-    getParentRoute: () => TenantauthRouteRoute,
+const AuthenticatedSettingsBrandingRoute =
+  AuthenticatedSettingsBrandingRouteImport.update({
+    id: '/settings/branding',
+    path: '/settings/branding',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicHooksApplyLatePenaltiesRoute =
-  ApiPublicHooksApplyLatePenaltiesRouteImport.update({
-    id: '/api/public/hooks/apply-late-penalties',
-    path: '/api/public/hooks/apply-late-penalties',
+const AuthenticatedSettingsBillingRoute =
+  AuthenticatedSettingsBillingRouteImport.update({
+    id: '/settings/billing',
+    path: '/settings/billing',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsAccountRoute =
+  AuthenticatedSettingsAccountRouteImport.update({
+    id: '/settings/account',
+    path: '/settings/account',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksCreditWatchRoute =
-  ApiPublicHooksCreditWatchRouteImport.update({
-    id: '/api/public/hooks/credit-watch',
-    path: '/api/public/hooks/credit-watch',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksGenerateMonthlyInvoicesRoute =
-  ApiPublicHooksGenerateMonthlyInvoicesRouteImport.update({
-    id: '/api/public/hooks/generate-monthly-invoices',
-    path: '/api/public/hooks/generate-monthly-invoices',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksSendPushRemindersRoute =
-  ApiPublicHooksSendPushRemindersRouteImport.update({
-    id: '/api/public/hooks/send-push-reminders',
-    path: '/api/public/hooks/send-push-reminders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksSendRentRemindersRoute =
-  ApiPublicHooksSendRentRemindersRouteImport.update({
-    id: '/api/public/hooks/send-rent-reminders',
-    path: '/api/public/hooks/send-rent-reminders',
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMpesaStkPushRoute = ApiPublicMpesaStkPushRouteImport.update({
+  id: '/api/public/mpesa/stk-push',
+  path: '/api/public/mpesa/stk-push',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMpesaSimulateCallbackRoute =
+  ApiPublicMpesaSimulateCallbackRouteImport.update({
+    id: '/api/public/mpesa/simulate-callback',
+    path: '/api/public/mpesa/simulate-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksWelcomeSweepRoute =
@@ -277,31 +280,34 @@ const ApiPublicHooksWelcomeSweepRoute =
     path: '/api/public/hooks/welcome-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicMpesaSimulateCallbackRoute =
-  ApiPublicMpesaSimulateCallbackRouteImport.update({
-    id: '/api/public/mpesa/simulate-callback',
-    path: '/api/public/mpesa/simulate-callback',
+const ApiPublicHooksSendRentRemindersRoute =
+  ApiPublicHooksSendRentRemindersRouteImport.update({
+    id: '/api/public/hooks/send-rent-reminders',
+    path: '/api/public/hooks/send-rent-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicMpesaStkPushRoute = ApiPublicMpesaStkPushRouteImport.update({
-  id: '/api/public/mpesa/stk-push',
-  path: '/api/public/mpesa/stk-push',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
+const ApiPublicHooksSendPushRemindersRoute =
+  ApiPublicHooksSendPushRemindersRouteImport.update({
+    id: '/api/public/hooks/send-push-reminders',
+    path: '/api/public/hooks/send-push-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksGenerateMonthlyInvoicesRoute =
+  ApiPublicHooksGenerateMonthlyInvoicesRouteImport.update({
+    id: '/api/public/hooks/generate-monthly-invoices',
+    path: '/api/public/hooks/generate-monthly-invoices',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksCreditWatchRoute =
+  ApiPublicHooksCreditWatchRouteImport.update({
+    id: '/api/public/hooks/credit-watch',
+    path: '/api/public/hooks/credit-watch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksApplyLatePenaltiesRoute =
+  ApiPublicHooksApplyLatePenaltiesRouteImport.update({
+    id: '/api/public/hooks/apply-late-penalties',
+    path: '/api/public/hooks/apply-late-penalties',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
+  '/tenant/account': typeof TenantauthTenantAccountRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/tenant/sign-lease': typeof TenantauthTenantSignLeaseRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
@@ -383,6 +390,7 @@ export interface FileRoutesByTo {
   '/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
+  '/tenant/account': typeof TenantauthTenantAccountRoute
   '/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/tenant/sign-lease': typeof TenantauthTenantSignLeaseRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
@@ -432,6 +440,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/managers': typeof AuthenticatedSettingsManagersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/settings/payments': typeof AuthenticatedSettingsPaymentsRoute
+  '/_tenantauth/tenant/account': typeof TenantauthTenantAccountRoute
   '/_tenantauth/tenant/dashboard': typeof TenantauthTenantDashboardRoute
   '/_tenantauth/tenant/sign-lease': typeof TenantauthTenantSignLeaseRoute
   '/api/public/hooks/apply-late-penalties': typeof ApiPublicHooksApplyLatePenaltiesRoute
@@ -480,6 +489,7 @@ export interface FileRouteTypes {
     | '/settings/managers'
     | '/settings/notifications'
     | '/settings/payments'
+    | '/tenant/account'
     | '/tenant/dashboard'
     | '/tenant/sign-lease'
     | '/api/public/hooks/apply-late-penalties'
@@ -526,6 +536,7 @@ export interface FileRouteTypes {
     | '/settings/managers'
     | '/settings/notifications'
     | '/settings/payments'
+    | '/tenant/account'
     | '/tenant/dashboard'
     | '/tenant/sign-lease'
     | '/api/public/hooks/apply-late-penalties'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/managers'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/payments'
+    | '/_tenantauth/tenant/account'
     | '/_tenantauth/tenant/dashboard'
     | '/_tenantauth/tenant/sign-lease'
     | '/api/public/hooks/apply-late-penalties'
@@ -616,18 +628,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_tenantauth': {
-      id: '/_tenantauth'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof TenantauthRouteRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -637,11 +642,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/_tenantauth': {
+      id: '/_tenantauth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof TenantauthRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tenant/': {
+      id: '/tenant/'
+      path: '/tenant'
+      fullPath: '/tenant/'
+      preLoaderRoute: typeof TenantIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -651,130 +670,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/analytics': {
-      id: '/_authenticated/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/applications': {
-      id: '/_authenticated/applications'
-      path: '/applications'
-      fullPath: '/applications'
-      preLoaderRoute: typeof AuthenticatedApplicationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/billing': {
-      id: '/_authenticated/billing'
-      path: '/billing'
-      fullPath: '/billing'
-      preLoaderRoute: typeof AuthenticatedBillingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/calendar': {
-      id: '/_authenticated/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof AuthenticatedCalendarRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/landlords': {
-      id: '/_authenticated/landlords'
-      path: '/landlords'
-      fullPath: '/landlords'
-      preLoaderRoute: typeof AuthenticatedLandlordsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/leases': {
-      id: '/_authenticated/leases'
-      path: '/leases'
-      fullPath: '/leases'
-      preLoaderRoute: typeof AuthenticatedLeasesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/maintenance': {
-      id: '/_authenticated/maintenance'
-      path: '/maintenance'
-      fullPath: '/maintenance'
-      preLoaderRoute: typeof AuthenticatedMaintenanceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/messages': {
-      id: '/_authenticated/messages'
-      path: '/messages'
-      fullPath: '/messages'
-      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/meters': {
-      id: '/_authenticated/meters'
-      path: '/meters'
-      fullPath: '/meters'
-      preLoaderRoute: typeof AuthenticatedMetersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/payments': {
-      id: '/_authenticated/payments'
-      path: '/payments'
-      fullPath: '/payments'
-      preLoaderRoute: typeof AuthenticatedPaymentsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/performance': {
-      id: '/_authenticated/performance'
-      path: '/performance'
-      fullPath: '/performance'
-      preLoaderRoute: typeof AuthenticatedPerformanceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/properties': {
-      id: '/_authenticated/properties'
-      path: '/properties'
-      fullPath: '/properties'
-      preLoaderRoute: typeof AuthenticatedPropertiesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tenants': {
-      id: '/_authenticated/tenants'
-      path: '/tenants'
-      fullPath: '/tenants'
-      preLoaderRoute: typeof AuthenticatedTenantsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/tenant/': {
-      id: '/tenant/'
-      path: '/tenant'
-      fullPath: '/tenant/'
-      preLoaderRoute: typeof TenantIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tenant/claim': {
-      id: '/tenant/claim'
-      path: '/tenant/claim'
-      fullPath: '/tenant/claim'
-      preLoaderRoute: typeof TenantClaimRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tenant/login': {
-      id: '/tenant/login'
-      path: '/tenant/login'
-      fullPath: '/tenant/login'
-      preLoaderRoute: typeof TenantLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tenant/register': {
-      id: '/tenant/register'
-      path: '/tenant/register'
-      fullPath: '/tenant/register'
-      preLoaderRoute: typeof TenantRegisterRouteImport
+    '/tenant/status': {
+      id: '/tenant/status'
+      path: '/tenant/status'
+      fullPath: '/tenant/status'
+      preLoaderRoute: typeof TenantStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tenant/request-access': {
@@ -784,53 +684,151 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TenantRequestAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tenant/status': {
-      id: '/tenant/status'
-      path: '/tenant/status'
-      fullPath: '/tenant/status'
-      preLoaderRoute: typeof TenantStatusRouteImport
+    '/tenant/register': {
+      id: '/tenant/register'
+      path: '/tenant/register'
+      fullPath: '/tenant/register'
+      preLoaderRoute: typeof TenantRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+    '/tenant/login': {
+      id: '/tenant/login'
+      path: '/tenant/login'
+      fullPath: '/tenant/login'
+      preLoaderRoute: typeof TenantLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/settings/account': {
-      id: '/_authenticated/settings/account'
-      path: '/settings/account'
-      fullPath: '/settings/account'
-      preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
+    '/tenant/claim': {
+      id: '/tenant/claim'
+      path: '/tenant/claim'
+      fullPath: '/tenant/claim'
+      preLoaderRoute: typeof TenantClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/tenants': {
+      id: '/_authenticated/tenants'
+      path: '/tenants'
+      fullPath: '/tenants'
+      preLoaderRoute: typeof AuthenticatedTenantsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/billing': {
-      id: '/_authenticated/settings/billing'
-      path: '/settings/billing'
-      fullPath: '/settings/billing'
-      preLoaderRoute: typeof AuthenticatedSettingsBillingRouteImport
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/branding': {
-      id: '/_authenticated/settings/branding'
-      path: '/settings/branding'
-      fullPath: '/settings/branding'
-      preLoaderRoute: typeof AuthenticatedSettingsBrandingRouteImport
+    '/_authenticated/properties': {
+      id: '/_authenticated/properties'
+      path: '/properties'
+      fullPath: '/properties'
+      preLoaderRoute: typeof AuthenticatedPropertiesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/lease': {
-      id: '/_authenticated/settings/lease'
-      path: '/settings/lease'
-      fullPath: '/settings/lease'
-      preLoaderRoute: typeof AuthenticatedSettingsLeaseRouteImport
+    '/_authenticated/performance': {
+      id: '/_authenticated/performance'
+      path: '/performance'
+      fullPath: '/performance'
+      preLoaderRoute: typeof AuthenticatedPerformanceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/managers': {
-      id: '/_authenticated/settings/managers'
-      path: '/settings/managers'
-      fullPath: '/settings/managers'
-      preLoaderRoute: typeof AuthenticatedSettingsManagersRouteImport
+    '/_authenticated/payments': {
+      id: '/_authenticated/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof AuthenticatedPaymentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/meters': {
+      id: '/_authenticated/meters'
+      path: '/meters'
+      fullPath: '/meters'
+      preLoaderRoute: typeof AuthenticatedMetersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/messages': {
+      id: '/_authenticated/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/maintenance': {
+      id: '/_authenticated/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof AuthenticatedMaintenanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/leases': {
+      id: '/_authenticated/leases'
+      path: '/leases'
+      fullPath: '/leases'
+      preLoaderRoute: typeof AuthenticatedLeasesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/landlords': {
+      id: '/_authenticated/landlords'
+      path: '/landlords'
+      fullPath: '/landlords'
+      preLoaderRoute: typeof AuthenticatedLandlordsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/calendar': {
+      id: '/_authenticated/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AuthenticatedCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/applications': {
+      id: '/_authenticated/applications'
+      path: '/applications'
+      fullPath: '/applications'
+      preLoaderRoute: typeof AuthenticatedApplicationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_tenantauth/tenant/sign-lease': {
+      id: '/_tenantauth/tenant/sign-lease'
+      path: '/tenant/sign-lease'
+      fullPath: '/tenant/sign-lease'
+      preLoaderRoute: typeof TenantauthTenantSignLeaseRouteImport
+      parentRoute: typeof TenantauthRouteRoute
+    }
+    '/_tenantauth/tenant/dashboard': {
+      id: '/_tenantauth/tenant/dashboard'
+      path: '/tenant/dashboard'
+      fullPath: '/tenant/dashboard'
+      preLoaderRoute: typeof TenantauthTenantDashboardRouteImport
+      parentRoute: typeof TenantauthRouteRoute
+    }
+    '/_tenantauth/tenant/account': {
+      id: '/_tenantauth/tenant/account'
+      path: '/tenant/account'
+      fullPath: '/tenant/account'
+      preLoaderRoute: typeof TenantauthTenantAccountRouteImport
+      parentRoute: typeof TenantauthRouteRoute
+    }
+    '/_authenticated/settings/payments': {
+      id: '/_authenticated/settings/payments'
+      path: '/settings/payments'
+      fullPath: '/settings/payments'
+      preLoaderRoute: typeof AuthenticatedSettingsPaymentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/notifications': {
@@ -840,88 +838,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/payments': {
-      id: '/_authenticated/settings/payments'
-      path: '/settings/payments'
-      fullPath: '/settings/payments'
-      preLoaderRoute: typeof AuthenticatedSettingsPaymentsRouteImport
+    '/_authenticated/settings/managers': {
+      id: '/_authenticated/settings/managers'
+      path: '/settings/managers'
+      fullPath: '/settings/managers'
+      preLoaderRoute: typeof AuthenticatedSettingsManagersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_tenantauth/tenant/dashboard': {
-      id: '/_tenantauth/tenant/dashboard'
-      path: '/tenant/dashboard'
-      fullPath: '/tenant/dashboard'
-      preLoaderRoute: typeof TenantauthTenantDashboardRouteImport
-      parentRoute: typeof TenantauthRouteRoute
+    '/_authenticated/settings/lease': {
+      id: '/_authenticated/settings/lease'
+      path: '/settings/lease'
+      fullPath: '/settings/lease'
+      preLoaderRoute: typeof AuthenticatedSettingsLeaseRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_tenantauth/tenant/sign-lease': {
-      id: '/_tenantauth/tenant/sign-lease'
-      path: '/tenant/sign-lease'
-      fullPath: '/tenant/sign-lease'
-      preLoaderRoute: typeof TenantauthTenantSignLeaseRouteImport
-      parentRoute: typeof TenantauthRouteRoute
+    '/_authenticated/settings/branding': {
+      id: '/_authenticated/settings/branding'
+      path: '/settings/branding'
+      fullPath: '/settings/branding'
+      preLoaderRoute: typeof AuthenticatedSettingsBrandingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/hooks/apply-late-penalties': {
-      id: '/api/public/hooks/apply-late-penalties'
-      path: '/api/public/hooks/apply-late-penalties'
-      fullPath: '/api/public/hooks/apply-late-penalties'
-      preLoaderRoute: typeof ApiPublicHooksApplyLatePenaltiesRouteImport
+    '/_authenticated/settings/billing': {
+      id: '/_authenticated/settings/billing'
+      path: '/settings/billing'
+      fullPath: '/settings/billing'
+      preLoaderRoute: typeof AuthenticatedSettingsBillingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/account': {
+      id: '/_authenticated/settings/account'
+      path: '/settings/account'
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/credit-watch': {
-      id: '/api/public/hooks/credit-watch'
-      path: '/api/public/hooks/credit-watch'
-      fullPath: '/api/public/hooks/credit-watch'
-      preLoaderRoute: typeof ApiPublicHooksCreditWatchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/generate-monthly-invoices': {
-      id: '/api/public/hooks/generate-monthly-invoices'
-      path: '/api/public/hooks/generate-monthly-invoices'
-      fullPath: '/api/public/hooks/generate-monthly-invoices'
-      preLoaderRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/send-push-reminders': {
-      id: '/api/public/hooks/send-push-reminders'
-      path: '/api/public/hooks/send-push-reminders'
-      fullPath: '/api/public/hooks/send-push-reminders'
-      preLoaderRoute: typeof ApiPublicHooksSendPushRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/send-rent-reminders': {
-      id: '/api/public/hooks/send-rent-reminders'
-      path: '/api/public/hooks/send-rent-reminders'
-      fullPath: '/api/public/hooks/send-rent-reminders'
-      preLoaderRoute: typeof ApiPublicHooksSendRentRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/welcome-sweep': {
-      id: '/api/public/hooks/welcome-sweep'
-      path: '/api/public/hooks/welcome-sweep'
-      fullPath: '/api/public/hooks/welcome-sweep'
-      preLoaderRoute: typeof ApiPublicHooksWelcomeSweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/mpesa/simulate-callback': {
-      id: '/api/public/mpesa/simulate-callback'
-      path: '/api/public/mpesa/simulate-callback'
-      fullPath: '/api/public/mpesa/simulate-callback'
-      preLoaderRoute: typeof ApiPublicMpesaSimulateCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/mpesa/stk-push': {
-      id: '/api/public/mpesa/stk-push'
-      path: '/api/public/mpesa/stk-push'
-      fullPath: '/api/public/mpesa/stk-push'
-      preLoaderRoute: typeof ApiPublicMpesaStkPushRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/auth/webhook': {
@@ -931,11 +894,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/mpesa/stk-push': {
+      id: '/api/public/mpesa/stk-push'
+      path: '/api/public/mpesa/stk-push'
+      fullPath: '/api/public/mpesa/stk-push'
+      preLoaderRoute: typeof ApiPublicMpesaStkPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/mpesa/simulate-callback': {
+      id: '/api/public/mpesa/simulate-callback'
+      path: '/api/public/mpesa/simulate-callback'
+      fullPath: '/api/public/mpesa/simulate-callback'
+      preLoaderRoute: typeof ApiPublicMpesaSimulateCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/welcome-sweep': {
+      id: '/api/public/hooks/welcome-sweep'
+      path: '/api/public/hooks/welcome-sweep'
+      fullPath: '/api/public/hooks/welcome-sweep'
+      preLoaderRoute: typeof ApiPublicHooksWelcomeSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/send-rent-reminders': {
+      id: '/api/public/hooks/send-rent-reminders'
+      path: '/api/public/hooks/send-rent-reminders'
+      fullPath: '/api/public/hooks/send-rent-reminders'
+      preLoaderRoute: typeof ApiPublicHooksSendRentRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/send-push-reminders': {
+      id: '/api/public/hooks/send-push-reminders'
+      path: '/api/public/hooks/send-push-reminders'
+      fullPath: '/api/public/hooks/send-push-reminders'
+      preLoaderRoute: typeof ApiPublicHooksSendPushRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/generate-monthly-invoices': {
+      id: '/api/public/hooks/generate-monthly-invoices'
+      path: '/api/public/hooks/generate-monthly-invoices'
+      fullPath: '/api/public/hooks/generate-monthly-invoices'
+      preLoaderRoute: typeof ApiPublicHooksGenerateMonthlyInvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/credit-watch': {
+      id: '/api/public/hooks/credit-watch'
+      path: '/api/public/hooks/credit-watch'
+      fullPath: '/api/public/hooks/credit-watch'
+      preLoaderRoute: typeof ApiPublicHooksCreditWatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/apply-late-penalties': {
+      id: '/api/public/hooks/apply-late-penalties'
+      path: '/api/public/hooks/apply-late-penalties'
+      fullPath: '/api/public/hooks/apply-late-penalties'
+      preLoaderRoute: typeof ApiPublicHooksApplyLatePenaltiesRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -996,11 +1015,13 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface TenantauthRouteRouteChildren {
+  TenantauthTenantAccountRoute: typeof TenantauthTenantAccountRoute
   TenantauthTenantDashboardRoute: typeof TenantauthTenantDashboardRoute
   TenantauthTenantSignLeaseRoute: typeof TenantauthTenantSignLeaseRoute
 }
 
 const TenantauthRouteRouteChildren: TenantauthRouteRouteChildren = {
+  TenantauthTenantAccountRoute: TenantauthTenantAccountRoute,
   TenantauthTenantDashboardRoute: TenantauthTenantDashboardRoute,
   TenantauthTenantSignLeaseRoute: TenantauthTenantSignLeaseRoute,
 }
