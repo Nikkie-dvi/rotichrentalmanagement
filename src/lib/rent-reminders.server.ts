@@ -2,6 +2,7 @@
 // Driven by each landlord's billing_settings. Server-only.
 import { sendSms } from "./sms.server";
 import { chargeSmsWallet } from "./sms-wallet.server";
+import { cadenceFor, payPattern, reminderToday, FIRM_FOLLOW_UP } from "./reminder-cadence";
 
 const DEFAULTS = {
   rent_reminders_enabled: true,
@@ -55,6 +56,28 @@ export async function runRentReminders(opts: { ownerId?: string } = {}) {
       .map((l) => `${l.invoice_id}`),
   );
 
+  // Payment habits per tenant -> how often to remind.
+  const tenantIds = [...new Set(((invoices ?? []) as any[]).map((i) => i.tenant_id))];
+  const invoiceIds = ((invoices ?? []) as any[]).map((i) => i.id);
+  const dueByTenant = new Map<string, string[]>();
+  const paysByTenant = new Map<string, string[]>();
+  const followUpsByInvoice = new Map<string, number>();
+  for (let i = 0; i < tenantIds.length; i += 200) {
+    const chunk = tenantIds.slice(i, i + 200);
+    const [{ data: past }, { data: pays }] = await Promise.all([
+      supabaseAdmin.from("invoices").select("tenant_id, due_date").in("tenant_id", chunk).eq("kind", "rent")
+        .not("due_date", "is", null).lt("due_date", todayKey),
+      supabaseAdmin.from("payments").select("tenant_id, payment_date").in("tenant_id", chunk),
+    ]);
+    for (const r of (past ?? []) as any[]) dueByTenant.set(r.tenant_id, [...(dueByTenant.get(r.tenant_id) ?? []), r.due_date]);
+    for (const r of (pays ?? []) as any[]) paysByTenant.set(r.tenant_id, [...(paysByTenant.get(r.tenant_id) ?? []), r.payment_date]);
+  }
+  for (let i = 0; i < invoiceIds.length; i += 200) {
+    const { data: prior } = await supabaseAdmin.from("notification_logs").select("invoice_id, subject")
+      .in("invoice_id", invoiceIds.slice(i, i + 200)).eq("channel", "sms").like("subject", "Rent reminder%overdue%");
+    for (const r of (prior ?? []) as any[]) followUpsByInvoice.set(r.invoice_id, (followUpsByInvoice.get(r.invoice_id) ?? 0) + 1);
+  }
+
   const logs: any[] = [];
   let smsSent = 0;
   let smsFailed = 0;
@@ -74,9 +97,13 @@ export async function runRentReminders(opts: { ownerId?: string } = {}) {
     const due = new Date(`${inv.due_date}T00:00:00Z`);
     const diff = Math.round((dayStart(due) - dayStart(today)) / 86400000);
 
-    let kind: "before" | "after" | null = null;
-    if (diff > 0 && diff === Number(s.reminder_days_before)) kind = "before";
-    else if (diff < 0 && Math.abs(diff) === Number(s.reminder_days_after)) kind = "after";
+    const habit = payPattern(
+      (dueByTenant.get(inv.tenant_id) ?? []).filter((d) => d !== inv.due_date),
+      paysByTenant.get(inv.tenant_id) ?? [],
+    );
+    const plan = cadenceFor(habit.pattern, { ...s, grace_days: s.grace_days ?? 0 });
+    const sentAfter = followUpsByInvoice.get(inv.id) ?? 0;
+    const kind = reminderToday(plan, diff, sentAfter);
     if (!kind) continue;
 
     considered++;
@@ -93,11 +120,9 @@ export async function runRentReminders(opts: { ownerId?: string } = {}) {
       days: String(Math.abs(diff)),
       month: inv.month_year,
     };
-    const message = fill(
-      kind === "before" ? s.reminder_before_template : s.reminder_after_template,
-      vars,
-    ).slice(0, 400);
-    const subject = `Rent reminder (${kind === "before" ? `${Math.abs(diff)} days before due` : `${Math.abs(diff)} days overdue`})`;
+    const tpl = kind === "before" ? s.reminder_before_template : sentAfter === 0 ? s.reminder_after_template : FIRM_FOLLOW_UP;
+    const message = fill(tpl, vars).slice(0, 400);
+    const subject = `Rent reminder (${kind === "before" ? `${Math.abs(diff)} days before due` : `${Math.abs(diff)} days overdue, follow-up ${sentAfter + 1}`})`;
 
     // SMS (charged to the landlord's SMS wallet)
     if (s.reminder_sms_enabled && tenant.phone_number) {
