@@ -17,6 +17,7 @@ import { sendBulkTenantDocsSms } from "@/lib/bulk-docs.functions";
 import { ModeTabs } from "@/components/mode-tabs";
 import { AutoTextingPanel } from "@/components/auto-texting-panel";
 import { RecentAlertsPanel } from "@/components/recent-alerts-panel";
+import { ReminderTrackerPanel } from "@/components/reminder-tracker-panel";
 import { AnimatePresence, motion } from "framer-motion";
 
 /** SMS Leopard messages are cut off past this length, so we stop typing there. */
@@ -625,7 +626,7 @@ function MessagesPage() {
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
             className="space-y-4"
           >
-            {mode === "alerts" ? <RecentAlertsPanel /> : <AutoTextingPanel />}
+            {mode === "alerts" ? <RecentAlertsPanel /> : <div className="grid gap-4"><AutoTextingPanel /><ReminderTrackerPanel /></div>}
           </motion.div>
         )}
       </AnimatePresence>
