@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { sendPaymentReceiptSms } from "@/lib/receipts.functions";
+import { notifyPaymentLogged } from "@/lib/payment-notify.functions";
 import { money } from "@/lib/types";
 import { notify } from "@/lib/notifications";
 
@@ -94,6 +95,7 @@ export function RecordPaymentButton({
         payment_date: date,
       });
       if (error) throw error;
+      notifyPaymentLogged({ data: { tenantId, amount: value } }).catch(() => {});
 
       if (smsReceipt) {
         try {

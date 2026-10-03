@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { sendPaymentReceiptSms } from "@/lib/receipts.functions";
+import { notifyPaymentLogged } from "@/lib/payment-notify.functions";
 
 export const Route = createFileRoute("/_authenticated/payments")({
   head: () => ({
@@ -163,6 +164,7 @@ function PaymentsPage() {
       setRef("");
       toast.success("Payment logged");
       setReceipt(p);
+      notifyPaymentLogged({ data: { tenantId: p.tenant_id, amount: Number(p.amount_paid) } }).catch(() => {});
       try {
         await sendPaymentReceiptSms({ data: {
           tenantId: p.tenant_id,

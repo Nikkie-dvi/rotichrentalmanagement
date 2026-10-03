@@ -3,7 +3,7 @@
 // the raw invoice balances in the database. Any mismatch is reported so the
 // landlord can fix the account before it silently skews next month's rent.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { pushToUsers, landlordAudience } from "@/lib/push.server";
+import { landlordPush } from "@/lib/push.server";
 import { accruedRent, buildLedger } from "@/lib/ledger";
 
 const num = (v: any) => Number(v ?? 0);
@@ -189,8 +189,7 @@ export async function notifyLedgerIssues(res: LedgerAuditResult) {
   }). Open Tenants to review.`;
 
   try {
-    const audience = await landlordAudience(res.ownerId);
-    await pushToUsers(audience, { title, body, url: "/tenants", tag: "ledger-audit" });
+    await landlordPush("other", res.ownerId, { title, body, url: "/tenants", tag: "ledger-audit" });
   } catch {
     /* alerts must never block the audit */
   }

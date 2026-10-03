@@ -3,6 +3,7 @@
 import { sendSms } from "./sms.server";
 import { chargeSmsWallet } from "./sms-wallet.server";
 import { cadenceFor, payPattern, reminderToday, FIRM_FOLLOW_UP } from "./reminder-cadence";
+import { tenantBalancePosition } from "./tenant-balance.server";
 
 const DEFAULTS = {
   rent_reminders_enabled: true,
@@ -86,6 +87,7 @@ export async function runRentReminders(opts: { ownerId?: string } = {}) {
   let considered = 0;
 
   let webpush: any = null;
+  const ledgerCache = new Map<string, number>();
 
   for (const inv of ((invoices ?? []) as any[])) {
     const tenant = inv.tenants;
@@ -106,8 +108,16 @@ export async function runRentReminders(opts: { ownerId?: string } = {}) {
     const kind = reminderToday(plan, diff, sentAfter);
     if (!kind) continue;
 
+    // Recalculate from the full ledger right before sending: stop once fully paid.
+    let arrears = Number(inv.balance_remaining) || 0;
+    try {
+      if (!ledgerCache.has(inv.tenant_id)) ledgerCache.set(inv.tenant_id, (await tenantBalancePosition(inv.tenant_id)).ledger.arrears);
+      arrears = ledgerCache.get(inv.tenant_id)!;
+    } catch { /* fall back to invoice balance */ }
+    if (arrears <= 0) continue;
+
     considered++;
-    const balance = Number(inv.balance_remaining) || 0;
+    const balance = Math.min(Number(inv.balance_remaining) || 0, arrears);
     const vars = {
       tenant_name: String(tenant.full_name ?? "there").split(" ")[0]!,
       total_balance: money(balance),

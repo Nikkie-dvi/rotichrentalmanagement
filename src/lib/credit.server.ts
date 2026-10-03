@@ -2,7 +2,7 @@
 // invoiced). They keep a log of credit events per tenant and alert the landlord
 // whenever credit appears, is used against a bill, or goes stale/expires.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { pushToUsers, landlordAudience } from "@/lib/push.server";
+import { landlordPush } from "@/lib/push.server";
 import { accruedRent, buildLedger } from "@/lib/ledger";
 
 
@@ -132,8 +132,7 @@ export async function logCreditEvent(opts: {
   const msg = copy[opts.kind];
 
   try {
-    const audience = await landlordAudience(opts.ownerId);
-    await pushToUsers(audience, { ...msg, url: "/tenants", tag: `credit-${opts.tenantId}-${opts.kind}` });
+    await landlordPush("other", opts.ownerId, { ...msg, url: "/tenants", tag: `credit-${opts.tenantId}-${opts.kind}` });
   } catch {
     /* alerts must never block the ledger write */
   }

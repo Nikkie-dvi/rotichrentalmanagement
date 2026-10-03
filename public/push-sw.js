@@ -25,6 +25,7 @@ self.addEventListener("push", (event) => {
     badge: payload.badge || "/apple-touch-icon.png",
     tag: payload.tag || "rms-reminder",
     renotify: true,
+    vibrate: payload.vibrate || [200, 100, 200, 100, 300],
     requireInteraction: payload.requireInteraction ?? false,
     data: { url: payload.url || "/", ...payload.data },
   };

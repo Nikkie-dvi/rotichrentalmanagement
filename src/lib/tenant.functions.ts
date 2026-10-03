@@ -116,8 +116,8 @@ export const submitTenantApplication = createServerFn({ method: "POST" })
     if (iErr) throw new Error(iErr.message);
     // Alert the landlord (and their active managers) instantly on their phones.
     try {
-      const { pushToUsers, landlordAudience } = await import("@/lib/push.server");
-      await pushToUsers(await landlordAudience(unit.owner_id as string), {
+      const { landlordPush } = await import("@/lib/push.server");
+      await landlordPush("other", unit.owner_id as string, {
         title: "New tenant application",
         body: `${data.fullName} applied for a unit and signed the lease. Review and approve.`,
         url: "/applications",
@@ -299,8 +299,8 @@ export const claimTenantAccount = createServerFn({ method: "POST" })
     if (upErr) throw new Error(upErr.message);
 
     try {
-      const { pushToUsers, landlordAudience } = await import("@/lib/push.server");
-      await pushToUsers(await landlordAudience(row.owner_id as string), {
+      const { landlordPush } = await import("@/lib/push.server");
+      await landlordPush("other", row.owner_id as string, {
         title: "Tenant joined the portal",
         body: `${row.full_name} created a login and linked it to their unit.`,
         url: "/tenants",
@@ -433,8 +433,8 @@ export const submitAccessRequest = createServerFn({ method: "POST" })
     if (iErr) throw new Error(iErr.message);
 
     try {
-      const { pushToUsers, landlordAudience } = await import("@/lib/push.server");
-      await pushToUsers(await landlordAudience(unit.owner_id as string), {
+      const { landlordPush } = await import("@/lib/push.server");
+      await landlordPush("other", unit.owner_id as string, {
         title: "New access request",
         body: `${data.fullName} requested access to unit ${unit.unit_number}${data.note ? ` — ${data.note}` : ""}.`,
         url: "/applications",

@@ -75,3 +75,10 @@ export async function landlordAudience(ownerId: string) {
     ...((managers ?? []) as any[]).map((m) => m.manager_user_id).filter(Boolean),
   ];
 }
+
+/** Landlords only get phone alerts about invoices raised, payments received and upcoming rent. */
+export type LandlordPushKind = "invoiced" | "paid" | "upcoming" | "other";
+export async function landlordPush(kind: LandlordPushKind, ownerId: string, payload: PushPayload) {
+  if (kind === "other") return { sent: 0, removed: 0 };
+  return pushToUsers(await landlordAudience(ownerId), payload);
+}
