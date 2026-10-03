@@ -2,7 +2,7 @@
 // any money the tenant had paid upfront that was used against the bill, and
 // the tenant's current overall balance.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { pushToUsers, landlordAudience } from "@/lib/push.server";
+import { landlordPush } from "@/lib/push.server";
 import { invoiceBreakdown } from "@/lib/invoice-breakdown.server";
 
 const num = (v: any) => Number(v ?? 0) || 0;
@@ -51,7 +51,7 @@ export async function notifyLandlordOfInvoice(opts: {
     const body = lines.join(" · ");
     const title = `${name} invoiced ${money(breakdown.total)}`;
 
-    await pushToUsers(await landlordAudience(opts.ownerId), {
+    await landlordPush("invoiced", opts.ownerId, {
       title,
       body,
       url: "/billing",
@@ -68,6 +68,24 @@ export async function notifyLandlordOfInvoice(opts: {
       status: "delivered",
     } as never);
 
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+/** Landlord-facing push when a tenant's payment is recorded, with the recalculated balance. */
+export async function notifyLandlordOfPayment(opts: { tenantId: string; amount: number }) {
+  try {
+    const { tenantBalancePosition } = await import("@/lib/tenant-balance.server");
+    const { tenant, ledger } = await tenantBalancePosition(opts.tenantId);
+    const ownerId = (tenant as any).owner_id as string;
+    const name = (tenant as any).full_name ?? "Tenant";
+    const status = ledger.arrears > 0 ? `Still owes ${money(ledger.arrears)}` : ledger.credit > 0 ? `Paid up, ${money(ledger.credit)} in credit` : "Fully paid up";
+    const title = `${name} paid ${money(opts.amount)}`;
+    const body = `${status}.${ledger.arrears > 0 ? "" : " Rent reminders stopped."}`;
+    await landlordPush("paid", ownerId, { title, body, url: "/payments", tag: `paid-${opts.tenantId}-${Date.now()}` });
+    await supabaseAdmin.from("notification_logs").insert({ owner_id: ownerId, tenant_id: opts.tenantId, channel: "push", subject: title, message: body, status: "delivered" } as never);
     return { ok: true };
   } catch {
     return { ok: false };
