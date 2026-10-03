@@ -3,6 +3,7 @@
 import { sendSms } from "./sms.server";
 import { chargeSmsWallet } from "./sms-wallet.server";
 import { cadenceFor, payPattern, reminderToday, FIRM_FOLLOW_UP } from "./reminder-cadence";
+import { tenantBalancePosition } from "./tenant-balance.server";
 
 const DEFAULTS = {
   rent_reminders_enabled: true,
@@ -86,6 +87,7 @@ export async function runRentReminders(opts: { ownerId?: string } = {}) {
   let considered = 0;
 
   let webpush: any = null;
+  const ledgerCache = new Map<string, number>();
 
   for (const inv of ((invoices ?? []) as any[])) {
     const tenant = inv.tenants;
