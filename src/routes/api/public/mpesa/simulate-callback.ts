@@ -101,6 +101,12 @@ export const Route = createFileRoute("/api/public/mpesa/simulate-callback")({
             mpesa_status: "success",
             payment_date: new Date().toISOString().slice(0, 10),
           });
+          try {
+            const { notifyLandlordOfPayment } = await import("@/lib/invoice-notify.server");
+            await notifyLandlordOfPayment({ tenantId: tx.tenant_id, amount: Number(tx.amount) });
+          } catch {
+            /* best-effort */
+          }
         }
 
         return json({ ok: true, status: "success", receipt });
