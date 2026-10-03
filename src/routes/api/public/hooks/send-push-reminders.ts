@@ -112,8 +112,32 @@ export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
           }
         }
 
+        // Landlord summary of upcoming rent (due within 3 days, not yet paid).
+        const { data: paidRows } = await supabaseAdmin
+          .from("invoices").select("tenant_id").eq("month_year", monthYear).eq("status", "paid");
+        const paidSet = new Set(((paidRows ?? []) as any[]).map((r) => r.tenant_id));
+        const upcoming = new Map<string, string[]>();
+        for (const t of (tenants ?? []) as any[]) {
+          if (!t.rent_due_day || paidSet.has(t.id)) continue;
+          const diff = Math.min(t.rent_due_day, lastDay) - todayDay;
+          if (diff < 0 || diff > 3) continue;
+          const when = diff === 0 ? "today" : diff === 1 ? "tomorrow" : `in ${diff} days`;
+          upcoming.set(t.owner_id, [...(upcoming.get(t.owner_id) ?? []), `${t.full_name} (${when})`]);
+        }
+        const { landlordPush } = await import("@/lib/push.server");
+        let landlordSent = 0;
+        for (const [ownerId, names] of upcoming) {
+          const r = await landlordPush("upcoming", ownerId, {
+            title: `${names.length} rent payment${names.length === 1 ? "" : "s"} coming up`,
+            body: names.slice(0, 6).join(", ") + (names.length > 6 ? ` and ${names.length - 6} more` : ""),
+            url: "/calendar",
+            tag: `upcoming-${ownerId}-${today.toISOString().slice(0, 10)}`,
+          }).catch(() => ({ sent: 0 }));
+          landlordSent += r.sent;
+        }
+
         if (byOwner.size === 0) {
-          return Response.json({ ok: true, sent: 0, note: "no reminders today" });
+          return Response.json({ ok: true, sent: 0, landlordSent, note: "no tenant reminders today" });
         }
 
         const { data: subs } = await supabaseAdmin
@@ -154,7 +178,7 @@ export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
           }
         }
 
-        return Response.json({ ok: true, sent, removed, owners: byOwner.size });
+        return Response.json({ ok: true, sent, removed, owners: byOwner.size, landlordSent });
       },
     },
   },
