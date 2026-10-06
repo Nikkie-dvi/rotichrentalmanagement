@@ -26,6 +26,7 @@ import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
 import { DashboardFocus } from "@/components/dashboard-focus";
 import { SimplePropertyPerformance } from "@/components/property-performance";
 import { KpiOverview } from "@/components/kpi-overview";
+import { TenantAiAssistant } from "@/components/tenant-ai-assistant";
 import { sendLateFeeNoticeSms, sendPaymentReceiptSms } from "@/lib/receipts.functions";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 
@@ -345,6 +346,8 @@ function Dashboard() {
       </div>
 
       <KpiOverview />
+
+      <TenantAiAssistant />
 
       <DashboardFocus collected={stats?.collected ?? 0} />
 
