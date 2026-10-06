@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 
-type Thought = { id: string; emoji: string; text: string; to: string; weight: number };
+type Thought = {
+  id: string; emoji: string; text: string; to: string; weight: number;
+  cta?: string; // tap-here label for guidance thoughts
+  remind?: { tenantId: string; name: string; amount: string; dueDate: string };
+  guide?: boolean; // onboarding tip: shown first and longer
+};
 
 const DISMISS_KEY = "rms-buddy-off-until";
 const FIRST_DELAY = 20_000;
@@ -31,22 +39,42 @@ const corners = [
   "top-20 left-5 md:left-[calc(var(--sidebar-width,16rem)+1.25rem)]",
 ];
 
+const VACANT_TIPS = [
+  "Try sharing your tenant sign-up link with people looking for a house.",
+  "Ask your current tenants if they know anyone looking — referrals fill units fast.",
+  "Check the rent is in line with similar units nearby.",
+  "A quick clean-up and fresh photos can help it rent faster.",
+  "Put up a 'To let' sign with your phone number at the gate.",
+];
 const daysSince = (d: string) => Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000);
 const first = (n: string) => (n || "Someone").split(" ")[0];
 
 async function loadThoughts(): Promise<Thought[]> {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return [];
-  const [{ data: inv }, { data: units }, { data: tickets }] = await Promise.all([
+  const { data: acct } = await supabase.from("landlord_accounts").select("created_at").eq("user_id", auth.user.id).maybeSingle();
+  const { data: mgr } = acct ? { data: null } : await supabase.from("manager_accounts").select("created_at").eq("user_id", auth.user.id).maybeSingle();
+  if (!acct && !mgr) return []; // tenants and others: no buddy
+  const [{ data: inv }, { data: units }, { data: tickets }, { count: propCount }, { count: tenantCount }, { count: mgrCount }] = await Promise.all([
     supabase
       .from("invoices")
-      .select("id,due_date,balance_remaining,tenants(full_name,active)")
+      .select("id,tenant_id,due_date,balance_remaining,tenants(full_name,active)")
       .gt("balance_remaining", 0)
       .limit(200),
     supabase.from("units").select("id,unit_number,status,properties(name)").eq("status", "vacant").limit(50),
     supabase.from("maintenance_tickets").select("id,category,created_at,status").in("status", ["open", "in_progress", "pending"]).limit(50),
+    supabase.from("properties").select("id", { count: "exact", head: true }),
+    supabase.from("tenants").select("id", { count: "exact", head: true }).eq("active", true),
+    supabase.from("property_managers").select("id", { count: "exact", head: true }),
   ]);
   const out: Thought[] = [];
+  const unitTotal = (await supabase.from("units").select("id", { count: "exact", head: true })).count ?? 0;
+  const ageDays = daysSince(((acct ?? mgr) as any).created_at);
+  // Getting-started guidance, one step at a time.
+  if (!propCount) out.push({ id: "guide-property", emoji: "👋", text: "Welcome! Let's start by adding your first property.", cta: "Tap here to add a property", to: "/properties", weight: 5, guide: true });
+  else if (!unitTotal) out.push({ id: "guide-unit", emoji: "🏗️", text: "Nice, your property is in. Next, add the units (rooms or houses) inside it.", cta: "Tap here to add your first unit", to: "/properties", weight: 5, guide: true });
+  else if (!tenantCount) out.push({ id: "guide-tenant", emoji: "🔑", text: "Your units are ready. Add your first tenant so rent can be tracked.", cta: "Tap here to add a tenant", to: "/tenants", weight: 5, guide: true });
+  else if (acct && !mgrCount && ageDays >= 5) out.push({ id: "guide-managers", emoji: "🤝", text: "Busy? You can add a property manager to record payments and handle tenants for you.", cta: "Tap here to add a property manager", to: "/settings/managers", weight: 2, guide: true });
   const today = new Date().toISOString().slice(0, 10);
   for (const i of (inv ?? []) as any[]) {
     if (!i.tenants?.active || !i.due_date) continue;
@@ -57,8 +85,9 @@ async function loadThoughts(): Promise<Thought[]> {
       out.push({
         id: `late-${i.id}`,
         emoji: d > 7 ? "😬" : "🤔",
-        text: `Psst… ${name} hasn't paid for ${d} day${d === 1 ? "" : "s"} (${bal}). Hope you remember!`,
+        text: `Psst… ${name} hasn't paid for ${d} day${d === 1 ? "" : "s"} (${bal}). Want me to send a reminder?`,
         to: "/tenants",
+        remind: { tenantId: i.tenant_id, name: i.tenants.full_name, amount: bal, dueDate: i.due_date },
         weight: d > 7 ? 4 : 3, // overdue rent is the most urgent
       });
     } else {
@@ -67,7 +96,7 @@ async function loadThoughts(): Promise<Thought[]> {
     }
   }
   for (const u of (units ?? []) as any[]) {
-    out.push({ id: `vac-${u.id}`, emoji: "🏠", text: `Unit ${u.unit_number}${u.properties?.name ? ` at ${u.properties.name}` : ""} is still empty… someone should live there!`, to: "/properties", weight: 1 });
+    out.push({ id: `vac-${u.id}`, emoji: "🏠", text: `Unit ${u.unit_number}${u.properties?.name ? ` at ${u.properties.name}` : ""} is still empty. ${VACANT_TIPS[Math.floor(Math.random() * VACANT_TIPS.length)]}`, cta: "See vacant units", to: "/properties", weight: 1 });
   }
   for (const t of (tickets ?? []) as any[]) {
     const d = daysSince(t.created_at);
@@ -78,6 +107,9 @@ async function loadThoughts(): Promise<Thought[]> {
 
 export function ThoughtBuddy() {
   const navigate = useNavigate();
+  const path = useRouterState({ select: (r) => r.location.pathname });
+  const notify = useServerFn(notifyMyTenants);
+  const [sending, setSending] = useState(false);
   const { data: thoughts = [] } = useQuery({ queryKey: ["thought-buddy"], queryFn: loadThoughts, staleTime: 5 * 60_000 });
   const [current, setCurrent] = useState<Thought | null>(null);
   const [corner, setCorner] = useState(0);
@@ -92,7 +124,8 @@ export function ThoughtBuddy() {
       timer = setTimeout(() => {
         const off = Number(localStorage.getItem(DISMISS_KEY) || 0);
         if (Date.now() < off || document.hidden) return schedule(nextDelay(urgency));
-        let pool = thoughts.filter((t) => !seen.current.has(t.id));
+        const guide = thoughts.find((t) => t.guide && !seen.current.has(t.id));
+        let pool = guide ? [guide] : thoughts.filter((t) => !seen.current.has(t.id));
         if (!pool.length) {
           seen.current.clear();
           pool = thoughts;
@@ -108,15 +141,32 @@ export function ThoughtBuddy() {
             setCurrent(null);
             schedule(nextDelay(urgency));
           }, 400);
-        }, SHOW_FOR);
+        }, pick.guide || pick.remind ? SHOW_FOR * 2 : SHOW_FOR);
       }, delay);
     };
-    schedule(FIRST_DELAY);
+    schedule(thoughts.some((t) => t.guide) ? 4_000 : FIRST_DELAY);
     return () => clearTimeout(timer);
   }, [thoughts]);
 
-  if (!current) return null;
+  if (!current || path.startsWith("/tenant") || path.startsWith("/auth")) return null;
   const close = () => setLeaving(true);
+  const sendReminder = async () => {
+    const r = current.remind!;
+    setSending(true);
+    try {
+      const due = new Date(`${r.dueDate}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+      const res: any = await notify({ data: {
+        title: "Rent reminder",
+        body: `Dear ${first(r.name)}, our records show your rent balance of ${r.amount}, due on ${due}, is still outstanding. Kindly settle it at your earliest convenience. View your account at homebasemanager.app/tenant/login using your phone number.`,
+        sms: true, push: true, tenantIds: [r.tenantId],
+      } });
+      if (res?.smsSkippedNoCredit) toast.warning("Not enough SMS credit — only a phone alert was sent.");
+      else toast.success(`Reminder sent to ${first(r.name)}`);
+      close();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not send the reminder");
+    } finally { setSending(false); }
+  };
 
   return (
     <div
@@ -136,6 +186,20 @@ export function ThoughtBuddy() {
         >
           {current.text}
         </button>
+        {current.remind && (
+          <div className="mt-2 flex gap-2">
+            <button disabled={sending} onClick={sendReminder} className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground disabled:opacity-60">
+              {sending ? "Sending…" : "Yes, send reminder"}
+            </button>
+            <button onClick={close} className="rounded-full border px-3 py-1 text-xs">Not now</button>
+          </div>
+        )}
+        {current.cta && (
+          <button onClick={() => { navigate({ to: current.to as any }); close(); }}
+            className={`mt-2 flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground ${current.guide ? "animate-pulse" : ""}`}>
+            👆 {current.cta}
+          </button>
+        )}
         <button onClick={close} aria-label="Dismiss" className="absolute right-1.5 top-1.5 text-muted-foreground hover:text-foreground">
           <X className="h-3.5 w-3.5" />
         </button>
