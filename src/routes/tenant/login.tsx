@@ -43,7 +43,7 @@ function TenantLoginPage() {
   const [loading, setLoading] = useState(false);
 
   // Code-by-text sign in
-  const [codeMode, setCodeMode] = useState(false);
+  const [codeMode] = useState(true);
   const [codeSent, setCodeSent] = useState(false);
   const [codePhone, setCodePhone] = useState("");
   const [code, setCode] = useState("");
@@ -125,7 +125,7 @@ function TenantLoginPage() {
       <Card className="overflow-hidden border-primary/20 border-t-4 border-t-primary">
         <CardHeader>
           <h1 className="text-lg font-semibold leading-none tracking-tight">Tenant Sign In</h1>
-          <CardDescription>Use the email and password you registered with.</CardDescription>
+          <CardDescription>No password needed — we text a sign-in code to your phone.</CardDescription>
         </CardHeader>
         <CardContent>
           {codeMode ? (
@@ -186,89 +186,24 @@ function TenantLoginPage() {
                   </Button>
                 </form>
               )}
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                onClick={() => {
-                  setCodeMode(false);
-                  setCodeSent(false);
-                  setCode("");
-                }}
-              >
-                Use a password instead
-              </Button>
               <p className="text-center text-xs text-muted-foreground">
                 Number not recognised?{" "}
                 <Link to="/tenant/request-access" className="font-medium underline">Request access</Link>
               </p>
             </div>
-          ) : (
-            <>
-          <form onSubmit={submit} className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Phone number or email</Label>
-              <Input
-                id="email"
-                type="text"
-                inputMode="text"
-                autoComplete="username"
-                placeholder="07XX XXX XXX or you@gmail.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">Use the phone number your landlord has on file, or your email.</p>
-            </div>
-            <PasswordField id="password" value={password} onChange={setPassword} required />
-            <Button type="submit" disabled={loading} size="lg">
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign in
+          ) : null}
+          <div className="mt-4 grid gap-2 text-center text-sm text-muted-foreground">
+            <Button type="button" variant="outline" className="w-full" disabled={google}
+              onClick={async () => {
+                setGoogle(true);
+                try { await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin }); }
+                catch (err) { toast.error(err instanceof Error ? err.message : "Google sign in failed"); setGoogle(false); }
+              }}>
+              {google && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Continue with Gmail
             </Button>
-          </form>
-          <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
+            <p>New here? <Link to="/tenant/register" className="font-medium text-primary underline">Register</Link></p>
+            <p className="text-xs">Landlord? <Link to="/auth" className="font-medium underline">Sign in here</Link></p>
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            size="lg"
-            className="mb-3 w-full"
-            onClick={() => setCodeMode(true)}
-          >
-            Text me a code instead
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="w-full"
-            disabled={google}
-            onClick={async () => {
-              setGoogle(true);
-              try {
-                await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-              } catch (err) {
-                toast.error(err instanceof Error ? err.message : "Google sign in failed");
-                setGoogle(false);
-              }
-            }}
-          >
-            {google && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Continue with Gmail
-          </Button>
-          <p className="mt-4 text-center text-sm">
-            <Link to="/reset-password" className="font-medium text-primary underline">Forgot your password?</Link>
-          </p>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            New here? <Link to="/tenant/register" className="font-medium text-primary underline">Register</Link>
-          </p>
-          <p className="mt-2 text-center text-xs text-muted-foreground">
-            Landlord? <Link to="/auth" className="font-medium underline">Sign in here</Link>
-          </p>
-            </>
-          )}
         </CardContent>
 
       </Card>
