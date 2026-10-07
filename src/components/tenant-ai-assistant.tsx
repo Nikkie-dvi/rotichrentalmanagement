@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { recordTenantPayment } from "@/lib/record-payment";
+import { sendPaymentReceiptSms } from "@/lib/receipts.functions";
+import { notifyPaymentLogged } from "@/lib/payment-notify.functions";
+import { money } from "@/lib/types";
 import { useServerFn } from "@tanstack/react-start";
 import { Bot, Loader2, Send } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +33,23 @@ export function TenantAiAssistant() {
   const [busy, setBusy] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [payment, setPayment] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+  const qc = useQueryClient();
+  const save = async () => {
+    setSaving(true);
+    try {
+      await recordTenantPayment({ tenantId, amount: payment.amount, method: payment.method, reference: payment.reference, date: payment.date });
+      notifyPaymentLogged({ data: { tenantId, amount: payment.amount } }).catch(() => {});
+      sendPaymentReceiptSms({ data: { tenantId, amount: payment.amount, paymentDate: payment.date, method: payment.method === "mpesa" ? "M-Pesa" : payment.method === "bank" ? "Bank" : "Cash", reference: payment.reference } })
+        .then(() => toast.success("Receipt texted to the tenant")).catch(() => toast.warning("Payment saved, but the receipt text could not be sent"));
+      qc.invalidateQueries();
+      toast.success(`Recorded ${money(payment.amount)}`);
+      setPayment(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not record the payment");
+    } finally { setSaving(false); }
+  };
   const { data: tenants = [] } = useQuery({
     queryKey: ["ai-tenant-list"],
     queryFn: async () => (await supabase.from("tenants").select("id, full_name, units(unit_number)").eq("active", true).order("full_name")).data ?? [],
@@ -35,10 +57,10 @@ export function TenantAiAssistant() {
 
   const run = async () => {
     if (!tenantId) return setError("Pick a tenant first.");
-    setBusy(true); setError(null); setAnswer(null);
+    setBusy(true); setError(null); setAnswer(null); setPayment(null);
     try {
       const r = await ask({ data: { tenantId, question } });
-      if (r.ok) setAnswer(r.text); else setError(r.error);
+      if (r.ok) { setAnswer(r.text); setPayment((r as any).payment ?? null); } else setError(r.error);
     } catch (e: any) {
       setError(e?.message ?? "Something went wrong.");
     } finally { setBusy(false); }
@@ -59,13 +81,24 @@ export function TenantAiAssistant() {
             ))}
           </SelectContent>
         </Select>
-        <Textarea rows={2} maxLength={1000} value={question} onChange={(e) => setQuestion(e.target.value)}
-          placeholder="e.g. Has she been paying late? Why is the balance higher this month? (optional)" />
+        <Textarea rows={3} maxLength={2000} value={question} onChange={(e) => setQuestion(e.target.value)}
+          placeholder="Ask a question, or paste an M-Pesa message and say they paid" />
         <Button onClick={run} disabled={busy || !tenantId}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {busy ? "Reading the account…" : "Summarize account"}
         </Button>
         {error && <p className="text-sm text-destructive">{error}</p>}
         {answer && <div className="rounded-lg border bg-muted/40 p-3"><Rendered text={answer} /></div>}
+        {payment && (
+          <div className="grid gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
+            <div className="font-medium">Record this payment?</div>
+            <div className="text-muted-foreground">{money(payment.amount)} · {payment.date} · {payment.method === "mpesa" ? "M-Pesa" : payment.method}{payment.reference ? ` · ${payment.reference}` : ""}</div>
+            {payment.duplicate && <div className="text-xs text-destructive">A payment with this reference is already recorded — check before saving again.</div>}
+            <div className="flex gap-2">
+              <Button size="sm" onClick={save} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />} Record payment</Button>
+              <Button size="sm" variant="ghost" onClick={() => setPayment(null)}>Not now</Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

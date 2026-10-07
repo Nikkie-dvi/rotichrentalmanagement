@@ -21,6 +21,7 @@ import { accruedRent, buildLedger } from "@/lib/ledger";
 import { AnimatePresence, motion } from "framer-motion";
 import { TenantModeSwitcher, type ModeKey } from "@/components/tenant/mode-switcher";
 import { QuickStartGuide } from "@/components/quick-start-guide";
+import { UnitSwitcher } from "@/components/tenant/unit-switcher";
 
 const TENANT_GUIDE = [
   {
@@ -308,6 +309,7 @@ function DashboardPage() {
           <Badge variant="outline" className={`mt-1 ${leaseClass}`}>{leaseStatus}</Badge>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          <UnitSwitcher />
           <QuickStartGuide audience="tenant" steps={TENANT_GUIDE} compact />
           <Button variant="outline" size="sm" onClick={() => navigate({ to: "/tenant/account" })}>
             My account

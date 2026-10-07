@@ -1,6 +1,7 @@
 // Phone sign-in codes for tenants: the landlord already has their phone number
 // on file, so a 6-digit text code is enough to get them into the portal.
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const CODE_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
@@ -158,15 +159,23 @@ export const verifyTenantLoginCode = createServerFn({ method: "POST" })
       .is("move_out_date", null)
       .order("created_at", { ascending: false })
       .limit(1);
-    const tenant = rows?.[0] as
-      | { id: string; full_name: string | null; email: string | null; auth_user_id: string | null }
-      | undefined;
+    const tenant = rows?.[0] as TenantRow | undefined;
     if (!tenant) throw new Error("We couldn't find your tenant record. Please contact your landlord.");
+    return sessionForTenantRow(supabaseAdmin, tenant, msisdn);
+  });
 
-    const email = tenant.email ?? `${msisdn}@tenant.homebasemanager.app`;
+type TenantRow = { id: string; full_name: string | null; email: string | null; auth_user_id: string | null };
 
-    // A tenant added by a landlord may never have registered — give them a
-    // portal account on the spot.
+/** Mint a portal session for one tenant row (one login per unit). */
+async function sessionForTenantRow(supabaseAdmin: any, tenant: TenantRow, msisdn: string) {
+    let email = tenant.email;
+    if (!email) {
+      // Each unit has its own login; give extra units a unique address.
+      const base = `${msisdn}@tenant.homebasemanager.app`;
+      const { data: taken } = await supabaseAdmin.from("tenants").select("id").eq("email", base).neq("id", tenant.id).limit(1);
+      email = taken?.length ? `${msisdn}.${tenant.id.slice(0, 8)}@tenant.homebasemanager.app` : base;
+    }
+
     if (!tenant.auth_user_id) {
       const created = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -200,4 +209,44 @@ export const verifyTenantLoginCode = createServerFn({ method: "POST" })
       access_token: verified.session.access_token,
       refresh_token: verified.session.refresh_token,
     };
+}
+
+
+/** Units held by the signed-in tenant (same phone number, still renting). */
+async function myUnits(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { toKenyanMsisdn } = await import("@/lib/sms.server");
+  const { data: me } = await supabaseAdmin.from("tenants").select("id, phone_number").eq("auth_user_id", userId).maybeSingle();
+  const msisdn = me?.phone_number ? toKenyanMsisdn(me.phone_number) : null;
+  if (!me || !msisdn) return { supabaseAdmin, msisdn: null, currentId: me?.id ?? null, units: [] as any[] };
+  const { data: rows } = await supabaseAdmin
+    .from("tenants")
+    .select("id, full_name, email, auth_user_id, units(unit_number, properties(name))")
+    .in("phone_number", phoneVariants(msisdn, me.phone_number!))
+    .is("move_out_date", null)
+    .order("created_at");
+  return { supabaseAdmin, msisdn, currentId: me.id, units: (rows ?? []) as any[] };
+}
+
+export const listMyUnits = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { units, currentId } = await myUnits(context.userId);
+    return {
+      currentId,
+      units: units.map((u) => ({ id: u.id as string, label: [u.units?.properties?.name, u.units?.unit_number].filter(Boolean).join(" · ") || "Unit" })),
+    };
+  });
+
+export const switchMyUnit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { tenantId: string }) => {
+    if (!d?.tenantId) throw new Error("Pick a unit");
+    return { tenantId: String(d.tenantId) };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin, msisdn, units } = await myUnits(context.userId);
+    const target = units.find((u) => u.id === data.tenantId);
+    if (!target || !msisdn) throw new Error("That unit isn't linked to your phone number.");
+    return sessionForTenantRow(supabaseAdmin, target, msisdn);
   });

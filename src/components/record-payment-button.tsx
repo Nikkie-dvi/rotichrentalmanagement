@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { sendPaymentReceiptSms } from "@/lib/receipts.functions";
 import { notifyPaymentLogged } from "@/lib/payment-notify.functions";
+import { recordTenantPayment } from "@/lib/record-payment";
 import { money } from "@/lib/types";
 import { notify } from "@/lib/notifications";
 
@@ -56,45 +57,7 @@ export function RecordPaymentButton({
     if (!date) return toast.error("Pick the payment date");
     setSaving(true);
     try {
-      // Allocate against outstanding invoices, oldest first (the given invoice first if any).
-      const { data: invoices, error: invErr } = await supabase
-        .from("invoices")
-        .select("id, balance_remaining, month_year")
-        .eq("tenant_id", tenantId)
-        .gt("balance_remaining", 0)
-        .order("month_year", { ascending: true });
-      if (invErr) throw invErr;
-
-      const list = [...(invoices ?? [])];
-      if (invoiceId) {
-        const i = list.findIndex((x) => x.id === invoiceId);
-        if (i > 0) list.unshift(list.splice(i, 1)[0]!);
-      }
-
-      let remaining = value;
-      let firstInvoiceId: string | null = invoiceId ?? null;
-      for (const inv of list) {
-        if (remaining <= 0) break;
-        const applied = Math.min(remaining, Number(inv.balance_remaining));
-        const newBalance = Number(inv.balance_remaining) - applied;
-        const { error: uErr } = await supabase
-          .from("invoices")
-          .update({ balance_remaining: newBalance, status: newBalance <= 0 ? "paid" : "partial" })
-          .eq("id", inv.id);
-        if (uErr) throw uErr;
-        firstInvoiceId ??= inv.id;
-        remaining -= applied;
-      }
-
-      const { error } = await supabase.from("payments").insert({
-        tenant_id: tenantId,
-        invoice_id: firstInvoiceId,
-        amount_paid: value,
-        payment_method: method,
-        reference_no: ref.trim() || null,
-        payment_date: date,
-      });
-      if (error) throw error;
+      await recordTenantPayment({ tenantId, invoiceId, amount: value, method, reference: ref.trim() || null, date });
       notifyPaymentLogged({ data: { tenantId, amount: value } }).catch(() => {});
 
       if (smsReceipt) {

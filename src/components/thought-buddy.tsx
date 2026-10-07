@@ -69,6 +69,18 @@ async function loadThoughts(): Promise<Thought[]> {
   ]);
   const out: Thought[] = [];
   const unitTotal = (await supabase.from("units").select("id", { count: "exact", head: true })).count ?? 0;
+  const now = new Date();
+  const thisM = now.toISOString().slice(0, 7);
+  const lastM = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
+  const { data: pays } = await supabase.from("payments").select("amount_paid, payment_date").gte("payment_date", `${lastM}-01`).limit(2000);
+  const sumFor = (m: string) => ((pays ?? []) as any[]).filter((p) => String(p.payment_date).startsWith(m));
+  const cur = sumFor(thisM), prev = sumFor(lastM);
+  const tot = (r: any[]) => r.reduce((a, p) => a + Number(p.amount_paid || 0), 0);
+  if (cur.length || prev.length) {
+    const diff = tot(cur) - tot(prev);
+    out.push({ id: `stats-${thisM}`, emoji: "📊", to: "/payments", weight: 1, cta: "See payments",
+      text: `This month you've recorded ${cur.length} payment${cur.length === 1 ? "" : "s"} (${money(tot(cur))}). Last month: ${prev.length} (${money(tot(prev))})${prev.length ? (diff >= 0 ? " — you're ahead!" : ` — ${money(-diff)} to go to match it.`) : "."}` });
+  }
   const ageDays = daysSince(((acct ?? mgr) as any).created_at);
   // Getting-started guidance, one step at a time.
   if (!propCount) out.push({ id: "guide-property", emoji: "👋", text: "Welcome! Let's start by adding your first property.", cta: "Tap here to add a property", to: "/properties", weight: 5, guide: true });
