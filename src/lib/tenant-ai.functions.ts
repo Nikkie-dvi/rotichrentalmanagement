@@ -27,7 +27,10 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       "You help a Kenyan landlord understand one tenant's rent account. Use ONLY the data given; never invent payments. " +
       "Reply in plain, short English with exactly these sections:\n**Summary** (2-4 sentences: balance owed or credit, how they usually pay - early/on time/late, any patterns)\n" +
       "**Answer** (only if the landlord asked a specific question)\n**Next step** (one concrete action, e.g. send a polite reminder, record a missing payment, waive or add a late fee, call the tenant). " +
-      "Amounts as 'KES 12,000'. Keep under 150 words.";
+      "Amounts as 'KES 12,000'. Keep under 150 words.\n" +
+      "If the landlord pasted a payment confirmation (e.g. an M-Pesa SMS) or says the tenant paid an amount, ALSO end with one final line exactly: " +
+      'PAYMENT_JSON: {"amount": <number>, "date": "YYYY-MM-DD", "reference": "<code or empty>", "method": "mpesa"|"bank"|"cash"} ' +
+      "using the date in the message (or today). In that case the Next step is to confirm recording it. Never output PAYMENT_JSON otherwise.";
     try {
       const { result } = createResponsesCall(
         getRequest(),
@@ -35,9 +38,29 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
         [{ role: "user", content: `Account data:\n${account}\n\nLandlord's question: ${question}` }],
         instructions,
       );
-      const text = (await result.text).trim();
+      let text = (await result.text).trim();
       if (!text) return { ok: false as const, error: "The assistant couldn't answer that. Try again later." };
-      return { ok: true as const, text };
+      let payment: { amount: number; date: string; reference: string | null; method: string; duplicate: boolean } | null = null;
+      const m = text.match(/PAYMENT_JSON:\s*(\{[^\n]*\})/);
+      if (m) {
+        text = text.replace(m[0], "").trim();
+        try {
+          const p = JSON.parse(m[1]!);
+          const amount = Math.round(Number(p.amount));
+          const date = /^\d{4}-\d{2}-\d{2}$/.test(p.date) && p.date <= today ? p.date : today;
+          const reference = String(p.reference ?? "").trim().slice(0, 40) || null;
+          const method = ["mpesa", "bank", "cash"].includes(p.method) ? p.method : "mpesa";
+          if (amount > 0) {
+            let duplicate = false;
+            if (reference) {
+              const { data: dup } = await sb.from("payments").select("id").or(`reference_no.eq.${reference},mpesa_receipt_no.eq.${reference}`).limit(1);
+              duplicate = !!dup?.length;
+            }
+            payment = { amount, date, reference, method, duplicate };
+          }
+        } catch { /* ignore malformed */ }
+      }
+      return { ok: true as const, text, payment };
     } catch (e: any) {
       const status = e?.statusCode ?? e?.status ?? e?.lastError?.statusCode;
       console.error("tenant assistant failed", status, e?.message);
