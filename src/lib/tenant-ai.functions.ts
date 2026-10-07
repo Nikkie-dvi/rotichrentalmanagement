@@ -6,7 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const askTenantAssistant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ tenantId: z.string().uuid(), question: z.string().trim().max(1000) }).parse(d))
+  .inputValidator((d) => z.object({ tenantId: z.string().uuid(), question: z.string().trim().max(2000) }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase;
     const [{ data: tenant }, { data: invoices }, { data: payments }, { data: credits }] = await Promise.all([
@@ -48,7 +48,7 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
           const p = JSON.parse(m[1]!);
           const amount = Math.round(Number(p.amount));
           const date = /^\d{4}-\d{2}-\d{2}$/.test(p.date) && p.date <= today ? p.date : today;
-          const reference = String(p.reference ?? "").trim().slice(0, 40) || null;
+          const reference = String(p.reference ?? "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 40) || null;
           const method = ["mpesa", "bank", "cash"].includes(p.method) ? p.method : "mpesa";
           if (amount > 0) {
             let duplicate = false;
