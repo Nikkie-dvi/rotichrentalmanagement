@@ -36,7 +36,7 @@ export function AssistantDock() {
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2">
       {open && (
-        <div className="thought-in w-[min(24rem,calc(100vw-2.5rem))] max-h-[75vh] overflow-y-auto rounded-2xl border bg-card p-4 text-card-foreground shadow-2xl">
+        <div className="thought-in w-[min(24rem,calc(100vw-2.5rem))] max-h-[75vh] overflow-y-auto overflow-x-hidden rounded-2xl border bg-card p-4 text-card-foreground shadow-2xl">
           <div className="mb-3 flex items-start justify-between gap-2">
             <div>
               <div className="flex items-center gap-2 font-semibold"><Bot className="h-5 w-5 text-primary" /> Rent assistant</div>
