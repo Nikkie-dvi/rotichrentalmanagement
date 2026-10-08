@@ -28,12 +28,12 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       }
       tenantId = hits[0].id as string;
     }
-    data = { ...data, tenantId };
+    const tid: string = tenantId;
     const [{ data: tenant }, { data: invoices }, { data: payments }, { data: credits }] = await Promise.all([
-      sb.from("tenants").select("full_name, move_in_date, rent_due_day, deposit_paid, active, units(unit_number, rent_amount, properties(name))").eq("id", data.tenantId).maybeSingle(),
-      sb.from("invoices").select("month_year, kind, total_due, balance_remaining, status, due_date, late_penalty_amount").eq("tenant_id", data.tenantId).order("month_year", { ascending: false }).limit(24),
-      sb.from("payments").select("amount_paid, payment_date, payment_method").eq("tenant_id", data.tenantId).order("payment_date", { ascending: false }).limit(36),
-      sb.from("tenant_credit_events").select("kind, delta, created_at, note").eq("tenant_id", data.tenantId).limit(20),
+      sb.from("tenants").select("full_name, move_in_date, rent_due_day, deposit_paid, active, units(unit_number, rent_amount, properties(name))").eq("id", tid).maybeSingle(),
+      sb.from("invoices").select("month_year, kind, total_due, balance_remaining, status, due_date, late_penalty_amount").eq("tenant_id", tid).order("month_year", { ascending: false }).limit(24),
+      sb.from("payments").select("amount_paid, payment_date, payment_method").eq("tenant_id", tid).order("payment_date", { ascending: false }).limit(36),
+      sb.from("tenant_credit_events").select("kind, delta, created_at, note").eq("tenant_id", tid).limit(20),
     ]);
     if (!tenant) throw new Error("Tenant not found");
 
