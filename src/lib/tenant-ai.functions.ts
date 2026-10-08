@@ -6,9 +6,29 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const askTenantAssistant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ tenantId: z.string().uuid(), question: z.string().trim().max(2000) }).parse(d))
+  .inputValidator((d) => z.object({ tenantId: z.string().uuid().optional().nullable(), question: z.string().trim().max(2000) }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase;
+    let tenantId = data.tenantId ?? null;
+    if (!tenantId) {
+      // Work out who the message is about: phone number first, then name.
+      const { data: all } = await sb.from("tenants").select("id, full_name, phone_number").eq("active", true).limit(1000);
+      const text = data.question.toLowerCase();
+      const digits = data.question.replace(/\D/g, " ");
+      const local = (p: string | null) => (p ?? "").replace(/\D/g, "").replace(/^254/, "0").slice(-9);
+      let hits = ((all ?? []) as any[]).filter((t) => { const l = local(t.phone_number); return l.length === 9 && digits.replace(/\s/g, "").includes(l); });
+      if (!hits.length) {
+        hits = ((all ?? []) as any[]).filter((t) => {
+          const parts = String(t.full_name ?? "").toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+          return parts.length > 0 && parts.filter((w) => new RegExp(`\\b${w.replace(/[^a-z0-9]/g, "")}\\b`).test(text)).length >= Math.min(2, parts.length);
+        });
+      }
+      if (hits.length !== 1) {
+        return { ok: false as const, needTenant: true, error: hits.length ? "That matches more than one tenant — pick who paid below." : "I couldn't tell which tenant this is — pick them below." };
+      }
+      tenantId = hits[0].id as string;
+    }
+    data = { ...data, tenantId };
     const [{ data: tenant }, { data: invoices }, { data: payments }, { data: credits }] = await Promise.all([
       sb.from("tenants").select("full_name, move_in_date, rent_due_day, deposit_paid, active, units(unit_number, rent_amount, properties(name))").eq("id", data.tenantId).maybeSingle(),
       sb.from("invoices").select("month_year, kind, total_due, balance_remaining, status, due_date, late_penalty_amount").eq("tenant_id", data.tenantId).order("month_year", { ascending: false }).limit(24),
@@ -27,7 +47,7 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       "You help a Kenyan landlord understand one tenant's rent account. Use ONLY the data given; never invent payments. " +
       "Reply in plain, short English with exactly these sections:\n**Summary** (2-4 sentences: balance owed or credit, how they usually pay - early/on time/late, any patterns)\n" +
       "**Answer** (only if the landlord asked a specific question)\n**Next step** (one concrete action, e.g. send a polite reminder, record a missing payment, waive or add a late fee, call the tenant). " +
-      "Amounts as 'KES 12,000'. Keep under 150 words.\n" +
+      "Amounts as 'KES 12,000'. Keep under 150 words. When a payment is mentioned, say how many months of rent it covers at the unit's rent (and any balance left or extra credit).\n" +
       "If the landlord pasted a payment confirmation (e.g. an M-Pesa SMS) or says the tenant paid an amount, ALSO end with one final line exactly: " +
       'PAYMENT_JSON: {"amount": <number>, "date": "YYYY-MM-DD", "reference": "<code or empty>", "method": "mpesa"|"bank"|"cash"} ' +
       "using the date in the message (or today). In that case the Next step is to confirm recording it. Never output PAYMENT_JSON otherwise.";
@@ -60,7 +80,7 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
           }
         } catch { /* ignore malformed */ }
       }
-      return { ok: true as const, text, payment };
+      return { ok: true as const, text, payment, tenantId: tenantId!, tenantName: (tenant as any).full_name as string };
     } catch (e: any) {
       const status = e?.statusCode ?? e?.status ?? e?.lastError?.statusCode;
       console.error("tenant assistant failed", status, e?.message);
