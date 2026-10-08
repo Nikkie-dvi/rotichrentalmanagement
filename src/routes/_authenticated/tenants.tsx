@@ -377,7 +377,7 @@ function TenantsPage() {
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm" className="shrink-0 px-2.5 sm:h-10 sm:px-4"><UserPlus className="h-4 w-4" /><span className="hidden min-[360px]:inline">Assign Tenant</span><span className="min-[360px]:hidden">Add</span></Button></DialogTrigger>
+          <DialogTrigger asChild><Button size="sm" data-tour="add-tenant" className="shrink-0 px-2.5 sm:h-10 sm:px-4"><UserPlus className="h-4 w-4" /><span className="hidden min-[360px]:inline">Assign Tenant</span><span className="min-[360px]:hidden">Add</span></Button></DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Assign New Tenant</DialogTitle></DialogHeader>
             <TenantForm

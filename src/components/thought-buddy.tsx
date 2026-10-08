@@ -33,7 +33,6 @@ function nextDelay(urgency: number): number {
   return (base / dayMood()) * (0.6 + Math.random() * 1.3);
 }
 const corners = [
-  "bottom-5 right-5",
   "bottom-5 left-5 md:left-[calc(var(--sidebar-width,16rem)+1.25rem)]",
   "top-20 right-5",
   "top-20 left-5 md:left-[calc(var(--sidebar-width,16rem)+1.25rem)]",
@@ -82,11 +81,6 @@ async function loadThoughts(): Promise<Thought[]> {
       text: `This month you've recorded ${cur.length} payment${cur.length === 1 ? "" : "s"} (${money(tot(cur))}). Last month: ${prev.length} (${money(tot(prev))})${prev.length ? (diff >= 0 ? " — you're ahead!" : ` — ${money(-diff)} to go to match it.`) : "."}` });
   }
   const ageDays = daysSince(((acct ?? mgr) as any).created_at);
-  // Getting-started guidance, one step at a time.
-  if (!propCount) out.push({ id: "guide-property", emoji: "👋", text: "Welcome! Let's start by adding your first property.", cta: "Tap here to add a property", to: "/properties", weight: 5, guide: true });
-  else if (!unitTotal) out.push({ id: "guide-unit", emoji: "🏗️", text: "Nice, your property is in. Next, add the units (rooms or houses) inside it.", cta: "Tap here to add your first unit", to: "/properties", weight: 5, guide: true });
-  else if (!tenantCount) out.push({ id: "guide-tenant", emoji: "🔑", text: "Your units are ready. Add your first tenant so rent can be tracked.", cta: "Tap here to add a tenant", to: "/tenants", weight: 5, guide: true });
-  else if (acct && !mgrCount && ageDays >= 5) out.push({ id: "guide-managers", emoji: "🤝", text: "Busy? You can add a property manager to record payments and handle tenants for you.", cta: "Tap here to add a property manager", to: "/settings/managers", weight: 2, guide: true });
   const today = new Date().toISOString().slice(0, 10);
   for (const i of (inv ?? []) as any[]) {
     if (!i.tenants?.active || !i.due_date) continue;

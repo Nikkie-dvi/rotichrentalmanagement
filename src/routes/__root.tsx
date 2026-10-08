@@ -18,6 +18,8 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 import { ThoughtBuddy } from "@/components/thought-buddy";
+import { AssistantDock } from "@/components/assistant-dock";
+import { GuidedTour } from "@/components/guided-tour";
 import { ThemeProvider } from "@/lib/theme";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
@@ -243,6 +245,8 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
               </main>
               <PaymentReminderPopup />
               <ThoughtBuddy />
+              <AssistantDock />
+              <GuidedTour />
 
             </SidebarInset>
           </SidebarProvider>
