@@ -129,7 +129,7 @@ export function ThoughtBuddy() {
     const schedule = (delay: number) => {
       timer = setTimeout(() => {
         const off = Number(localStorage.getItem(DISMISS_KEY) || 0);
-        if (Date.now() < off || document.hidden) return schedule(nextDelay(urgency));
+        if (Date.now() < off || document.hidden || document.body.dataset.tour === "on") return schedule(nextDelay(urgency));
         const guide = thoughts.find((t) => t.guide && !seen.current.has(t.id));
         let pool = guide ? [guide] : thoughts.filter((t) => !seen.current.has(t.id));
         if (!pool.length) {

@@ -55,7 +55,7 @@ export function AssistantDock() {
           <button onClick={() => { setHint(false); localStorage.setItem(HINT_KEY, "1"); }} className="ml-1 underline">OK</button>
         </div>
       )}
-      <button onClick={toggle} aria-label={open ? "Close rent assistant" : "Open rent assistant"}
+      <button data-tour="assistant" onClick={toggle} aria-label={open ? "Close rent assistant" : "Open rent assistant"}
         className="grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-xl ring-4 ring-primary/20 transition-transform hover:scale-105">
         {open ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
       </button>
