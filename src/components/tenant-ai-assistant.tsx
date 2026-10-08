@@ -68,10 +68,10 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
   };
 
   const body = (
-      <div className="grid gap-3">
+      <div className="grid min-w-0 gap-3">
 
         <Select value={tenantId} onValueChange={(v) => { setTenantId(v); setAnswer(null); }}>
-          <SelectTrigger><SelectValue placeholder="Tenant (optional — I can find them from the message)" /></SelectTrigger>
+          <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Tenant (optional)" /></SelectTrigger>
           <SelectContent>
             {(tenants as any[]).map((t) => (
               <SelectItem key={t.id} value={t.id}>{t.full_name}{t.units?.unit_number ? ` · ${t.units.unit_number}` : ""}</SelectItem>
