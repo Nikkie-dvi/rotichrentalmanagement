@@ -181,7 +181,7 @@ function PropertiesPage() {
         {(
         <div className="flex gap-2">
           <Dialog open={propOpen} onOpenChange={setPropOpen}>
-            <DialogTrigger asChild><Button variant="secondary"><Plus className="h-4 w-4" />Add Property</Button></DialogTrigger>
+            <DialogTrigger asChild><Button variant="secondary" data-tour="add-property"><Plus className="h-4 w-4" />Add Property</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>New Property</DialogTitle></DialogHeader>
               <form
@@ -199,7 +199,7 @@ function PropertiesPage() {
             </DialogContent>
           </Dialog>
           <Dialog open={unitOpen} onOpenChange={(o) => { setUnitOpen(o); if (!o) setEditing(null); }}>
-            <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Add Unit</Button></DialogTrigger>
+            <DialogTrigger asChild><Button data-tour="add-unit"><Plus className="h-4 w-4" />Add Unit</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editing ? "Edit Unit" : "New Unit"}</DialogTitle></DialogHeader>
               <UnitForm

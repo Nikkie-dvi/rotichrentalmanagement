@@ -217,6 +217,7 @@ function ManagersPage() {
           </div>
           <div className="sm:col-span-2">
             <Button
+              data-tour="add-manager"
               className="w-full glass-btn"
               disabled={missing.email || missing.password || create.isPending}
               onClick={() => create.mutate()}
