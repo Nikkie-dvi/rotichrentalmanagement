@@ -217,7 +217,8 @@ function LeasesPage() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 font-medium">
                   {r.full_name}
-                  <Badge variant="outline" className="capitalize">{r.approval_status}</Badge>
+                   {!r.active && r.approval_status === "pending" && <Badge variant="outline">Awaiting landlord approval</Badge>}
+                   {r.approval_status === "declined" && <Badge variant="outline">Declined</Badge>}
                   {r.lease_signature ? (
                     <Badge variant="secondary">Signed</Badge>
                   ) : r.signed_lease_path ? (

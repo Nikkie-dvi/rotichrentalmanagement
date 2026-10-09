@@ -16,6 +16,7 @@ import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
 import { TenantCreditDialog } from "@/components/tenant-credit-dialog";
 import { TenantReminderButton } from "@/components/tenant-reminder-button";
+import { TenantInvoicesButton } from "@/components/tenant-invoices-button";
 import { LedgerHealthCard } from "@/components/ledger-health-card";
 
 import { runCreditWatch } from "@/lib/credit.functions";
@@ -500,7 +501,7 @@ function TenantCard({
         <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" /> {t.phone_number ?? "No phone"}</p>
         <div className="mt-4 flex flex-wrap gap-2"><RiskBadge risk={{ ...risk, total: balance }} />{duplicate && <Badge variant="outline"><AlertTriangle className="h-3 w-3" /> Possible duplicate</Badge>}</div>
         <div className="mt-3 flex items-baseline justify-between gap-2"><span className="text-xs text-muted-foreground">{balance > 0 ? "Outstanding" : inCredit ? "Available credit" : "Account balance"}</span><span className={`text-lg font-bold ${balance > 0 ? "text-arrears-foreground" : inCredit ? "text-paid-ahead-foreground" : "text-foreground"}`}>{money(Math.abs(balance))}</span></div>
-        <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">{balance > 0 && <TenantReminderButton tenantId={t.id} name={t.full_name} balance={balance} />}<Button size="sm" variant="outline" className="min-w-0 flex-1" onClick={() => setExpanded(v => !v)}><FileText className="h-4 w-4" /> {expanded ? "Hide details" : "View account"}</Button></div>
+        <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">{balance > 0 && <TenantReminderButton tenantId={t.id} name={t.full_name} balance={balance} />}<TenantInvoicesButton tenantId={t.id} name={t.full_name} /></div>
       </div>
 
       {expanded && (

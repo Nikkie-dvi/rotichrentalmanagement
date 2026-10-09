@@ -96,7 +96,8 @@ export function TenantSignedLeaseUpload({
       <input
         ref={inputRef}
         type="file"
-        accept="application/pdf,image/*"
+        accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,application/pdf,image/*"
+        aria-label={`Choose signed lease file for ${tenantName}`}
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
@@ -104,16 +105,16 @@ export function TenantSignedLeaseUpload({
           if (f) void upload(f);
         }}
       />
-      <Button size="sm" variant="outline" disabled={busy} onClick={() => inputRef.current?.click()}>
+       <Button size="sm" variant={path ? "outline" : "default"} disabled={busy} onClick={() => inputRef.current?.click()}>
         {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-        {path ? "Replace signed copy" : "Upload signed copy"}
+         {path ? "Replace lease file" : "Choose lease file"}
       </Button>
       {path && (
         <>
           <Button size="sm" variant="outline" onClick={openFile}>
             <ExternalLink className="mr-2 h-4 w-4" /> View
           </Button>
-          <Button size="sm" variant="ghost" disabled={busy} onClick={remove}>
+           <Button size="sm" variant="ghost" disabled={busy} onClick={remove} aria-label={`Remove uploaded lease for ${tenantName}`}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </>
