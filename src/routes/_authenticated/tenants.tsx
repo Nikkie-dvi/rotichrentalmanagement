@@ -331,7 +331,7 @@ function TenantsPage() {
 
 
   return (
-    <div className="min-w-0 space-y-4 overflow-x-clip sm:space-y-6">
+    <div className="min-w-0 space-y-2 px-3 pb-4 sm:space-y-4 sm:px-0">
       <div className="sticky top-0 z-30 mb-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b bg-background/95 py-2 backdrop-blur md:-mx-6 md:px-6">
         <Button
           variant="outline"
@@ -356,7 +356,6 @@ function TenantsPage() {
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="min-w-0">
           <h2 className="truncate text-xl font-bold tracking-tight sm:text-2xl">Tenants</h2>
-          <p className="text-sm text-muted-foreground">Assign, track and offboard tenants.</p>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
@@ -372,7 +371,17 @@ function TenantsPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4" aria-label="Tenant account highlights">
+      <section aria-label="Tenant search and filters" className="min-w-0 space-y-2 border-y border-primary/25 bg-accent/40 px-2.5 py-3 sm:px-3">
+        <Label htmlFor="tenant-search" className="flex items-center gap-1.5 text-xs font-semibold text-primary"><Search className="h-3.5 w-3.5 shrink-0" />Find a tenant</Label>
+        <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" /><Input id="tenant-search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Name, phone or unit" aria-label="Search tenants" className="h-10 min-w-0 border-primary/40 bg-background pl-9 text-sm shadow-sm" /></div>
+        <div className="grid min-w-0 grid-cols-2 gap-2">
+          <Select value={propFilter} onValueChange={setPropFilter}><SelectTrigger aria-label="Filter by property" className="h-8 w-full min-w-0 bg-background text-xs [&>span]:truncate"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All properties</SelectItem>{propertyNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}</SelectContent></Select>
+          <Select value={paymentFilter} onValueChange={setPaymentFilter}><SelectTrigger aria-label="Filter by payment status" className="h-8 w-full min-w-0 bg-background text-xs [&>span]:truncate"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem><SelectItem value="overdue">Overdue / Arrears</SelectItem><SelectItem value="paid">Paid ahead / Credit</SelectItem><SelectItem value="zero">Zero balance</SelectItem></SelectContent></Select>
+        </div>
+      </section>
+      <details className="group min-w-0 border-b pb-2">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs font-medium"><span className="flex min-w-0 items-center gap-1.5"><Wallet className="h-3.5 w-3.5 shrink-0 text-primary" />Account summary</span><ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" /></summary>
+      <div className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-4" aria-label="Tenant account highlights">
         {[
           { label: "Total Collection", value: money((allPayments ?? []).filter(p => propFilter === "all" || (tenants ?? []).some(t => t.id === p.tenant_id && t.units?.properties?.name === propFilter)).reduce((sum, p) => sum + Number(p.amount_paid), 0)), note: "All recorded payments", icon: Wallet, tone: "border-primary/25 bg-accent/40 text-accent-foreground" },
           { label: "Paid Ahead", value: money(metricTenants.reduce((sum, t) => sum + (ledgers.get(t.id)?.credit ?? 0), 0)), note: `${metricTenants.filter(t => (balances.get(t.id) ?? 0) < 0).length} tenants in credit`, icon: CheckCircle2, tone: "border-paid-ahead-border bg-paid-ahead text-paid-ahead-foreground" },
@@ -380,23 +389,11 @@ function TenantsPage() {
           { label: "Overdue / Arrears", value: money(metricTenants.reduce((sum, t) => sum + (ledgers.get(t.id)?.arrears ?? 0), 0)), note: `${metricTenants.filter(t => (balances.get(t.id) ?? 0) > 0).length} tenants with a balance`, icon: AlertTriangle, tone: "border-arrears-border bg-arrears text-arrears-foreground" },
         ].map(metric => <div key={metric.label} className={`min-w-0 rounded-lg border px-2.5 py-2 shadow-sm sm:p-3 ${metric.tone}`}><div className="flex items-center gap-1.5 text-[11px] font-semibold"><metric.icon className="h-3.5 w-3.5 shrink-0" /><span>{metric.label}</span></div><p className="mt-1 break-words text-base font-bold sm:text-lg">{metric.value}</p><p className="mt-0.5 text-[10px] sm:text-xs">{metric.note}</p></div>)}
       </div>
-      {duplicateCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>
-            <b>{duplicateCount}</b> tenant record{duplicateCount === 1 ? "" : "s"} look like duplicates (same name and phone). Move out the extra record to keep balances clean.
-          </span>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_180px_180px]">
-        <div className="relative col-span-2 min-w-0 sm:col-span-1"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search name, phone or unit" aria-label="Search tenants" className="h-9 pl-9" /></div>
-        <Select value={propFilter} onValueChange={setPropFilter}><SelectTrigger aria-label="Filter by property" className="h-9 min-w-0 text-xs [&>span]:truncate"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All properties</SelectItem>{propertyNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}</SelectContent></Select>
-        <Select value={paymentFilter} onValueChange={setPaymentFilter}><SelectTrigger aria-label="Filter by payment status" className="h-9 min-w-0 text-xs [&>span]:truncate"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem><SelectItem value="overdue">Overdue / Arrears</SelectItem><SelectItem value="paid">Paid ahead / Credit</SelectItem><SelectItem value="zero">Zero balance</SelectItem></SelectContent></Select>
-      </div>
+      </details>
       <details className="group border-b pb-2">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs text-muted-foreground">Credit & account checks<ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" /></summary>
         <div className="mt-2 space-y-2">
+          {duplicateCount > 0 && <div className="flex items-start gap-2 border-l-2 border-destructive pl-2 text-xs"><AlertTriangle className="h-3.5 w-3.5 shrink-0" /><span><b>{duplicateCount}</b> tenant record{duplicateCount === 1 ? "" : "s"} look like duplicates (same name and phone). Move out the extra record to keep balances clean.</span></div>}
       {creditHeld > 0 && (
         <div className="space-y-2 rounded-lg border bg-muted/40 px-3 py-2 text-xs sm:text-sm">
           <div className="flex items-center gap-2">
@@ -421,10 +418,10 @@ function TenantsPage() {
       {groups.map(([groupName, members]) => (
       <section key={groupName} className="min-w-0 space-y-2">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 border-b pb-1">
-          <h3 className="flex min-w-0 items-center gap-2 text-base font-bold uppercase"><Building2 className="h-5 w-5 shrink-0 text-primary" /><span className="break-words">{groupName}</span></h3>
+          <h3 className="flex min-w-0 items-center gap-1.5 text-sm font-bold uppercase"><Building2 className="h-4 w-4 shrink-0 text-primary" /><span className="[overflow-wrap:anywhere]">{groupName}</span></h3>
           <Badge variant="secondary" className="shrink-0 rounded-full">{members.length} tenants</Badge>
         </div>
-      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {members.map((t: any) => {
           const ledger = ledgers.get(t.id) ?? buildLedger({ invoiced: 0, paid: 0 });
           const balance = balances?.get(t.id) ?? 0;
@@ -504,10 +501,10 @@ function TenantCard({
       <div className={`h-1 ${balance > 0 ? "bg-arrears-foreground" : inCredit ? "bg-paid-ahead-foreground" : "bg-border"}`} />
       <div className="p-3 sm:p-4">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2"><div className="min-w-0"><p className="flex items-center gap-1.5 text-xs font-semibold text-primary"><Home className="h-4 w-4 shrink-0" /><span className="break-words">Unit {t.units?.unit_number ?? "Unassigned"}</span></p><h4 className="mt-2 break-words text-lg font-semibold leading-tight">{t.full_name}</h4></div><Button size="icon" variant="ghost" aria-label={`Expand ${t.full_name}`} aria-expanded={expanded} onClick={() => setExpanded(v => !v)}><ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} /></Button></div>
-        <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" /> {t.phone_number ?? "No phone"}</p>
-        <div className="mt-4 flex flex-wrap gap-2"><RiskBadge risk={{ ...risk, total: balance }} />{duplicate && <Badge variant="outline"><AlertTriangle className="h-3 w-3" /> Possible duplicate</Badge>}</div>
-        <div className="mt-3 flex items-baseline justify-between gap-2"><span className="text-xs text-muted-foreground">{balance > 0 ? "Outstanding" : inCredit ? "Available credit" : "Account balance"}</span><span className={`text-lg font-bold ${balance > 0 ? "text-arrears-foreground" : inCredit ? "text-paid-ahead-foreground" : "text-foreground"}`}>{money(Math.abs(balance))}</span></div>
-        <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">{balance > 0 && <TenantReminderButton tenantId={t.id} name={t.full_name} balance={balance} />}<TenantInvoicesButton tenantId={t.id} name={t.full_name} /></div>
+        <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" /><span className="[overflow-wrap:anywhere]">{t.phone_number ?? "No phone"}</span></p>
+        <div className="mt-2 flex flex-wrap gap-1.5"><RiskBadge risk={{ ...risk, total: balance }} />{duplicate && <Badge variant="outline"><AlertTriangle className="h-3 w-3" /> Possible duplicate</Badge>}</div>
+        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-baseline gap-2"><span className="min-w-0 text-xs text-muted-foreground">{balance > 0 ? "Outstanding" : inCredit ? "Available credit" : "Account balance"}</span><span className={`min-w-0 break-words text-right text-base font-bold ${balance > 0 ? "text-arrears-foreground" : inCredit ? "text-paid-ahead-foreground" : "text-foreground"}`}>{money(Math.abs(balance))}</span></div>
+        <div className="mt-2 flex flex-wrap gap-2 border-t pt-2">{balance > 0 && <TenantReminderButton tenantId={t.id} name={t.full_name} balance={balance} />}<TenantInvoicesButton tenantId={t.id} name={t.full_name} /></div>
       </div>
 
       {expanded && (
