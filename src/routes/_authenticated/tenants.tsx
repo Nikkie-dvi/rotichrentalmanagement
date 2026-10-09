@@ -280,6 +280,7 @@ function TenantsPage() {
         rank[risks.get(a.id)?.level ?? "clear"] - rank[risks.get(b.id)?.level ?? "clear"],
     );
   const inactive = (tenants ?? []).filter((t: any) => !t.active && matches(t));
+  const metricTenants = (tenants ?? []).filter(t => t.active && (propFilter === "all" || t.units?.properties?.name === propFilter));
 
   // Group active tenants by building, ordered by unit number inside each.
   const groups = (() => {
@@ -374,9 +375,9 @@ function TenantsPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Tenant account highlights">
         {[
           { label: "Total Collection", value: money((allPayments ?? []).filter(p => propFilter === "all" || (tenants ?? []).some(t => t.id === p.tenant_id && t.units?.properties?.name === propFilter)).reduce((sum, p) => sum + Number(p.amount_paid), 0)), note: "All recorded payments", icon: Wallet, tone: "border-primary/25 bg-accent/40 text-accent-foreground" },
-          { label: "Paid Ahead", value: money(active.reduce((sum, t) => sum + (ledgers.get(t.id)?.credit ?? 0), 0)), note: `${active.filter(t => (balances.get(t.id) ?? 0) < 0).length} tenants in credit`, icon: CheckCircle2, tone: "border-paid-ahead-border bg-paid-ahead text-paid-ahead-foreground" },
-          { label: "Balanced", value: String(active.filter(t => (balances.get(t.id) ?? 0) === 0).length), note: "Tenants with KES 0 due", icon: CheckCircle2, tone: "border-border bg-muted text-foreground" },
-          { label: "Overdue / Arrears", value: money(active.reduce((sum, t) => sum + (ledgers.get(t.id)?.arrears ?? 0), 0)), note: `${active.filter(t => (balances.get(t.id) ?? 0) > 0).length} tenants with a balance`, icon: AlertTriangle, tone: "border-arrears-border bg-arrears text-arrears-foreground" },
+          { label: "Paid Ahead", value: money(metricTenants.reduce((sum, t) => sum + (ledgers.get(t.id)?.credit ?? 0), 0)), note: `${metricTenants.filter(t => (balances.get(t.id) ?? 0) < 0).length} tenants in credit`, icon: CheckCircle2, tone: "border-paid-ahead-border bg-paid-ahead text-paid-ahead-foreground" },
+          { label: "Balanced", value: String(metricTenants.filter(t => (balances.get(t.id) ?? 0) === 0).length), note: "Tenants with KES 0 due", icon: CheckCircle2, tone: "border-border bg-muted text-foreground" },
+          { label: "Overdue / Arrears", value: money(metricTenants.reduce((sum, t) => sum + (ledgers.get(t.id)?.arrears ?? 0), 0)), note: `${metricTenants.filter(t => (balances.get(t.id) ?? 0) > 0).length} tenants with a balance`, icon: AlertTriangle, tone: "border-arrears-border bg-arrears text-arrears-foreground" },
         ].map(metric => <div key={metric.label} className={`min-w-0 rounded-xl border p-3 shadow-sm sm:p-4 ${metric.tone}`}><div className="flex items-center gap-2 text-xs font-semibold"><metric.icon className="h-4 w-4 shrink-0" /><span>{metric.label}</span></div><p className="mt-3 break-words text-lg font-bold sm:text-xl">{metric.value}</p><p className="mt-1 text-xs">{metric.note}</p></div>)}
       </div>
       {duplicateCount > 0 && (
