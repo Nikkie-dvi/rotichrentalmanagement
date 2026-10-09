@@ -5,8 +5,13 @@ function baseUrl() {
   return env("MPESA_ENV") === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke";
 }
 
+/** Till number overrides the shortcode for Buy Goods (till) payments. */
+function shortcode() {
+  return env("MPESA_TILL_NUMBER") || env("MPESA_SHORTCODE");
+}
+
 export function darajaConfigured() {
-  return !!(env("MPESA_CONSUMER_KEY") && env("MPESA_CONSUMER_SECRET") && env("MPESA_SHORTCODE") && env("MPESA_PASSKEY"));
+  return !!(env("MPESA_CONSUMER_KEY") && env("MPESA_CONSUMER_SECRET") && shortcode() && env("MPESA_PASSKEY"));
 }
 
 export function normalizeKePhone(input: string) {
