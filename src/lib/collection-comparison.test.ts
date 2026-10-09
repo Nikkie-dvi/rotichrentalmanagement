@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { compareCollections } from "./collection-comparison";
 describe("comparable collection periods", () => {
   test("excludes later days and future payments", () => {
