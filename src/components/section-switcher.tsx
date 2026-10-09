@@ -110,7 +110,7 @@ export function SectionSwitcher({ items, compact = false }: { items: SwitcherIte
   };
 
   return (
-    <div className="sticky top-0 z-20 -mx-1 overflow-x-auto pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className={`sticky top-0 z-20 min-w-0 max-w-full overflow-x-auto pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${compact ? "mx-0" : "-mx-1"}`}>
       <motion.div
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
