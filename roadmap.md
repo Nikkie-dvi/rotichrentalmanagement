@@ -20,6 +20,8 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
+- [ ] Compare collections with the same date last month in assistant analysis and buddy notices.
+- [ ] Explain portfolio results, arrears, vacancies and repairs in plain-language detail.
 - [ ] Modernize corner assistant and thinking state.
 - [ ] Confirmed payment corrections and refunds (real transfers require payment-provider setup).
 - [ ] Strengthen first-time landlord guidance effects.
