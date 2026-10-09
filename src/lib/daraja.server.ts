@@ -5,8 +5,13 @@ function baseUrl() {
   return env("MPESA_ENV") === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke";
 }
 
+/** Till number overrides the shortcode for Buy Goods (till) payments. */
+function shortcode() {
+  return env("MPESA_TILL_NUMBER") || env("MPESA_SHORTCODE");
+}
+
 export function darajaConfigured() {
-  return !!(env("MPESA_CONSUMER_KEY") && env("MPESA_CONSUMER_SECRET") && env("MPESA_SHORTCODE") && env("MPESA_PASSKEY"));
+  return !!(env("MPESA_CONSUMER_KEY") && env("MPESA_CONSUMER_SECRET") && shortcode() && env("MPESA_PASSKEY"));
 }
 
 export function normalizeKePhone(input: string) {
@@ -34,7 +39,7 @@ function stamp() {
 }
 
 function password(ts: string) {
-  return btoa(`${env("MPESA_SHORTCODE")}${env("MPESA_PASSKEY")}${ts}`);
+  return btoa(`${shortcode()}${env("MPESA_PASSKEY")}${ts}`);
 }
 
 export async function stkPush(p: { phone: string; amount: number; reference: string; description: string; callbackUrl: string }) {
@@ -44,13 +49,13 @@ export async function stkPush(p: { phone: string; amount: number; reference: str
     method: "POST",
     headers: { Authorization: `Bearer ${await token()}`, "content-type": "application/json" },
     body: JSON.stringify({
-      BusinessShortCode: env("MPESA_SHORTCODE"),
+      BusinessShortCode: shortcode(),
       Password: password(ts),
       Timestamp: ts,
       TransactionType: till ? "CustomerBuyGoodsOnline" : "CustomerPayBillOnline",
       Amount: Math.max(1, Math.round(p.amount)),
       PartyA: p.phone,
-      PartyB: env("MPESA_PARTY_B") || env("MPESA_SHORTCODE"),
+      PartyB: env("MPESA_PARTY_B") || shortcode(),
       PhoneNumber: p.phone,
       CallBackURL: p.callbackUrl,
       AccountReference: p.reference.slice(0, 12),
@@ -72,7 +77,7 @@ export async function stkQuery(checkoutRequestId: string) {
     method: "POST",
     headers: { Authorization: `Bearer ${await token()}`, "content-type": "application/json" },
     body: JSON.stringify({
-      BusinessShortCode: env("MPESA_SHORTCODE"),
+      BusinessShortCode: shortcode(),
       Password: password(ts),
       Timestamp: ts,
       CheckoutRequestID: checkoutRequestId,
