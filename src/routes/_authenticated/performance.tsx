@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { unitTypeLabel } from "@/lib/unit-types";
 import { PortfolioReports, thisMonth } from "@/components/portfolio-reports";
+import { compareCollections, comparisonPeriod } from "@/lib/collection-comparison";
 
 export const Route = createFileRoute("/_authenticated/performance")({
   head: () => ({
@@ -66,7 +67,7 @@ function PerformancePage() {
         supabase
           .from("payments")
           .select("id,tenant_id,invoice_id,amount_paid,payment_date")
-          .gte("payment_date", range.start)
+           .gte("payment_date", comparisonPeriod(month).start)
           .lt("payment_date", range.end),
         supabase
           .from("maintenance_tickets")
@@ -79,7 +80,8 @@ function PerformancePage() {
         units: units.data ?? [],
         tenants: tenants.data ?? [],
         invoices: invoices.data ?? [],
-        payments: payments.data ?? [],
+       payments: (payments.data ?? []).filter(p => p.payment_date >= range.start),
+       comparisonPayments: payments.data ?? [],
         tickets: tickets.data ?? [],
       };
     },
@@ -181,6 +183,14 @@ function PerformancePage() {
     const totalPaid = early + onTime + late;
 
     return {
+      comparison: compareCollections(d.comparisonPayments, month),
+      vacant: d.units.filter(u => u.status === "vacant"),
+      occupied: d.units.filter(u => u.status === "occupied").length,
+      totalUnits: d.units.length,
+      billed: d.invoices.filter(i => i.month_year === month).reduce((s, i) => s + Number(i.total_due), 0),
+      arrears: d.invoices.reduce((s, i) => s + Math.max(0, Number(i.balance_remaining)), 0),
+      owingTenants: new Set(d.invoices.filter(i => Number(i.balance_remaining) > 0).map(i => i.tenant_id)).size,
+      vacancyRent: d.units.filter(u => u.status === "vacant").reduce((s, u) => s + Number(u.rent_amount), 0),
       rows: scored,
       worstPayers,
       punctuality: { early, onTime, late, totalPaid, avgLateDays: late ? Math.round(lateDaysTotal / late) : 0 },
@@ -234,7 +244,33 @@ function PerformancePage() {
         </nav>
       </div>
 
-      <div id="overview" className="scroll-mt-24">
+       {q.isError && <p role="alert" className="text-sm text-destructive">Portfolio records could not be loaded. Please refresh to try again.</p>}
+       {view && <section className="space-y-4 border-b pb-6" aria-label="Portfolio analysis">
+         <div><p className="text-xs font-semibold uppercase text-primary">What the figures mean</p><h2 className="mt-1 text-xl font-semibold">Your portfolio, explained</h2></div>
+         <div className="grid gap-6 md:grid-cols-2">
+           <div className="space-y-2"><h3 className="font-semibold">Collection pace</h3>
+             <p className="text-sm leading-relaxed">{view.comparison.currentMonth ? `So far through ${view.comparison.cutoff}` : `During ${month}`} you collected <strong>{money(view.comparison.collected)}</strong> from {view.comparison.currentCount} payments. {view.comparison.currentMonth ? `By ${view.comparison.previousCutoff} last month` : `During ${view.comparison.previousMonth}`} you had collected <strong>{money(view.comparison.previousCollected)}</strong> from {view.comparison.previousCount} payments.</p>
+             <p className={`text-sm font-medium ${view.comparison.difference < 0 ? "text-destructive" : "text-primary"}`}>{view.comparison.difference === 0 ? "Collections match the previous period." : `${money(Math.abs(view.comparison.difference))} ${view.comparison.difference > 0 ? "ahead of" : "behind"} the comparable period${view.comparison.percentChange === null ? "" : ` (${Math.abs(view.comparison.percentChange)}%)`}.`}</p>
+             <p className="text-xs text-muted-foreground">{view.comparison.currentMonth ? "Today is still in progress. " : ""}Cash received by payment date, including prepaid rent and earlier balances; not a next-month forecast.</p>
+           </div>
+           <div className="space-y-2"><h3 className="font-semibold">Balances needing attention</h3>
+             <p className="text-sm leading-relaxed">{money(view.billed)} was billed for {month}. Invoices through this month currently show <strong>{money(view.arrears)}</strong> unpaid across {view.owingTenants} tenant accounts.</p>
+             <p className="text-sm text-muted-foreground">{view.arrears > 0 ? "Review each tenant's ledger and due date before sending a reminder. A partial payment should reduce the next reminder, and a cleared balance should stop it." : "No unpaid invoice balances are recorded through this month."}</p>
+             <p className="text-xs text-muted-foreground">Balances reflect payments recorded now, not a historical month-end snapshot. Cash collected and this month's billed amount may cover different rent periods.</p>
+           </div>
+           <div className="space-y-2"><h3 className="font-semibold">Vacancies and rent potential</h3>
+             <p className="text-sm leading-relaxed">Right now {view.occupied} of {view.totalUnits} units are occupied ({pct(view.occupied, view.totalUnits)}%). {view.vacant.length} units are marked vacant, representing <strong>{money(view.vacancyRent)}</strong> in potential monthly rent at their listed rates.</p>
+             {view.vacant.length > 0 && <p className="text-sm text-muted-foreground">Vacant units: {view.vacant.map(u => u.unit_number).join(", ")}. Consider a viewing or a same-property tenant notice from My Account.</p>}
+             <p className="text-xs text-muted-foreground">Current occupancy, not historical occupancy. Potential rent is not income received.</p>
+           </div>
+           <div className="space-y-2"><h3 className="font-semibold">Payment habits and repairs</h3>
+             <p className="text-sm leading-relaxed">Of {view.punctuality.totalPaid} payments matched to due dates, {view.punctuality.early} were early, {view.punctuality.onTime} on time and {view.punctuality.late} late{view.punctuality.late ? `, averaging ${view.punctuality.avgLateDays} days late` : ""}. Payments without a matched due date are excluded.</p>
+             <p className="text-sm leading-relaxed">{view.tickets.reduce((s, t) => s + t.total, 0)} repair requests were opened in {month}; {view.tickets.reduce((s, t) => s + t.open, 0)} remain open. Resolution times below use closed requests and their last update date.</p>
+             <p className="text-sm text-muted-foreground">{view.tickets.some(t => t.open > 0) ? "Follow up on open requests and arrange a completion date." : "No open repair requests in this month's reported group."} True net operating income needs operating expenses, which are not currently recorded; collections are not NOI.</p>
+           </div>
+         </div>
+       </section>}
+       <div id="overview" className="scroll-mt-24">
         <h2 className="text-lg font-semibold">Unit performance</h2>
         <p className="text-sm text-muted-foreground">
           Occupancy and financial results for the selected month, grouped by room type.

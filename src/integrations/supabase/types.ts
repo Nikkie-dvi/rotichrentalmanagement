@@ -639,6 +639,57 @@ export type Database = {
           },
         ]
       }
+      payment_corrections: {
+        Row: {
+          changed_by: string
+          created_at: string
+          id: string
+          new_amount: number
+          old_amount: number
+          owner_id: string
+          payment_id: string
+          reason: string
+          tenant_id: string
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string
+          id?: string
+          new_amount: number
+          old_amount: number
+          owner_id: string
+          payment_id: string
+          reason: string
+          tenant_id: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          id?: string
+          new_amount?: number
+          old_amount?: number
+          owner_id?: string
+          payment_id?: string
+          reason?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_corrections_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_corrections_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount_paid: number
@@ -1228,6 +1279,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      correct_assistant_payment: {
+        Args: {
+          _expected_amount: number
+          _new_amount: number
+          _payment_id: string
+          _reason: string
+        }
+        Returns: Json
+      }
       generate_landlord_code: { Args: never; Returns: string }
       manager_can_edit: { Args: { _owner: string }; Returns: boolean }
       manages_owner: { Args: { _owner: string }; Returns: boolean }

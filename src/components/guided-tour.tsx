@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { X } from "lucide-react";
+import { X, Hand, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -74,16 +74,16 @@ export function GuidedTour() {
     <>
       {rect && (
         <div className="pointer-events-none fixed z-[60]" style={{ top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12 }}>
-          <div className="absolute inset-0 animate-pulse rounded-xl ring-4 ring-primary shadow-[0_0_0_9999px_hsl(var(--background)/0.55)]" />
-          <div className="thought-bob absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg">
-            👆 Tap here
+           <div className="guide-focus absolute inset-0" />
+           <div className={`guide-pointer absolute ${rect.top > 110 ? "bottom-full mb-3" : "top-full mt-3"} right-0 flex items-center gap-2 whitespace-nowrap rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-lg`}>
+             <Hand className="h-5 w-5" /> Tap here
           </div>
         </div>
       )}
       <div className="thought-in fixed bottom-24 left-4 z-[61] w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-primary/40 bg-card p-4 text-card-foreground shadow-2xl md:left-[calc(var(--sidebar-width,16rem)+1rem)]">
         <div className="mb-1 flex items-center justify-between">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Step {data.idx + 1} of {STEPS.length}</span>
-          <button onClick={() => setHidden(true)} aria-label="Hide guide for now" className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+           <Button size="icon-sm" variant="ghost" onClick={() => setHidden(true)} aria-label="Hide guide for now"><X className="h-4 w-4" /></Button>
         </div>
         <div className="mb-2 flex gap-1">
           {STEPS.map((s, i) => <span key={s.key} className={`h-1.5 flex-1 rounded-full ${i < data.idx ? "bg-primary" : i === data.idx ? "bg-primary/60" : "bg-muted"}`} />)}
@@ -92,7 +92,7 @@ export function GuidedTour() {
         <p className="mt-1 text-sm text-muted-foreground">{step.what}</p>
         <p className="mt-2 text-sm font-medium">{onPage ? step.tap : "First, let's go to the right page."}</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          {!onPage && <Button size="sm" onClick={() => navigate({ to: step.page as any })}>👆 Take me there</Button>}
+           {!onPage && <Button size="sm" onClick={() => navigate({ to: step.page as any })}><ArrowRight className="h-4 w-4" /> Take me there</Button>}
           {step.key === "managers" && <Button size="sm" variant="outline" onClick={finish}>Finish tour</Button>}
           <Button size="sm" variant="ghost" onClick={finish}>Skip tour</Button>
         </div>

@@ -22,6 +22,7 @@ import {
 } from "@/hooks/use-landlord-account";
 import { money } from "@/lib/types";
 import { SmsCreditCard } from "@/components/sms-credit-card";
+import { VacancyNotices } from "@/components/vacancy-notices";
 
 export const Route = createFileRoute("/_authenticated/settings/account")({
   head: () => ({
@@ -120,6 +121,7 @@ function AccountPage() {
       </Card>
 
       <SmsCreditCard />
+      <VacancyNotices />
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <CheckCircle2 className="h-4 w-4 text-primary" /> Account information is visible only to the landlord.
@@ -236,6 +238,7 @@ function ManagerAccountView() {
           ))}
         </CardContent>
       </Card>
+      <VacancyNotices />
     </div>
   );
 }

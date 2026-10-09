@@ -26,7 +26,7 @@ function label(monthKey: string) {
 function monthRange(monthKey: string) {
   const [y, m] = monthKey.split("-").map(Number);
   const start = `${monthKey}-01`;
-  const endDate = new Date(y || new Date().getFullYear(), m || 1, 1); // first day of next month
+   const endDate = new Date(Date.UTC(y || new Date().getFullYear(), m || 1, 1)); // first day of next month
   const end = endDate.toISOString().slice(0, 10);
   return { start, end };
 }

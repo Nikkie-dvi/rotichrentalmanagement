@@ -7,6 +7,7 @@ import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
+import { compareCollections, comparisonPeriod } from "@/lib/collection-comparison";
 
 type Thought = {
   id: string; emoji: string; text: string; to: string; weight: number;
@@ -68,17 +69,12 @@ async function loadThoughts(): Promise<Thought[]> {
   ]);
   const out: Thought[] = [];
   const unitTotal = (await supabase.from("units").select("id", { count: "exact", head: true })).count ?? 0;
-  const now = new Date();
-  const thisM = now.toISOString().slice(0, 7);
-  const lastM = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
-  const { data: pays } = await supabase.from("payments").select("amount_paid, payment_date").gte("payment_date", `${lastM}-01`).limit(2000);
-  const sumFor = (m: string) => ((pays ?? []) as any[]).filter((p) => String(p.payment_date).startsWith(m));
-  const cur = sumFor(thisM), prev = sumFor(lastM);
-  const tot = (r: any[]) => r.reduce((a, p) => a + Number(p.amount_paid || 0), 0);
-  if (cur.length || prev.length) {
-    const diff = tot(cur) - tot(prev);
-    out.push({ id: `stats-${thisM}`, emoji: "📊", to: "/payments", weight: 1, cta: "See payments",
-      text: `This month you've recorded ${cur.length} payment${cur.length === 1 ? "" : "s"} (${money(tot(cur))}). Last month: ${prev.length} (${money(tot(prev))})${prev.length ? (diff >= 0 ? " — you're ahead!" : ` — ${money(-diff)} to go to match it.`) : "."}` });
+  const period = comparisonPeriod();
+  const { data: pays, error: comparisonError } = await supabase.from("payments").select("amount_paid, payment_date").gte("payment_date", period.start).lt("payment_date", period.end);
+  const c = compareCollections(pays ?? []);
+  if (!comparisonError && (c.currentCount || c.previousCount)) {
+    out.push({ id: `stats-${c.cutoff}`, emoji: "📊", to: "/performance", weight: c.difference < 0 ? 2 : 1, cta: "Review portfolio",
+      text: `By ${c.previousCutoff} you had collected ${money(c.previousCollected)}. So far this month: ${money(c.collected)}${c.difference < 0 ? ` — ${money(-c.difference)} behind the same date last month. Check outstanding rent.` : c.difference > 0 ? ` — ${money(c.difference)} ahead of the same date last month.` : " — matching the same date last month."}` });
   }
   const ageDays = daysSince(((acct ?? mgr) as any).created_at);
   const today = new Date().toISOString().slice(0, 10);
