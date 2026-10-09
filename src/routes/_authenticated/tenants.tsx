@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2, KeyRound, ArrowLeft, Home, Pencil, Search, ChevronDown } from "lucide-react";
+import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2, KeyRound, ArrowLeft, Home, Pencil, Search, ChevronDown, Building2, Phone, Wallet, FileText } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
 import { TenantCreditDialog } from "@/components/tenant-credit-dialog";
+import { TenantReminderButton } from "@/components/tenant-reminder-button";
 import { LedgerHealthCard } from "@/components/ledger-health-card";
 
 import { runCreditWatch } from "@/lib/credit.functions";
@@ -57,35 +58,9 @@ type RiskLevel = "clear" | "credit" | "soon" | "overdue" | "high";
 type Risk = { level: RiskLevel; total: number; monthsUnpaid: number; daysLate: number };
 
 function RiskBadge({ risk }: { risk: Risk }) {
-  if (risk.level === "credit")
-    return (
-      <Badge variant="outline" className="gap-1">
-        <CheckCircle2 className="h-3.5 w-3.5" /> Paid ahead · {money(Math.abs(risk.total))}
-      </Badge>
-    );
-  if (risk.level === "high")
-    return (
-      <Badge variant="outline" className="gap-1 border-destructive/40 text-destructive">
-        <AlertTriangle className="h-3.5 w-3.5" /> High risk · {risk.monthsUnpaid} mo
-      </Badge>
-    );
-  if (risk.level === "overdue")
-    return (
-      <Badge variant="outline" className="gap-1 border-destructive/40 text-destructive">
-        <AlertTriangle className="h-3.5 w-3.5" /> Overdue {risk.daysLate}d
-      </Badge>
-    );
-  if (risk.level === "soon")
-    return (
-      <Badge variant="outline" className="gap-1">
-        <Clock className="h-3.5 w-3.5" /> Due soon
-      </Badge>
-    );
-  return (
-    <Badge variant="outline" className="gap-1 text-muted-foreground">
-      <CheckCircle2 className="h-3.5 w-3.5" /> Clear
-    </Badge>
-  );
+  if (risk.total < 0) return <Badge className="rounded-full border-paid-ahead-border bg-paid-ahead text-paid-ahead-foreground gap-1 whitespace-normal"><CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> +{money(Math.abs(risk.total))} Paid ahead</Badge>;
+  if (risk.total > 0) return <Badge className="rounded-full border-arrears-border bg-arrears text-arrears-foreground gap-1"><AlertTriangle className="h-3.5 w-3.5 shrink-0" /> {risk.daysLate > 0 ? `Overdue ${risk.daysLate}d` : "Balance due"}{risk.monthsUnpaid >= 2 ? ` · ${risk.monthsUnpaid} mo` : ""}</Badge>;
+  return <Badge variant="secondary" className="rounded-full gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> KES 0 · Balanced</Badge>;
 }
 
 function TenantsPage() {
@@ -93,6 +68,7 @@ function TenantsPage() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("all");
 
 
   const { data: tenants } = useQuery(tenantsFullQuery);
@@ -174,6 +150,7 @@ function TenantsPage() {
           move_in_date: v.move_in_date || null,
           rent_due_day: v.rent_due_day ? Number(v.rent_due_day) : null,
           active: true,
+          approval_status: "approved",
         })
         .select("id")
         .single();
@@ -263,7 +240,7 @@ function TenantsPage() {
       const months = (byTenant.get((t as any).id) ?? []).sort();
       const total = balances.get((t as any).id) ?? 0;
       if (!months.length || total <= 0) {
-        map.set((t as any).id, { level: "clear", total, monthsUnpaid: 0, daysLate: 0 });
+        map.set((t as any).id, { level: total < 0 ? "credit" : total > 0 ? "soon" : "clear", total, monthsUnpaid: 0, daysLate: 0 });
         continue;
       }
       const oldest = months[0];
@@ -285,6 +262,10 @@ function TenantsPage() {
   const rank: Record<RiskLevel, number> = { high: 0, overdue: 1, soon: 2, clear: 3, credit: 4 };
   const matches = (t: any) => {
     if (propFilter !== "all" && (t.units?.properties?.name ?? "No unit assigned") !== propFilter) return false;
+    const balance = balances.get(t.id) ?? 0;
+    if (paymentFilter === "overdue" && balance <= 0) return false;
+    if (paymentFilter === "paid" && balance >= 0) return false;
+    if (paymentFilter === "zero" && balance !== 0) return false;
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return [t.full_name, t.phone_number, t.email, t.units?.unit_number, t.units?.properties?.name]
@@ -389,15 +370,14 @@ function TenantsPage() {
           </DialogContent>
         </Dialog>
       </div>
-      {flagged.length > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>
-            <b>{flagged.length}</b> tenant{flagged.length === 1 ? "" : "s"} overdue · <b>{money(atRisk)}</b> at risk
-          </span>
-        </div>
-      )}
-
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Tenant account highlights">
+        {[
+          { label: "Total Collection", value: money((allPayments ?? []).filter(p => propFilter === "all" || (tenants ?? []).some(t => t.id === p.tenant_id && t.units?.properties?.name === propFilter)).reduce((sum, p) => sum + Number(p.amount_paid), 0)), note: "All recorded payments", icon: Wallet, tone: "border-primary/25 bg-accent/40 text-accent-foreground" },
+          { label: "Paid Ahead", value: money(active.reduce((sum, t) => sum + (ledgers.get(t.id)?.credit ?? 0), 0)), note: `${active.filter(t => (balances.get(t.id) ?? 0) < 0).length} tenants in credit`, icon: CheckCircle2, tone: "border-paid-ahead-border bg-paid-ahead text-paid-ahead-foreground" },
+          { label: "Balanced", value: String(active.filter(t => (balances.get(t.id) ?? 0) === 0).length), note: "Tenants with KES 0 due", icon: CheckCircle2, tone: "border-border bg-muted text-foreground" },
+          { label: "Overdue / Arrears", value: money(active.reduce((sum, t) => sum + (ledgers.get(t.id)?.arrears ?? 0), 0)), note: `${active.filter(t => (balances.get(t.id) ?? 0) > 0).length} tenants with a balance`, icon: AlertTriangle, tone: "border-arrears-border bg-arrears text-arrears-foreground" },
+        ].map(metric => <div key={metric.label} className={`min-w-0 rounded-xl border p-3 shadow-sm sm:p-4 ${metric.tone}`}><div className="flex items-center gap-2 text-xs font-semibold"><metric.icon className="h-4 w-4 shrink-0" /><span>{metric.label}</span></div><p className="mt-3 break-words text-lg font-bold sm:text-xl">{metric.value}</p><p className="mt-1 text-xs">{metric.note}</p></div>)}
+      </div>
       {duplicateCount > 0 && (
         <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
           <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -407,39 +387,11 @@ function TenantsPage() {
         </div>
       )}
 
-      {propertyNames.length > 1 && (
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Filter by property">
-          {["all", ...propertyNames].map((name) => {
-            const count = name === "all"
-              ? (tenants ?? []).filter((t: any) => t.active).length
-              : (tenants ?? []).filter((t: any) => t.active && (t.units?.properties?.name ?? "No unit assigned") === name).length;
-            return (
-              <Button key={name} type="button" size="sm" role="tab" aria-selected={propFilter === name}
-                variant={propFilter === name ? "default" : "outline"} className="h-8 shrink-0 rounded-full px-3 text-xs"
-                onClick={() => setPropFilter(name)}>
-                {name === "all" ? "All properties" : name} <span className="ml-1 opacity-70">{count}</span>
-              </Button>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search name, phone, unit or property"
-          aria-label="Search tenants"
-          className="pl-9"
-        />
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_180px_180px]">
+        <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search name, phone or unit" aria-label="Search tenants" className="pl-9" /></div>
+        <Select value={propFilter} onValueChange={setPropFilter}><SelectTrigger aria-label="Filter by property"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All properties</SelectItem>{propertyNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}</SelectContent></Select>
+        <Select value={paymentFilter} onValueChange={setPaymentFilter}><SelectTrigger aria-label="Filter by payment status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All payment statuses</SelectItem><SelectItem value="overdue">Overdue / Arrears</SelectItem><SelectItem value="paid">Paid ahead / Credit</SelectItem><SelectItem value="zero">Zero balance</SelectItem></SelectContent></Select>
       </div>
-
-      <p className="hidden text-xs text-muted-foreground sm:block">
-        Tap a tenant to see their full statement — what was invoiced, what they paid, arrears still owed and any credit
-        that will be taken off their next invoice.
-      </p>
-
       {creditHeld > 0 && (
         <div className="space-y-2 rounded-lg border bg-muted/40 px-3 py-2 text-xs sm:text-sm">
           <div className="flex items-center gap-2">
@@ -462,8 +414,8 @@ function TenantsPage() {
       {groups.map(([groupName, members]) => (
       <section key={groupName} className="min-w-0 space-y-2">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 border-b pb-1">
-          <h3 className="truncate text-sm font-semibold uppercase tracking-wide text-muted-foreground">{groupName}</h3>
-          <span className="text-xs text-muted-foreground">{members.length} tenant{members.length === 1 ? "" : "s"}</span>
+          <h3 className="flex min-w-0 items-center gap-2 text-base font-bold uppercase"><Building2 className="h-5 w-5 shrink-0 text-primary" /><span className="break-words">{groupName}</span></h3>
+          <Badge variant="secondary" className="shrink-0 rounded-full">{members.length} tenants</Badge>
         </div>
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {members.map((t: any) => {
@@ -493,7 +445,7 @@ function TenantsPage() {
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {active.length === 0 && (
           <Card className="md:col-span-2 xl:col-span-3">
-            <CardContent className="py-10 text-center text-muted-foreground">No active tenants yet.</CardContent>
+            <CardContent className="py-10 text-center text-muted-foreground">{query || propFilter !== "all" || paymentFilter !== "all" ? "No tenants match these filters." : "No active tenants yet."}</CardContent>
           </Card>
         )}
       </div>
@@ -541,49 +493,15 @@ function TenantCard({
 
 
   return (
-    <Card className={`glass-card relative min-w-0 overflow-hidden ${flagged ? "border-l-2 border-l-destructive/60" : ""}`}>
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-        className="w-full p-3 text-left sm:p-4"
-      >
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <div className="min-w-0">
-            <div className="truncate text-base font-semibold">{t.full_name}</div>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {t.phone_number ?? "No phone"} · {t.units?.unit_number ?? "No unit"}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <span
-              className={
-                balance > 0
-                  ? "text-sm font-semibold text-destructive"
-                  : inCredit
-                    ? "text-sm font-semibold text-foreground"
-                    : "text-sm font-semibold text-muted-foreground"
-              }
-            >
-              {inCredit ? `+${money(Math.abs(balance))}` : money(balance)}
-            </span>
-            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
-          </div>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {(flagged || inCredit) && <RiskBadge risk={inCredit ? { ...risk, level: "credit" } : risk} />}
-          {ledger.credit > 0 && ledger.arrears > 0 && (
-            <Badge variant="outline" className="gap-1">
-              Credit {money(ledger.credit)}
-            </Badge>
-          )}
-          {duplicate && (
-            <Badge variant="outline" className="gap-1">
-              <AlertTriangle className="h-3 w-3" /> Possible duplicate
-            </Badge>
-          )}
-        </div>
-      </button>
+    <Card className={`relative min-w-0 overflow-hidden rounded-xl border shadow-sm ${balance > 0 ? "border-arrears-border" : inCredit ? "border-paid-ahead-border" : "border-border"}`}>
+      <div className={`h-1 ${balance > 0 ? "bg-arrears-foreground" : inCredit ? "bg-paid-ahead-foreground" : "bg-border"}`} />
+      <div className="p-4">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2"><div className="min-w-0"><p className="flex items-center gap-1.5 text-xs font-semibold text-primary"><Home className="h-4 w-4 shrink-0" /><span className="break-words">Unit {t.units?.unit_number ?? "Unassigned"}</span></p><h4 className="mt-2 break-words text-lg font-semibold leading-tight">{t.full_name}</h4></div><Button size="icon" variant="ghost" aria-label={`Expand ${t.full_name}`} aria-expanded={expanded} onClick={() => setExpanded(v => !v)}><ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} /></Button></div>
+        <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" /> {t.phone_number ?? "No phone"}</p>
+        <div className="mt-4 flex flex-wrap gap-2"><RiskBadge risk={{ ...risk, total: balance }} />{duplicate && <Badge variant="outline"><AlertTriangle className="h-3 w-3" /> Possible duplicate</Badge>}</div>
+        <div className="mt-3 flex items-baseline justify-between gap-2"><span className="text-xs text-muted-foreground">{balance > 0 ? "Outstanding" : inCredit ? "Available credit" : "Account balance"}</span><span className={`text-lg font-bold ${balance > 0 ? "text-arrears-foreground" : inCredit ? "text-paid-ahead-foreground" : "text-foreground"}`}>{money(Math.abs(balance))}</span></div>
+        <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">{balance > 0 && <TenantReminderButton tenantId={t.id} name={t.full_name} balance={balance} />}<Button size="sm" variant="outline" className="min-w-0 flex-1" onClick={() => setExpanded(v => !v)}><FileText className="h-4 w-4" /> {expanded ? "Hide details" : "View account"}</Button></div>
+      </div>
 
       {expanded && (
         <CardContent className="space-y-2 p-3 pt-0 text-sm sm:p-4 sm:pt-0">
