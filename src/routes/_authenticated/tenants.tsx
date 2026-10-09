@@ -351,8 +351,8 @@ function TenantsPage() {
           </Link>
         </Button>
       </div>
-      <SectionSwitcher items={PEOPLE_TABS} />
-      <SectionPanel items={PEOPLE_TABS}>
+      <SectionSwitcher items={PEOPLE_TABS} compact />
+      <SectionPanel items={PEOPLE_TABS} compact>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="min-w-0">
           <h2 className="truncate text-xl font-bold tracking-tight sm:text-2xl">Tenants</h2>
@@ -372,13 +372,13 @@ function TenantsPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Tenant account highlights">
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4" aria-label="Tenant account highlights">
         {[
           { label: "Total Collection", value: money((allPayments ?? []).filter(p => propFilter === "all" || (tenants ?? []).some(t => t.id === p.tenant_id && t.units?.properties?.name === propFilter)).reduce((sum, p) => sum + Number(p.amount_paid), 0)), note: "All recorded payments", icon: Wallet, tone: "border-primary/25 bg-accent/40 text-accent-foreground" },
           { label: "Paid Ahead", value: money(metricTenants.reduce((sum, t) => sum + (ledgers.get(t.id)?.credit ?? 0), 0)), note: `${metricTenants.filter(t => (balances.get(t.id) ?? 0) < 0).length} tenants in credit`, icon: CheckCircle2, tone: "border-paid-ahead-border bg-paid-ahead text-paid-ahead-foreground" },
           { label: "Balanced", value: String(metricTenants.filter(t => (balances.get(t.id) ?? 0) === 0).length), note: "Tenants with KES 0 due", icon: CheckCircle2, tone: "border-border bg-muted text-foreground" },
           { label: "Overdue / Arrears", value: money(metricTenants.reduce((sum, t) => sum + (ledgers.get(t.id)?.arrears ?? 0), 0)), note: `${metricTenants.filter(t => (balances.get(t.id) ?? 0) > 0).length} tenants with a balance`, icon: AlertTriangle, tone: "border-arrears-border bg-arrears text-arrears-foreground" },
-        ].map(metric => <div key={metric.label} className={`min-w-0 rounded-xl border p-3 shadow-sm sm:p-4 ${metric.tone}`}><div className="flex items-center gap-2 text-xs font-semibold"><metric.icon className="h-4 w-4 shrink-0" /><span>{metric.label}</span></div><p className="mt-3 break-words text-lg font-bold sm:text-xl">{metric.value}</p><p className="mt-1 text-xs">{metric.note}</p></div>)}
+        ].map(metric => <div key={metric.label} className={`min-w-0 rounded-lg border px-2.5 py-2 shadow-sm sm:p-3 ${metric.tone}`}><div className="flex items-center gap-1.5 text-[11px] font-semibold"><metric.icon className="h-3.5 w-3.5 shrink-0" /><span>{metric.label}</span></div><p className="mt-1 break-words text-base font-bold sm:text-lg">{metric.value}</p><p className="mt-0.5 text-[10px] sm:text-xs">{metric.note}</p></div>)}
       </div>
       {duplicateCount > 0 && (
         <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
@@ -389,11 +389,14 @@ function TenantsPage() {
         </div>
       )}
 
-      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_180px_180px]">
-        <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search name, phone or unit" aria-label="Search tenants" className="pl-9" /></div>
-        <Select value={propFilter} onValueChange={setPropFilter}><SelectTrigger aria-label="Filter by property"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All properties</SelectItem>{propertyNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}</SelectContent></Select>
-        <Select value={paymentFilter} onValueChange={setPaymentFilter}><SelectTrigger aria-label="Filter by payment status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All payment statuses</SelectItem><SelectItem value="overdue">Overdue / Arrears</SelectItem><SelectItem value="paid">Paid ahead / Credit</SelectItem><SelectItem value="zero">Zero balance</SelectItem></SelectContent></Select>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_180px_180px]">
+        <div className="relative col-span-2 min-w-0 sm:col-span-1"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search name, phone or unit" aria-label="Search tenants" className="h-9 pl-9" /></div>
+        <Select value={propFilter} onValueChange={setPropFilter}><SelectTrigger aria-label="Filter by property" className="h-9 min-w-0 text-xs [&>span]:truncate"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All properties</SelectItem>{propertyNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}</SelectContent></Select>
+        <Select value={paymentFilter} onValueChange={setPaymentFilter}><SelectTrigger aria-label="Filter by payment status" className="h-9 min-w-0 text-xs [&>span]:truncate"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem><SelectItem value="overdue">Overdue / Arrears</SelectItem><SelectItem value="paid">Paid ahead / Credit</SelectItem><SelectItem value="zero">Zero balance</SelectItem></SelectContent></Select>
       </div>
+      <details className="group border-b pb-2">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs text-muted-foreground">Credit & account checks<ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" /></summary>
+        <div className="mt-2 space-y-2">
       {creditHeld > 0 && (
         <div className="space-y-2 rounded-lg border bg-muted/40 px-3 py-2 text-xs sm:text-sm">
           <div className="flex items-center gap-2">
@@ -410,6 +413,8 @@ function TenantsPage() {
       )}
 
       <LedgerHealthCard />
+        </div>
+      </details>
 
 
 
@@ -497,7 +502,7 @@ function TenantCard({
   return (
     <Card className={`relative min-w-0 overflow-hidden rounded-xl border shadow-sm ${balance > 0 ? "border-arrears-border" : inCredit ? "border-paid-ahead-border" : "border-border"}`}>
       <div className={`h-1 ${balance > 0 ? "bg-arrears-foreground" : inCredit ? "bg-paid-ahead-foreground" : "bg-border"}`} />
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2"><div className="min-w-0"><p className="flex items-center gap-1.5 text-xs font-semibold text-primary"><Home className="h-4 w-4 shrink-0" /><span className="break-words">Unit {t.units?.unit_number ?? "Unassigned"}</span></p><h4 className="mt-2 break-words text-lg font-semibold leading-tight">{t.full_name}</h4></div><Button size="icon" variant="ghost" aria-label={`Expand ${t.full_name}`} aria-expanded={expanded} onClick={() => setExpanded(v => !v)}><ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} /></Button></div>
         <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" /> {t.phone_number ?? "No phone"}</p>
         <div className="mt-4 flex flex-wrap gap-2"><RiskBadge risk={{ ...risk, total: balance }} />{duplicate && <Badge variant="outline"><AlertTriangle className="h-3 w-3" /> Possible duplicate</Badge>}</div>
