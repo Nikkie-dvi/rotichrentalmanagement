@@ -20,7 +20,7 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
-- [ ] Make Tenants fit comfortably on phones, separate and highlight search, and reduce the space before tenant cards.
+- [x] Make Tenants fit comfortably on phones, separate and highlight search, and reduce the space before tenant cards; verified at 360px, 420px and 1280px with working search and summaries and no horizontal overflow.
 - [x] Compact Tenants navigation, summaries and spacing; verified at 420px with no horizontal overflow and working expandable account checks.
 - [x] Redesign tenant status cards, property grouping, metrics and search/payment filters; desktop and phone layouts, invoice dialog and zero-balance filter verified.
 - [x] Simplify finding lease files for upload and clarify approval labels for self-applications versus landlord-added tenants; active tenant approval labels removed and direct assignment marked approved.
