@@ -325,7 +325,7 @@ function DashboardPage() {
       <motion.div key="details" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ type: "spring", stiffness: 320, damping: 32 }}>
       <LandlordMessageCard />
 
-      {status === "pending" && (
+       {status === "pending" && !t.active && (
         <Card className="mb-4 glass-card glow-amber border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
           <CardContent className="flex items-start gap-3 p-4 text-sm">
             <AlertCircle className="mt-0.5 h-4 w-4 text-amber-600" />

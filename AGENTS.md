@@ -14,3 +14,4 @@
 - Calculate comparable collection periods through the shared collection-comparison helper in the business timezone; this keeps assistant and portfolio trends consistent.
 - Confirm assistant payment corrections through the atomic correct_assistant_payment RPC with authorization, expected-amount checks and an immutable audit trail; recalculate invoice allocations from the same payment/credit pool.
 - Keep vacancy announcements manually confirmed and property-scoped through notifyMyTenants; never broaden a vacant unit's notice to other properties.
+- Keep tenant-card invoice reads and confirmed reminder actions in focused components using the existing ledger balance and notification service; this preserves consistent balances and delivery controls.
