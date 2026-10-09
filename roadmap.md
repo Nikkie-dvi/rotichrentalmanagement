@@ -20,7 +20,10 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
-- None
+- [ ] Modernize corner assistant and thinking state.
+- [ ] Confirmed payment corrections and refunds (real transfers require payment-provider setup).
+- [ ] Strengthen first-time landlord guidance effects.
+- [ ] My account vacancy notices for tenants in the same property.
 
 ## Done recently
 - [x] Tenant assignment now asks for opening rent paid in months or an exact amount, records it as a payment, and previews credit or balance due separately from the deposit.
