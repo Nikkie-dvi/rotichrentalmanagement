@@ -43,6 +43,13 @@
       "when": 1791522080826,
       "tag": "0005_confirmed_assistant_payment_corrections",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791553589932,
+      "tag": "0006_landlord_subscription_stk",
+      "breakpoints": true
     }
   ]
 }
