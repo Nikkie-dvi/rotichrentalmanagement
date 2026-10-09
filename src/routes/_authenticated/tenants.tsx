@@ -332,7 +332,7 @@ function TenantsPage() {
 
   return (
     <div className="min-w-0 space-y-2 px-3 pb-4 sm:space-y-4 sm:px-0">
-      <div className="sticky top-0 z-30 mb-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b bg-background/95 py-2 backdrop-blur md:-mx-6 md:px-6">
+      <div className="sticky top-0 z-30 mb-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b bg-background/95 py-2 backdrop-blur">
         <Button
           variant="outline"
           size="sm"
