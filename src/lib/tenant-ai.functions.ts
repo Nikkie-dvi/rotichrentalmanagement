@@ -3,6 +3,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { compareCollections } from "@/lib/collection-comparison";
+import { accruedRent, buildLedger, businessTodayIso } from "@/lib/ledger";
 
 export const askTenantAssistant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -29,28 +31,34 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       tenantId = hits[0].id as string;
     }
     const tid: string = tenantId;
-    const [{ data: tenant }, { data: invoices }, { data: payments }, { data: credits }] = await Promise.all([
+    const [tenantResult, invoiceResult, paymentResult, creditResult] = await Promise.all([
       sb.from("tenants").select("full_name, move_in_date, rent_due_day, deposit_paid, active, units(unit_number, rent_amount, properties(name))").eq("id", tid).maybeSingle(),
-      sb.from("invoices").select("month_year, kind, total_due, balance_remaining, status, due_date, late_penalty_amount").eq("tenant_id", tid).order("month_year", { ascending: false }).limit(24),
-      sb.from("payments").select("amount_paid, payment_date, payment_method").eq("tenant_id", tid).order("payment_date", { ascending: false }).limit(36),
-      sb.from("tenant_credit_events").select("kind, delta, created_at, note").eq("tenant_id", tid).limit(20),
+      sb.from("invoices").select("month_year, kind, total_due, balance_remaining, status, due_date, late_penalty_amount").eq("tenant_id", tid).order("month_year", { ascending: false }),
+      sb.from("payments").select("id, amount_paid, payment_date, payment_method, reference_no, mpesa_receipt_no").eq("tenant_id", tid).order("payment_date", { ascending: false }),
+      sb.from("tenant_credit_events").select("kind, delta, created_at, note").eq("tenant_id", tid),
     ]);
+    for (const r of [tenantResult, invoiceResult, paymentResult, creditResult]) if (r.error) throw new Error("Could not read the full tenant account. Please try again.");
+    const tenant = tenantResult.data, invoices = invoiceResult.data ?? [], payments = paymentResult.data ?? [], credits = creditResult.data ?? [];
     if (!tenant) throw new Error("Tenant not found");
 
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("The AI assistant isn't set up yet.");
     const { createResponsesCall } = await import("./ai/responses.server");
-    const today = new Date().toISOString().slice(0, 10);
-    const account = JSON.stringify({ today, currency: "KES", tenant, invoices, payments, credit_adjustments: credits });
+    const today = businessTodayIso();
+    const sum = (rows: any[], field: string) => rows.reduce((s, r) => s + Number(r[field] || 0), 0);
+    const ledger = buildLedger({ invoiced: sum(invoices, "total_due"), paid: sum(payments, "amount_paid"), adjustments: sum(credits, "delta"), accrued: tenant.active ? accruedRent({ rentAmount: tenant.units?.rent_amount, moveInDate: tenant.move_in_date, rentDueDay: tenant.rent_due_day }) : 0 });
+    const comparison = compareCollections(payments, today.slice(0, 7), today);
+    const account = JSON.stringify({ today, currency: "KES", tenant, ledger, collection_comparison: comparison, invoices: invoices.slice(0, 36), payments: payments.slice(0, 100), credit_adjustments: credits.slice(0, 30) });
     const question = data.question || "Summarize this account and tell me what to do next.";
     const instructions =
       "You help a Kenyan landlord understand one tenant's rent account. Use ONLY the data given; never invent payments. " +
       "Reply in plain, short English with exactly these sections:\n**Summary** (2-4 sentences: balance owed or credit, how they usually pay - early/on time/late, any patterns)\n" +
       "**Answer** (only if the landlord asked a specific question)\n**Next step** (one concrete action, e.g. send a polite reminder, record a missing payment, waive or add a late fee, call the tenant). " +
-      "Amounts as 'KES 12,000'. Keep under 150 words. When a payment is mentioned, say how many months of rent it covers at the unit's rent (and any balance left or extra credit).\n" +
+      "Amounts as 'KES 12,000'. Keep under 200 words. Use the supplied ledger for balances, never sum invoice balances as the account balance. Compare this month's collections with the SAME DATE last month using collection_comparison, give both amounts and difference. Today is still in progress. Never claim what next month will collect; forecasts must be labeled estimates. When a payment is mentioned, say how many months of rent it covers at the unit's rent (and any balance left or extra credit).\n" +
       "If the landlord pasted a payment confirmation (e.g. an M-Pesa SMS) or says the tenant paid an amount, ALSO end with one final line exactly: " +
       'PAYMENT_JSON: {"amount": <number>, "date": "YYYY-MM-DD", "reference": "<code or empty>", "method": "mpesa"|"bank"|"cash"} ' +
-      "using the date in the message (or today). In that case the Next step is to confirm recording it. Never output PAYMENT_JSON otherwise.";
+      "using the date in the message (or today). In that case the Next step is to confirm recording it. Never output PAYMENT_JSON otherwise.\n" +
+      'For an explicit correction of an EXISTING recorded payment, NEVER output PAYMENT_JSON. Only if exactly one payment in the account matches the date, reference or recorded amount, end with CORRECTION_JSON: {"paymentId":"existing UUID", "amount":2500, "reason":"short reason"}. Amount is the corrected total, not a difference. If ambiguous ask which date/reference; do not guess. No mutation has happened; the landlord must confirm. For refunds explain that actual transfers are unavailable until an M-Pesa B2C/Reversal provider is connected. Never propose a payment/correction to imitate a refund or claim money was transferred.';
     try {
       const { result } = createResponsesCall(
         getRequest(),
@@ -61,16 +69,26 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       let text = (await result.text).trim();
       if (!text) return { ok: false as const, error: "The assistant couldn't answer that. Try again later." };
       let payment: { amount: number; date: string; reference: string | null; method: string; duplicate: boolean } | null = null;
+      let correction: { paymentId: string; oldAmount: number; amount: number; date: string; reason: string } | null = null;
+      const correctionMatch = text.match(/CORRECTION_JSON:\s*(\{[^\n]*\})/);
+      if (correctionMatch) {
+        text = text.replace(correctionMatch[0], "").trim();
+        try {
+          const c = z.object({ paymentId: z.string().uuid(), amount: z.number().positive().max(10000000), reason: z.string().trim().min(3).max(500) }).parse(JSON.parse(correctionMatch[1] ?? ""));
+          const existing = payments.find(p => p.id === c.paymentId);
+          if (existing && Number(existing.amount_paid) !== c.amount) correction = { ...c, oldAmount: Number(existing.amount_paid), date: existing.payment_date };
+        } catch { /* a malformed proposal never authorizes a change */ }
+      }
       const m = text.match(/PAYMENT_JSON:\s*(\{[^\n]*\})/);
       if (m) {
         text = text.replace(m[0], "").trim();
         try {
-          const p = JSON.parse(m[1]!);
+           const p = JSON.parse(m[1] ?? "");
           const amount = Math.round(Number(p.amount));
           const date = /^\d{4}-\d{2}-\d{2}$/.test(p.date) && p.date <= today ? p.date : today;
           const reference = String(p.reference ?? "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 40) || null;
           const method = ["mpesa", "bank", "cash"].includes(p.method) ? p.method : "mpesa";
-          if (amount > 0) {
+           if (amount > 0 && amount <= 10000000 && !correctionMatch && !/\b(refund|correct|correction|mistake|instead)\b/i.test(question)) {
             let duplicate = false;
             if (reference) {
               const { data: dup } = await sb.from("payments").select("id").or(`reference_no.eq.${reference},mpesa_receipt_no.eq.${reference}`).limit(1);
@@ -80,7 +98,7 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
           }
         } catch { /* ignore malformed */ }
       }
-      return { ok: true as const, text, payment, tenantId: tenantId!, tenantName: (tenant as any).full_name as string };
+      return { ok: true as const, text, payment, correction, tenantId: tid, tenantName: tenant.full_name };
     } catch (e: any) {
       const status = e?.statusCode ?? e?.status ?? e?.lastError?.statusCode;
       console.error("tenant assistant failed", status, e?.message);
@@ -89,4 +107,13 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       if (status === 403) return { ok: false as const, error: "The AI assistant isn't available for this workspace right now." };
       return { ok: false as const, error: "The assistant couldn't answer right now. Please try again." };
     }
+  });
+
+export const confirmAssistantCorrection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(d => z.object({ paymentId: z.string().uuid(), oldAmount: z.number().nonnegative(), amount: z.number().positive().max(10000000), reason: z.string().trim().min(3).max(500) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: result, error } = await context.supabase.rpc("correct_assistant_payment", { _payment_id: data.paymentId, _expected_amount: data.oldAmount, _new_amount: data.amount, _reason: data.reason });
+    if (error) throw new Error(error.message);
+    return { ok: true, result };
   });
