@@ -20,12 +20,15 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
-- [ ] Compare collections with the same date last month in assistant analysis and buddy notices.
-- [ ] Explain portfolio results, arrears, vacancies and repairs in plain-language detail.
-- [ ] Modernize corner assistant and thinking state.
-- [ ] Confirmed payment corrections and refunds (real transfers require payment-provider setup).
-- [ ] Strengthen first-time landlord guidance effects.
-- [ ] My account vacancy notices for tenants in the same property.
+- [ ] Actual refund transfers — blocked until M-Pesa B2C/Reversal provider credentials and transfer setup are supplied.
+
+## Completed assistant and portfolio updates
+- [x] Compare collections with the same date last month in assistant analysis and buddy notices; comparison tests passed.
+- [x] Explain portfolio collections, arrears, vacancies and repairs in plain-language detail; signed-in page verified.
+- [x] Modernize corner assistant and thinking state; assistant opening/closing verified.
+- [x] Add confirmed, audited payment corrections with invoice balance reconciliation (no money transfer).
+- [x] Strengthen first-time landlord guidance effects.
+- [x] My Account vacancy notices for tenants in the same property; screen verified without sending paid messages.
 
 ## Done recently
 - [x] Tenant assignment now asks for opening rent paid in months or an exact amount, records it as a payment, and previews credit or balance due separately from the deposit.
