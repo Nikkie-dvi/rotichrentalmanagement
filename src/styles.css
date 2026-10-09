@@ -32,6 +32,12 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-paid-ahead: var(--paid-ahead);
+  --color-paid-ahead-foreground: var(--paid-ahead-foreground);
+  --color-paid-ahead-border: var(--paid-ahead-border);
+  --color-arrears: var(--arrears);
+  --color-arrears-foreground: var(--arrears-foreground);
+  --color-arrears-border: var(--arrears-border);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -44,6 +50,12 @@
 
 :root {
   --radius: 0.625rem;
+  --paid-ahead: oklch(0.95 0.04 155);
+  --paid-ahead-foreground: oklch(0.37 0.1 155);
+  --paid-ahead-border: oklch(0.82 0.075 155);
+  --arrears: oklch(0.96 0.025 25);
+  --arrears-foreground: oklch(0.48 0.18 25);
+  --arrears-border: oklch(0.84 0.075 25);
   --background: oklch(0.98 0.005 245);
   --foreground: oklch(0.25 0.035 245);
   --card: oklch(1 0 0);
@@ -78,6 +90,12 @@
 }
 
 .dark {
+  --paid-ahead: oklch(0.27 0.04 155);
+  --paid-ahead-foreground: oklch(0.83 0.12 155);
+  --paid-ahead-border: oklch(0.42 0.07 155);
+  --arrears: oklch(0.28 0.06 25);
+  --arrears-foreground: oklch(0.83 0.1 25);
+  --arrears-border: oklch(0.44 0.09 25);
   --background: oklch(0.16 0.02 260);
   --foreground: oklch(0.96 0.005 250);
   --card: oklch(0.22 0.02 260);
