@@ -39,7 +39,7 @@ function stamp() {
 }
 
 function password(ts: string) {
-  return btoa(`${env("MPESA_SHORTCODE")}${env("MPESA_PASSKEY")}${ts}`);
+  return btoa(`${shortcode()}${env("MPESA_PASSKEY")}${ts}`);
 }
 
 export async function stkPush(p: { phone: string; amount: number; reference: string; description: string; callbackUrl: string }) {
