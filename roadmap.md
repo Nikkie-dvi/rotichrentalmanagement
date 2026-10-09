@@ -20,6 +20,7 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
+- [ ] Compact Tenants navigation, summaries and spacing; verify the phone layout.
 - [x] Redesign tenant status cards, property grouping, metrics and search/payment filters; desktop and phone layouts, invoice dialog and zero-balance filter verified.
 - [x] Simplify finding lease files for upload and clarify approval labels for self-applications versus landlord-added tenants; active tenant approval labels removed and direct assignment marked approved.
 - [ ] Actual refund transfers — blocked until M-Pesa B2C/Reversal provider credentials and transfer setup are supplied.

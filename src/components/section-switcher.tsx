@@ -37,7 +37,7 @@ export const PEOPLE_TABS: SwitcherItem[] = [
  * iPhone-camera style mode switcher: a horizontally scrollable rail of labels
  * where the active one sits in a raised pill.
  */
-export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
+export function SectionSwitcher({ items, compact = false }: { items: SwitcherItem[]; compact?: boolean }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const counts = usePendingCounts();
@@ -119,7 +119,7 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
           if (info.offset.x < -40) move(1);
           else if (info.offset.x > 40) move(-1);
         }}
-        className="mx-auto inline-flex min-w-full items-center justify-center gap-1 overflow-hidden rounded-full border border-border/50 bg-background/70 p-1 shadow-2xl ring-1 ring-inset ring-foreground/10 backdrop-blur-2xl backdrop-saturate-150 sm:min-w-0"
+        className={`mx-auto inline-flex items-center justify-center gap-1 overflow-hidden rounded-full border border-border/50 bg-background/70 p-1 ring-1 ring-inset ring-foreground/10 backdrop-blur-2xl backdrop-saturate-150 ${compact ? "w-auto shadow-sm" : "min-w-full shadow-2xl sm:min-w-0"}`}
       >
         {items.map((item) => {
           const active = current === item.url;
@@ -130,7 +130,7 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
               to={item.url}
               preload="intent"
               onClick={() => setPending(item.url)}
-              className={`relative flex-1 shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider transition-colors duration-300 sm:text-sm ${
+              className={`relative shrink-0 whitespace-nowrap rounded-full text-center text-xs font-semibold transition-colors duration-300 ${compact ? "px-3 py-1.5" : "flex-1 px-4 py-2 uppercase tracking-wider sm:text-sm"} ${
                 active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
               aria-current={active ? "page" : undefined}
@@ -176,7 +176,7 @@ export function SectionSwitcher({ items }: { items: SwitcherItem[] }) {
  */
 let lastPanelIndex = -1;
 
-export function SectionPanel({ items, children }: { items: SwitcherItem[]; children: React.ReactNode }) {
+export function SectionPanel({ items, children, compact = false }: { items: SwitcherItem[]; children: React.ReactNode; compact?: boolean }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const index = items.findIndex((i) => i.url === pathname);
@@ -207,7 +207,7 @@ export function SectionPanel({ items, children }: { items: SwitcherItem[]; child
       initial={{ opacity: 0, x: dir * 60 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.6 }}
-      className="space-y-6"
+      className={compact ? "space-y-3" : "space-y-6"}
     >
       {children}
     </motion.div>
