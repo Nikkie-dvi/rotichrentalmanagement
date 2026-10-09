@@ -50,7 +50,7 @@ export function SmsCreditCard() {
   };
 
   return (
-    <Card id="sms-credit" className={`glass-card ${empty ? "border-destructive/60 glow-red" : ""}`}>
+    <Card id="sms-credit" className={`glass-card min-w-0 max-w-full ${empty ? "border-destructive/60 glow-red" : ""}`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <MessageSquare className="h-4 w-4" /> SMS credit
@@ -59,17 +59,17 @@ export function SmsCreditCard() {
           Every text costs {ksh(data?.rate ?? 1.2)} per tenant, no matter how long the message is.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-3">
+      <CardContent className="grid min-w-0 grid-cols-1 gap-3">
         {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         ) : (
           <>
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 p-3">
-              <div>
+            <div className="grid min-w-0 grid-cols-1 items-center gap-2 rounded-lg border bg-muted/40 p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="min-w-0">
                 <div className="text-xs text-muted-foreground">Balance</div>
-                <div className="text-xl font-semibold">{ksh(data?.balance ?? 0)}</div>
+                <div className="break-words text-xl font-semibold">{ksh(data?.balance ?? 0)}</div>
               </div>
-              <Badge variant={low ? "destructive" : "secondary"} className="ml-auto">
+              <Badge variant={low ? "destructive" : "secondary"} className="max-w-full justify-self-start whitespace-normal sm:justify-self-end">
                 {data?.messagesLeft ?? 0} message{data?.messagesLeft === 1 ? "" : "s"} left
               </Badge>
             </div>
@@ -89,17 +89,18 @@ export function SmsCreditCard() {
                 Recharge of {ksh(pending.amount)} requested — waiting for approval.
               </p>
             ) : (
-              <div className="grid gap-2">
-                <div className="flex flex-wrap gap-2">
+              <div className="grid min-w-0 grid-cols-1 gap-2">
+                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
                   {[300, 600, 1200, 3000].map((v) => (
                     <Button
                       key={v}
                       type="button"
                       size="sm"
                       variant={String(v) === amount ? "default" : "outline"}
+                      className="h-auto min-w-0 flex-col gap-0.5 px-2 py-2 text-xs"
                       onClick={() => setAmount(String(v))}
                     >
-                      {ksh(v)} · {Math.floor(v / (data?.rate ?? 1.2))} SMS
+                      <span>{ksh(v)}</span><span className="text-[10px] font-normal">{Math.floor(v / (data?.rate ?? 1.2))} SMS</span>
                     </Button>
                   ))}
                 </div>
@@ -125,7 +126,7 @@ export function SmsCreditCard() {
               </div>
             )}
 
-            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+            <Button asChild variant="outline" size="sm" className="h-auto min-h-9 w-full min-w-0 whitespace-normal px-3 py-2 text-center sm:w-auto">
               <a
                 href={whatsappSupportLink(
                   `Hello, I need help with my SMS recharge.\n\nLandlord: ${account?.full_name ?? ""}${
@@ -140,7 +141,7 @@ export function SmsCreditCard() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <MessageCircle className="h-4 w-4" /> Problem with your recharge? WhatsApp us
+                <MessageCircle className="h-4 w-4 shrink-0" /><span className="min-w-0">Recharge help on WhatsApp</span>
               </a>
             </Button>
 
@@ -149,7 +150,7 @@ export function SmsCreditCard() {
                 <div className="border-b px-3 py-2 text-xs font-medium text-muted-foreground">Recent activity</div>
                 <ul className="divide-y text-sm">
                   {(data?.ledger ?? []).slice(0, 6).map((l: any) => (
-                    <li key={l.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                    <li key={l.id} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-2">
                       <span className="min-w-0 truncate">
                         {l.reason === "broadcast"
                           ? `${l.sms_count} SMS sent`
@@ -158,7 +159,7 @@ export function SmsCreditCard() {
                             : l.reason.replace("_", " ")}
                         {l.note ? ` · ${l.note}` : ""}
                       </span>
-                      <span className={Number(l.delta) < 0 ? "text-destructive" : "text-emerald-600"}>
+                      <span className={`shrink-0 whitespace-nowrap text-xs ${Number(l.delta) < 0 ? "text-destructive" : "text-paid-ahead-foreground"}`}>
                         {Number(l.delta) < 0 ? "" : "+"}
                         {ksh(l.delta)}
                       </span>
