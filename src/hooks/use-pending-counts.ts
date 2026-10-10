@@ -9,7 +9,7 @@ export function usePendingCounts() {
     refetchOnWindowFocus: true,
     queryFn: async () => {
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      const [apps, tickets, moveOuts, invoices, overdue, payments, unsignedLeases, pendingLandlords] = await Promise.all([
+      const [apps, tickets, moveOuts, invoices, overdue, payments, unsignedLeases, pendingLandlords, pendingRecharges] = await Promise.all([
         supabase.from("tenants").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
         // Anything the landlord still has to act on.
         supabase.from("maintenance_tickets").select("id", { count: "exact", head: true }).neq("status", "resolved"),
@@ -31,6 +31,8 @@ export function usePendingCounts() {
           .is("lease_signature", null),
         // Landlord sign-ups waiting on review (super-admin view only; RLS returns 0 otherwise).
         supabase.from("landlord_accounts").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        // SMS recharge requests waiting on approval (super-admin view; landlords only see their own).
+        supabase.from("sms_topup_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ]);
       return {
         applications: apps.count ?? 0,
