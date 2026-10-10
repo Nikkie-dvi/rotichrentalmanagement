@@ -1335,6 +1335,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_recharge_request: {
+        Args: { _kind: string; _user_id: string }
+        Returns: boolean
+      }
       correct_assistant_payment: {
         Args: {
           _expected_amount: number

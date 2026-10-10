@@ -16,3 +16,4 @@
 - Keep vacancy announcements manually confirmed and property-scoped through notifyMyTenants; never broaden a vacant unit's notice to other properties.
 - Reuse VacancyNotices for the post-move-out draft and My Account, with a user-scoped device preference for its switch; one shared confirmation flow prevents inconsistent audiences and accidental sends.
 - Keep tenant-card invoice reads and confirmed reminder actions in focused components using the existing ledger balance and notification service; this preserves consistent balances and delivery controls.
+- Resolve recharge payment phones from the authenticated account server-side and claim rate limits atomically before requests; shared registered-phone presentation and database locks prevent arbitrary recipients and concurrent prompt spam.

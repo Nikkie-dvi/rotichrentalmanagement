@@ -5,24 +5,26 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 /** Sends an M-Pesa payment prompt to the landlord's phone for their subscription. */
 export const startSubscriptionStk = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { phone: string }) => {
-    const phone = String(d?.phone ?? "").trim();
-    if (phone.replace(/\D/g, "").length < 9) throw new Error("Enter a valid M-Pesa phone number");
-    return { phone };
-  })
-  .handler(async ({ data, context }) => {
+  .inputValidator(() => ({}))
+  .handler(async ({ context }) => {
     const { darajaConfigured, normalizeKePhone, stkPush } = await import("./daraja.server");
     if (!darajaConfigured()) throw new Error("M-Pesa payments are not set up yet");
-    const phone = normalizeKePhone(data.phone);
-    if (!/^254(7|1)\d{8}$/.test(phone)) throw new Error("Use a Safaricom number like 07XX XXX XXX");
-
     const { data: account } = await context.supabase
       .from("landlord_accounts")
-      .select("id, landlord_code, monthly_fee, discount_percent, billing_plan, status")
+      .select("id, phone, landlord_code, monthly_fee, discount_percent, billing_plan, status")
       .eq("user_id", context.userId)
       .maybeSingle();
     if (!account) throw new Error("Landlord account not found");
     if (account.status === "declined") throw new Error("This account was declined");
+    const phone = normalizeKePhone(account.phone ?? "");
+    if (!/^254(7|1)\d{8}$/.test(phone)) throw new Error("Save a valid Kenyan phone number through the protected account details process before paying.");
+    const { data: pending, error: pendingError } = await context.supabase
+      .from("landlord_subscription_stk").select("id, amount")
+      .eq("user_id", context.userId).eq("status", "pending")
+      .gte("created_at", new Date(Date.now() - 180_000).toISOString())
+      .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (pendingError) throw new Error("Could not check existing payment requests");
+    if (pending) return { id: pending.id, amount: Number(pending.amount) };
 
     const { data: pricing } = await (context.supabase as any)
       .from("platform_pricing").select("base_monthly, annual_discount_percent").eq("id", "default").maybeSingle();
@@ -34,6 +36,8 @@ export const startSubscriptionStk = createServerFn({ method: "POST" })
       ? Math.round(monthly * 12 * (1 - Number(pricing?.annual_discount_percent ?? 0) / 100))
       : monthly;
     if (amount < 1) throw new Error("Nothing to pay right now");
+    const { claimRechargeRequest } = await import("./recharge-guard.server");
+    await claimRechargeRequest(context.userId, "subscription_prompt");
 
     const origin = new URL(getRequest().url).origin;
     const site = origin.startsWith("https://") && !origin.includes("localhost") ? origin : "https://homebasemanager.app";

@@ -65,6 +65,11 @@ export const requestSmsRecharge = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const ownerId = await effectiveOwnerId(context.supabase, context.userId);
     if (ownerId !== context.userId) throw new Error("Only the landlord can request a recharge");
+    const { data: account, error: accountError } = await context.supabase.from("landlord_accounts")
+      .select("phone, status").eq("user_id", context.userId).maybeSingle();
+    if (accountError || !account || account.status === "declined") throw new Error("An active landlord account is required");
+    const { normalizeKePhone } = await import("./daraja.server");
+    if (!/^254(7|1)\d{8}$/.test(normalizeKePhone(account.phone ?? ""))) throw new Error("Save a valid Kenyan phone number through the protected account details process before requesting a recharge.");
     const { data: existing } = await context.supabase
       .from("sms_topup_requests")
       .select("id")
@@ -72,6 +77,8 @@ export const requestSmsRecharge = createServerFn({ method: "POST" })
       .eq("status", "pending")
       .maybeSingle();
     if (existing) throw new Error("You already have a recharge request waiting for approval");
+    const { claimRechargeRequest } = await import("./recharge-guard.server");
+    await claimRechargeRequest(context.userId, "sms_recharge");
 
     const { error } = await context.supabase
       .from("sms_topup_requests")
