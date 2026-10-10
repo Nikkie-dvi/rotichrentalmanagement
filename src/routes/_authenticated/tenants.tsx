@@ -18,6 +18,7 @@ import { TenantCreditDialog } from "@/components/tenant-credit-dialog";
 import { TenantReminderButton } from "@/components/tenant-reminder-button";
 import { TenantInvoicesButton } from "@/components/tenant-invoices-button";
 import { LedgerHealthCard } from "@/components/ledger-health-card";
+import { VacancyNotices } from "@/components/vacancy-notices";
 
 import { runCreditWatch } from "@/lib/credit.functions";
 import { accruedRent, buildLedger, type Ledger } from "@/lib/ledger";
@@ -70,6 +71,7 @@ function TenantsPage() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("all");
+  const [vacancyUnitId, setVacancyUnitId] = useState<string | null>(null);
 
 
   const { data: tenants } = useQuery(tenantsFullQuery);
@@ -215,9 +217,10 @@ function TenantsPage() {
         if (uErr) throw uErr;
       }
     },
-    onSuccess: () => {
+    onSuccess: (_result, tenant) => {
       qc.invalidateQueries();
       toast.success("Tenant moved out");
+      if (tenant.unit_id) setVacancyUnitId(tenant.unit_id);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -469,6 +472,14 @@ function TenantsPage() {
         </Card>
       )}
       </SectionPanel>
+      <Dialog open={Boolean(vacancyUnitId)} onOpenChange={value => { if (!value) setVacancyUnitId(null); }}>
+        <DialogContent className="max-h-[85vh] w-[calc(100vw-1.5rem)] max-w-md overflow-y-auto">
+          <DialogHeader><DialogTitle>A room just opened up</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Move-out saved. Let the neighbours know a room is available, without sharing who moved out.</p>
+          {vacancyUnitId && <VacancyNotices key={vacancyUnitId} initialUnitId={vacancyUnitId} onSent={() => setVacancyUnitId(null)} />}
+          <DialogFooter><Button variant="ghost" onClick={() => setVacancyUnitId(null)}>Not now</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
 
   );
