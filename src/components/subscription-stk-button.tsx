@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Smartphone, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Smartphone, Loader2, CheckCircle2, XCircle, ShieldCheck, ArrowRight } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { RegisteredPaymentPhone } from "@/components/registered-payment-phone";
 import { money } from "@/lib/types";
 import { startSubscriptionStk, checkSubscriptionStk } from "@/lib/subscription-stk.functions";
 
@@ -18,7 +17,7 @@ export function SubscriptionStkButton({ amount, defaultPhone, full = false }: { 
   const start = useServerFn(startSubscriptionStk);
   const check = useServerFn(checkSubscriptionStk);
   const [open, setOpen] = useState(false);
-  const [phone, setPhone] = useState(defaultPhone ?? "");
+  const phone = defaultPhone?.trim() ?? "";
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -28,7 +27,7 @@ export function SubscriptionStkButton({ amount, defaultPhone, full = false }: { 
   const send = async () => {
     setStatus("sending");
     try {
-      const r = await start({ data: { phone } });
+      const r = await start({ data: {} });
       setStatus("pending");
       setMessage("Check your phone and enter your M-Pesa PIN.");
       let tries = 0;
@@ -67,36 +66,36 @@ export function SubscriptionStkButton({ amount, defaultPhone, full = false }: { 
           <Smartphone className="h-4 w-4" /> Pay {money(amount)} with M-Pesa
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm overflow-y-auto max-h-[90dvh]">
         <DialogHeader>
-          <DialogTitle>Pay subscription</DialogTitle>
-          <DialogDescription>We'll send a payment prompt to your phone. Enter your PIN to pay {money(amount)}.</DialogDescription>
+          <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><Smartphone className="h-5 w-5" /></div>
+          <DialogTitle>Renew your subscription</DialogTitle>
+          <DialogDescription>Pay securely with M-Pesa using your registered account number.</DialogDescription>
         </DialogHeader>
+        <div className="flex items-baseline justify-between gap-3 border-y py-4"><span className="text-sm text-muted-foreground">Subscription total</span><span className="text-2xl font-semibold">{money(amount)}</span></div>
+        <RegisteredPaymentPhone phone={phone} />
         {(status === "idle" || status === "sending") && (
           <div className="space-y-3">
-            <div className="grid gap-1.5">
-              <Label htmlFor="sub-phone">M-Pesa phone number</Label>
-              <Input id="sub-phone" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XX XXX XXX" />
-            </div>
+            <p className="text-xs text-muted-foreground">{phone ? "Enter your M-Pesa PIN on your phone. To change this number, use the protected account details process." : "Add your phone through the protected account details process before paying."}</p>
             <Button className="w-full" onClick={send} disabled={status === "sending" || !phone}>
-              {status === "sending" && <Loader2 className="h-4 w-4 animate-spin" />} Send prompt
+              {status === "sending" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />} {status === "sending" ? "Sending payment request" : "Send M-Pesa prompt"}
             </Button>
           </div>
         )}
         {status === "pending" && (
-          <div className="flex items-start gap-2 rounded-md border p-3 text-sm">
+          <div className="flex items-start gap-3 rounded-lg border bg-muted/40 p-4 text-sm" role="status">
             <Loader2 className="mt-0.5 h-4 w-4 animate-spin text-primary" />
             <div><div className="font-medium">Waiting for your PIN</div><div className="text-xs text-muted-foreground">{message}</div></div>
           </div>
         )}
         {status === "success" && (
-          <div className="flex items-start gap-2 rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
+          <div className="flex items-start gap-3 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm" role="status">
             <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
             <div><div className="font-medium text-primary">Payment received</div><div className="text-xs text-muted-foreground">{message}</div></div>
           </div>
         )}
         {status === "failed" && (
-          <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+          <div className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm" role="alert">
             <XCircle className="mt-0.5 h-4 w-4 text-destructive" />
             <div>
               <div className="font-medium text-destructive">Not paid</div>
@@ -105,6 +104,7 @@ export function SubscriptionStkButton({ amount, defaultPhone, full = false }: { 
             </div>
           </div>
         )}
+        <p className="flex items-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0" /> PIN entered on your phone only</p>
       </DialogContent>
     </Dialog>
   );
