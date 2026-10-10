@@ -20,6 +20,7 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
+- [ ] Modernize SMS recharge and subscription payment windows; restrict prompts to the saved account phone and verify safeguards.
 - [x] Prepare a confirmed, same-apartment room-available notice after tenant move-out, respecting the vacancy-notice switch; simulated move-out, draft and confirmation verified without sending messages.
 - [x] Fix My Account SMS credit overlap and add an explicit off-by-default switch for manual, same-property vacancy notices; verified at 360px, 420px and 1280px, with switch on/off checked and no messages sent.
 - [x] Make Tenants fit comfortably on phones, separate and highlight search, and reduce the space before tenant cards; verified at 360px, 420px and 1280px with working search and summaries and no horizontal overflow.
