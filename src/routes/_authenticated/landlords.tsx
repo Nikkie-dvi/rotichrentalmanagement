@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, XCircle, ShieldAlert, Loader2, CalendarClock, Wallet, ChevronDown, Search } from "lucide-react";
+import { CheckCircle2, XCircle, ShieldAlert, Loader2, CalendarClock, Wallet, ChevronDown, Search, UserPlus, Clock3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -342,6 +342,25 @@ function LandlordsPage() {
           {PAYMENT_NUMBER}.
         </p>
       </div>
+
+      {pending.length > 0 && (
+        <div className="flex items-start gap-3 rounded-lg border border-warning/50 bg-warning/10 p-3" role="status">
+          <span className="relative mt-1 flex h-2.5 w-2.5 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-warning" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold">
+              Action needed · {pending.length} landlord sign-up{pending.length === 1 ? "" : "s"} waiting for your approval
+            </p>
+            <p className="text-xs text-muted-foreground">
+              They cannot use the app until you approve them. Find them in the pending list below, and check for any SMS
+              recharge requests waiting here too.
+            </p>
+          </div>
+          <UserPlus className="ml-auto hidden h-5 w-5 shrink-0 text-warning sm:block" />
+        </div>
+      )}
 
       <SmsRechargeAdmin />
       <ManagerFeesAdmin />
