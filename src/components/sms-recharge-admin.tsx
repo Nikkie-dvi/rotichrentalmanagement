@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MessageSquare, Loader2, Check, X, Plus } from "lucide-react";
+import { MessageSquare, Loader2, Check, X, Plus, Clock3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,7 +86,13 @@ export function SmsRechargeAdmin() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <MessageSquare className="h-4 w-4" /> SMS credit & recharges
+          <MessageSquare className="h-4 w-4" /> SMS credit &amp; recharges
+          {pending.length > 0 && (
+            <Badge className="gap-1 bg-warning text-warning-foreground">
+              <Clock3 className="h-3 w-3" />
+              {pending.length} waiting
+            </Badge>
+          )}
         </CardTitle>
         <CardDescription>Landlords are billed KES 1.20 per tenant SMS. Approve their recharge requests here.</CardDescription>
       </CardHeader>
@@ -95,6 +101,22 @@ export function SmsRechargeAdmin() {
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         ) : (
           <>
+            {pending.length > 0 && (
+              <div className="flex items-start gap-3 rounded-lg border border-warning/50 bg-warning/10 p-3" role="status">
+                <span className="relative mt-1 flex h-2.5 w-2.5 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-warning" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold">
+                    Action needed · {pending.length} recharge request{pending.length === 1 ? "" : "s"} waiting for your approval
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    A landlord has paid for SMS credit and is waiting for their balance to update. Review the requests below.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="rounded-lg border border-primary/40 bg-primary/5 p-3">
               <div className="text-sm font-medium">Recharge every landlord</div>
               <p className="text-xs text-muted-foreground">
@@ -132,7 +154,7 @@ export function SmsRechargeAdmin() {
               ) : (
                 <div className="space-y-2">
                   {pending.map((r: any) => (
-                    <div key={r.id} className="rounded-lg border p-3">
+                    <div key={r.id} className="rounded-lg border border-l-4 border-l-warning p-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <div className="font-medium">
@@ -140,6 +162,9 @@ export function SmsRechargeAdmin() {
                             {r.landlord.code ? (
                               <Badge variant="outline" className="ml-2 font-mono tracking-widest">#{r.landlord.code}</Badge>
                             ) : null}
+                            <Badge variant="secondary" className="ml-2">
+                              <Clock3 className="mr-1 h-3 w-3" /> Waiting
+                            </Badge>
                           </div>
                           <div className="text-xs text-muted-foreground">
                             Asked for {ksh(r.amount)} · {new Date(r.created_at).toLocaleString()}

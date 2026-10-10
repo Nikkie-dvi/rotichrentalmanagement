@@ -62,27 +62,33 @@ export function SectionSwitcher({ items, compact = false }: { items: SwitcherIte
       case "/applications":
         return counts.applications;
       case "/landlords":
-        return counts.pendingLandlords;
+        return counts.pendingLandlords + counts.pendingRecharges;
       default:
         return 0;
     }
   };
 
   /** Plain-language description of what the badge on a tab refers to. */
-  const noteFor = (url: string, n: number): string | null => {
+  const noteFor = (url: string): string | null => {
     switch (url) {
       case "/billing":
-        return `${n} overdue invoice${n === 1 ? "" : "s"} need attention`;
+        return `${counts.overdueInvoices} overdue invoice${counts.overdueInvoices === 1 ? "" : "s"} need attention`;
       case "/payments":
-        return `${n} payment${n === 1 ? "" : "s"} received in the last 24 hours`;
+        return `${counts.recentPayments} payment${counts.recentPayments === 1 ? "" : "s"} received in the last 24 hours`;
       case "/leases":
-        return `${n} lease${n === 1 ? "" : "s"} still unsigned`;
+        return `${counts.unsignedLeases} lease${counts.unsignedLeases === 1 ? "" : "s"} still unsigned`;
       case "/tenants":
-        return `${n} open issue${n === 1 ? "" : "s"} from tenants`;
+        return `${counts.issues} open issue${counts.issues === 1 ? "" : "s"} from tenants`;
       case "/applications":
-        return `${n} application${n === 1 ? "" : "s"} waiting for review`;
-      case "/landlords":
-        return `${n} landlord sign-up${n === 1 ? "" : "s"} pending approval`;
+        return `${counts.applications} application${counts.applications === 1 ? "" : "s"} waiting for review`;
+      case "/landlords": {
+        const parts: string[] = [];
+        if (counts.pendingLandlords > 0)
+          parts.push(`${counts.pendingLandlords} landlord sign-up${counts.pendingLandlords === 1 ? "" : "s"}`);
+        if (counts.pendingRecharges > 0)
+          parts.push(`${counts.pendingRecharges} SMS recharge request${counts.pendingRecharges === 1 ? "" : "s"}`);
+        return parts.length > 0 ? `${parts.join(" and ")} waiting for your approval` : null;
+      }
       default:
         return null;
     }
@@ -94,7 +100,7 @@ export function SectionSwitcher({ items, compact = false }: { items: SwitcherIte
     if (items.some((i) => i.url === pathname)) markSeen(pathname, activeCount);
   }, [pathname, activeCount, items, markSeen]);
 
-  const activeNote = activeCount > 0 ? noteFor(pathname, activeCount) : null;
+  const activeNote = activeCount > 0 ? noteFor(pathname) : null;
 
 
   const go = (url: string) => {

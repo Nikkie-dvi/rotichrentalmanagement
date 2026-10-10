@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Moon, Sun, Bell, BellOff, BellRing, LogOut, ClipboardCheck, Wrench, UserCog, Building2, Users, Receipt, LayoutDashboard } from "lucide-react";
+import { Moon, Sun, Bell, BellOff, BellRing, LogOut, ClipboardCheck, Wrench, UserPlus, UserCog, Building2, Users, Receipt, LayoutDashboard } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
-import { setActiveLandlordId, useIsPropertyManager, useLandlordAccount, useManagerLinks } from "@/hooks/use-landlord-account";
+import { setActiveLandlordId, useIsPropertyManager, useIsSuperAdmin, useLandlordAccount, useManagerLinks } from "@/hooks/use-landlord-account";
 import { useTheme } from "@/lib/theme";
 import { money } from "@/lib/types";
 import {
@@ -49,6 +49,7 @@ export function AppHeader() {
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
   const counts = usePendingCounts();
   const isManager = useIsPropertyManager();
+  const isSuper = useIsSuperAdmin();
   const { data: account } = useLandlordAccount();
   const { data: links } = useManagerLinks();
   const activeLinks = (links ?? []).filter((l) => l.active);
@@ -164,6 +165,14 @@ export function AppHeader() {
             <Badge className="bg-warning text-warning-foreground">
               <Wrench className="mr-1 h-3.5 w-3.5" />
               {counts.issues} issues
+            </Badge>
+          </Link>
+        )}
+        {isSuper && counts.pendingLandlords + counts.pendingRecharges > 0 && (
+          <Link to="/landlords">
+            <Badge className="gap-1 bg-warning text-warning-foreground">
+              <UserPlus className="h-3.5 w-3.5" />
+              {counts.pendingLandlords + counts.pendingRecharges} to review
             </Badge>
           </Link>
         )}
