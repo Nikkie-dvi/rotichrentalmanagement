@@ -43,6 +43,7 @@ export function usePendingCounts() {
         recentPayments: payments.count ?? 0,
         unsignedLeases: unsignedLeases.count ?? 0,
         pendingLandlords: pendingLandlords.count ?? 0,
+        pendingRecharges: pendingRecharges.count ?? 0,
       };
     },
   });
@@ -55,6 +56,7 @@ export function usePendingCounts() {
     recentPayments: data?.recentPayments ?? 0,
     unsignedLeases: data?.unsignedLeases ?? 0,
     pendingLandlords: data?.pendingLandlords ?? 0,
+    pendingRecharges: data?.pendingRecharges ?? 0,
     issues: (data?.tickets ?? 0) + (data?.moveOuts ?? 0),
   };
 }
