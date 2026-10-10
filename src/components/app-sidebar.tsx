@@ -175,8 +175,18 @@ export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isSuper = useIsSuperAdmin();
   const isManager = useIsPropertyManager();
+  const counts = usePendingCounts();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+
+  /** Live counts that deserve attention, shown as a small red badge on the item. */
+  const badgeFor = (url: string): number => {
+    if (url === "/billing") return counts.overdueInvoices;
+    // Main-account panel: new landlord sign-ups and SMS recharge requests waiting for approval.
+    if (url === "/analytics" && isSuper) return counts.pendingLandlords + counts.pendingRecharges;
+    return 0;
+  };
+
   const visibleSections = sections
     .map((section) => ({
       ...section,
@@ -231,6 +241,7 @@ export function AppSidebar() {
                     <SidebarMenu className="gap-1">
                       {section.items.map((item) => {
                         const active = isItemActive(item, pathname);
+                        const badge = badgeFor(item.url);
                         return (
                           <SidebarMenuItem key={item.url}>
                             <SidebarMenuButton
@@ -245,9 +256,12 @@ export function AppSidebar() {
                                   <span className="block truncate text-[13px] font-medium text-sidebar-foreground">{item.title}</span>
                                   <span className="mt-0.5 block truncate text-[10px] text-sidebar-foreground/45">{item.description}</span>
                                 </span>
-                                {item.badge && (
-                                  <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:right-0 group-data-[collapsible=icon]:top-0">
-                                    {item.badge}
+                                {badge > 0 && (
+                                  <span
+                                    className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:right-0 group-data-[collapsible=icon]:top-0"
+                                    title={`${badge} waiting for your attention`}
+                                  >
+                                    {badge > 99 ? "99+" : badge}
                                   </span>
                                 )}
                                 {active && <span className="nav-active-bar" aria-hidden />}
