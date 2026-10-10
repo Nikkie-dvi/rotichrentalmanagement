@@ -50,6 +50,13 @@
       "when": 1791553589932,
       "tag": "0006_landlord_subscription_stk",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791635307639,
+      "tag": "0007_limit_account_recharge_requests",
+      "breakpoints": true
     }
   ]
 }
