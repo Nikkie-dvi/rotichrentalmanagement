@@ -19,6 +19,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useIsSuperAdmin, useIsPropertyManager } from "@/hooks/use-landlord-account";
+import { usePendingCounts } from "@/hooks/use-pending-counts";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -43,7 +44,6 @@ type NavItem = {
   matches?: string[];
   landlordOnly?: boolean;
   superOnly?: boolean;
-  badge?: string;
 };
 
 type NavSection = {
@@ -115,7 +115,6 @@ const sections: NavSection[] = [
         url: "/billing",
         icon: ReceiptText,
         matches: ["/billing"],
-        badge: "4",
       },
       {
         title: "Transaction History",
