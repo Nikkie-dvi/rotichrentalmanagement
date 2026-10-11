@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RegisteredPaymentPhone } from "@/components/registered-payment-phone";
-import { requestSmsRecharge } from "@/lib/sms-wallet.functions";
 import { PaywavePayButton } from "@/components/paywave-pay-button";
 import { fetchSmsWalletSafe } from "@/lib/sms-wallet-client";
 import { usePlatformPricing, whatsappSupportLink, useLandlordAccount } from "@/hooks/use-landlord-account";
@@ -39,22 +38,6 @@ export function SmsCreditCard() {
   const pending = (data?.requests ?? []).find((r: any) => r.status === "pending");
   const low = (data?.messagesLeft ?? 0) < 10;
   const empty = (data?.messagesLeft ?? 0) < 1;
-
-  const submit = async () => {
-    setBusy(true);
-    try {
-      await requestSmsRecharge({ data: { amount: Number(amount), note } });
-      toast.success("Recharge requested — the main account will confirm it shortly");
-      setNote("");
-      setOpen(false);
-      setReview(false);
-      qc.invalidateQueries({ queryKey: ["sms-wallet"] });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not send the request");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <Card id="sms-credit" className={`glass-card min-w-0 max-w-full ${empty ? "border-destructive/60 glow-red" : ""}`}>
