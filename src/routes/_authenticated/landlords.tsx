@@ -47,6 +47,8 @@ function SubscriptionBlock({ row }: { row: LandlordAccount }) {
   const qc = useQueryClient();
   const sub = subscriptionState(row);
   const [busy, setBusy] = useState(false);
+  const [fee, setFee] = useState(String(row.monthly_fee ?? MONTHLY_FEE));
+  const [savingFee, setSavingFee] = useState(false);
   const [draft, setDraft] = useState<PayDraft>({
     amount: String(row.monthly_fee ?? MONTHLY_FEE),
     date: new Date().toISOString().slice(0, 10),
@@ -54,6 +56,22 @@ function SubscriptionBlock({ row }: { row: LandlordAccount }) {
     reference: "",
   });
   const set = (patch: Partial<PayDraft>) => setDraft((d) => ({ ...d, ...patch }));
+
+  const saveFee = async () => {
+    const value = Number(fee);
+    if (!(value >= 0)) return toast.error("Enter a valid price");
+    setSavingFee(true);
+    const { error } = await supabase
+      .from("landlord_accounts")
+      .update({ monthly_fee: value })
+      .eq("id", row.id);
+    setSavingFee(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Price set to ${money(value)}/month for this landlord`);
+    setDraft((d) => ({ ...d, amount: String(value) }));
+    qc.invalidateQueries({ queryKey: ["landlord-accounts-all"] });
+    qc.invalidateQueries({ queryKey: ["landlord-account"] });
+  };
 
   const record = async () => {
     setBusy(true);
