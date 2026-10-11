@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, ShieldCheck, Smartphone, Copy, LogOut, XCircle, CalendarClock, MessageCircle, Gift } from "lucide-react";
+import { Loader2, ShieldCheck, Smartphone, LogOut, XCircle, CalendarClock, MessageCircle, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +14,6 @@ import {
   useIsSuperAdmin,
   useManagerStatus,
   subscriptionState,
-  PAYMENT_NUMBER,
-  paymentMethodLabel,
   usePlatformPricing,
   effectivePrice,
   DEFAULT_PRICING,
@@ -26,14 +24,6 @@ import {
 import { SubscriptionStkButton } from "@/components/subscription-stk-button";
 
 
-async function copyText(value: string) {
-  try {
-    await navigator.clipboard.writeText(value);
-    toast.success("Copied");
-  } catch {
-    toast.error("Copy not supported");
-  }
-}
 
 /**
  * Blocks the landlord dashboard until the main account approves the landlord.
@@ -71,8 +61,6 @@ export function LandlordGate({ children }: { children: ReactNode }) {
 
   if (!account || isSuper || isManager) return <>{children}</>;
 
-  const payNumber = account.payment_number?.trim() || PAYMENT_NUMBER;
-  const payMethod = paymentMethodLabel(account.payment_method);
   const price = effectivePrice(account, pricing ?? DEFAULT_PRICING);
   const trial = trialState(account);
   const waLink = whatsappSupportLink(
@@ -108,13 +96,10 @@ export function LandlordGate({ children }: { children: ReactNode }) {
             <CalendarClock className="h-4 w-4 shrink-0" />
             <span className="font-medium">Subscription: {sub.label}.</span>
             <span className="text-muted-foreground">
-              {payMethod}: send {money(price.dueNow)} ({price.label}) to {payNumber} to stay active.
+              Pay {money(price.dueNow)} ({price.label}) with M-Pesa to stay active.
             </span>
             <PaywavePayButton kind="subscription" amount={price.dueNow} phone={account.phone} />
             <SubscriptionStkButton amount={price.dueNow} defaultPhone={account.phone} />
-            <Button size="sm" variant="ghost" className="ml-auto" onClick={() => copyText(payNumber)}>
-              <Copy className="h-4 w-4" /> Copy number
-            </Button>
             <WhatsAppButton />
           </div>
         )}
@@ -135,13 +120,10 @@ export function LandlordGate({ children }: { children: ReactNode }) {
             Free trial — {trial.daysLeft} day{trial.daysLeft === 1 ? "" : "s"} left.
           </span>
           <span className="text-muted-foreground">
-            After that, send {money(price.dueNow)} ({payMethod} {payNumber}) to keep your account active.
+            After that, pay {money(price.dueNow)} ({price.label}) with M-Pesa to keep your account active.
           </span>
           <PaywavePayButton kind="subscription" amount={price.dueNow} phone={account.phone} />
           <SubscriptionStkButton amount={price.dueNow} defaultPhone={account.phone} />
-          <Button size="sm" variant="ghost" onClick={() => copyText(payNumber)}>
-            <Copy className="h-4 w-4" /> Copy number
-          </Button>
           <WhatsAppButton />
         </div>
         {children}
@@ -156,7 +138,6 @@ export function LandlordGate({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   };
 
-  const copy = copyText;
 
 
   return (
