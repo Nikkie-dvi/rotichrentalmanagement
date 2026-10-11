@@ -315,8 +315,8 @@ function LandlordsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Landlord accounts</h1>
         <p className="text-sm text-muted-foreground">
-          New landlords stay locked out until you confirm them. They are shown to send {money(MONTHLY_FEE)} monthly to{" "}
-          {PAYMENT_NUMBER}.
+          New landlords stay locked out until you confirm them. They pay {money(MONTHLY_FEE)} monthly by M-Pesa prompt
+          on their phone.
         </p>
       </div>
 
