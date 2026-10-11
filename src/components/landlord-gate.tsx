@@ -184,54 +184,22 @@ export function LandlordGate({ children }: { children: ReactNode }) {
                 <PaywavePayButton full kind="subscription" amount={price.dueNow} phone={account.phone} />
                 <SubscriptionStkButton full amount={price.dueNow} defaultPhone={account.phone} />
               </div>
-              <p className="mt-3 text-xs text-muted-foreground">Or pay manually:</p>
-              <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-                <li>
-                  Open M-Pesa on your phone and choose <strong>{payMethod}</strong>.
-                </li>
-                <li>
-                  Enter the number{" "}
-                  <button
-                    type="button"
-                    onClick={() => copy(payNumber)}
-                    className="font-semibold text-foreground underline underline-offset-2"
-                  >
-                    {payNumber}
-                  </button>
-                  .
-                </li>
-                <li>
-                  Enter the amount <strong className="text-foreground">{money(price.dueNow)}</strong> and confirm.
-                </li>
-                <li>Once paid, the main account confirms your access — you get in right away.</li>
-              </ol>
 
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                <div className="rounded-md bg-muted/50 p-3">
-                  <div className="text-xs text-muted-foreground">{payMethod} — pay to</div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold">{payNumber}</span>
-                    <Button size="icon" variant="ghost" onClick={() => copy(payNumber)}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
+              <div className="mt-4 rounded-md bg-muted/50 p-3">
+                <div className="text-xs text-muted-foreground">
+                  {price.annual ? "Yearly fee" : "Monthly fee"}
                 </div>
-                <div className="rounded-md bg-muted/50 p-3">
+                <div className="font-semibold">{money(price.dueNow)}</div>
+                {price.discount > 0 && (
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400">
+                    {price.discount}% offer applied (was {money(price.base)})
+                  </div>
+                )}
+                {(account.offer_note ?? (pricing ?? DEFAULT_PRICING).offer_note) && (
                   <div className="text-xs text-muted-foreground">
-                    {price.annual ? "Yearly fee" : "Monthly fee"}
+                    {account.offer_note ?? (pricing ?? DEFAULT_PRICING).offer_note}
                   </div>
-                  <div className="font-semibold">{money(price.dueNow)}</div>
-                  {price.discount > 0 && (
-                    <div className="text-xs text-emerald-600 dark:text-emerald-400">
-                      {price.discount}% offer applied (was {money(price.base)})
-                    </div>
-                  )}
-                  {(account.offer_note ?? (pricing ?? DEFAULT_PRICING).offer_note) && (
-                    <div className="text-xs text-muted-foreground">
-                      {account.offer_note ?? (pricing ?? DEFAULT_PRICING).offer_note}
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           )}
