@@ -82,32 +82,30 @@ export function LandlordGate({ children }: { children: ReactNode }) {
 
   if (account.status === "approved") {
     const sub = subscriptionState(account);
-    return (
-      <>
-        {sub.tone !== "active" && (
-          <div
-            className={`mb-3 flex flex-wrap items-center gap-2 rounded-lg border p-3 text-sm ${
-              sub.tone === "overdue"
-                ? "border-destructive/40 bg-destructive/5"
-                : "border-amber-500/40 bg-amber-500/5"
-            }`}
-          >
-            <CalendarClock className="h-4 w-4 shrink-0" />
-            <span className="font-medium">Subscription: {sub.label}.</span>
-            <span className="text-muted-foreground">
-              Pay {money(price.dueNow)} ({price.label}) with M-Pesa to stay active.
-            </span>
-            <PaywavePayButton kind="subscription" amount={price.dueNow} phone={account.phone} />
-            <SubscriptionStkButton amount={price.dueNow} defaultPhone={account.phone} />
-            <WhatsAppButton />
-          </div>
-        )}
-        {children}
-      </>
-    );
+    // Expired subscription: block the dashboard until payment is recorded.
+    if (sub.tone !== "overdue") {
+      return (
+        <>
+          {sub.tone !== "active" && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
+              <CalendarClock className="h-4 w-4 shrink-0" />
+              <span className="font-medium">Subscription: {sub.label}.</span>
+              <span className="text-muted-foreground">
+                Pay {money(price.dueNow)} ({price.label}) with M-Pesa to stay active.
+              </span>
+              <PaywavePayButton kind="subscription" amount={price.dueNow} phone={account.phone} />
+              <SubscriptionStkButton amount={price.dueNow} defaultPhone={account.phone} />
+              <WhatsAppButton />
+            </div>
+          )}
+          {children}
+        </>
+      );
+    }
   }
 
   const declined = account.status === "declined";
+  const expired = account.status === "approved" && subscriptionState(account).tone === "overdue";
 
   // Free trial: a brand new landlord uses everything for two weeks before paying.
   if (!declined && trial.active) {
@@ -151,16 +149,24 @@ export function LandlordGate({ children }: { children: ReactNode }) {
             )}
           </div>
           <CardTitle>
-            {declined ? "Account declined" : trial.endsAt ? "Free trial ended" : "Account awaiting approval"}
+            {declined
+              ? "Account declined"
+              : expired
+                ? "Subscription expired"
+                : trial.endsAt
+                  ? "Free trial ended"
+                  : "Account awaiting approval"}
           </CardTitle>
           <CardDescription>
             {declined
               ? "Your landlord account was not approved."
-              : `Your ${TRIAL_DAYS}-day free trial is over and no payment has been received yet. Pay your subscription below and your account is switched back on as soon as it is recorded.`}
+              : expired
+                ? "Your subscription is up. Pay below and your account is switched back on as soon as the payment is recorded."
+                : `Your ${TRIAL_DAYS}-day free trial is over and no payment has been received yet. Pay your subscription below and your account is switched back on as soon as it is recorded.`}
           </CardDescription>
           <div className="pt-2">
-            <Badge variant={declined ? "destructive" : "secondary"}>
-              {declined ? "Declined" : "Payment not received"}
+            <Badge variant={declined || expired ? "destructive" : "secondary"}>
+              {declined ? "Declined" : expired ? "Subscription expired" : "Payment not received"}
             </Badge>
           </div>
 
