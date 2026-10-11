@@ -189,6 +189,7 @@ export function AppHeader() {
         <Badge variant="destructive" className="hidden lg:inline-flex">
           Arrears: <span className="ml-1 font-semibold">{money(summary?.arrears ?? 0)}</span>
         </Badge>
+        <InstallAppButton />
         <Button
           variant="ghost"
           size="icon"
