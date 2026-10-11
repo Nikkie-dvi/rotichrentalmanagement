@@ -149,16 +149,24 @@ export function LandlordGate({ children }: { children: ReactNode }) {
             )}
           </div>
           <CardTitle>
-            {declined ? "Account declined" : trial.endsAt ? "Free trial ended" : "Account awaiting approval"}
+            {declined
+              ? "Account declined"
+              : expired
+                ? "Subscription expired"
+                : trial.endsAt
+                  ? "Free trial ended"
+                  : "Account awaiting approval"}
           </CardTitle>
           <CardDescription>
             {declined
               ? "Your landlord account was not approved."
-              : `Your ${TRIAL_DAYS}-day free trial is over and no payment has been received yet. Pay your subscription below and your account is switched back on as soon as it is recorded.`}
+              : expired
+                ? "Your subscription is up. Pay below and your account is switched back on as soon as the payment is recorded."
+                : `Your ${TRIAL_DAYS}-day free trial is over and no payment has been received yet. Pay your subscription below and your account is switched back on as soon as it is recorded.`}
           </CardDescription>
           <div className="pt-2">
-            <Badge variant={declined ? "destructive" : "secondary"}>
-              {declined ? "Declined" : "Payment not received"}
+            <Badge variant={declined || expired ? "destructive" : "secondary"}>
+              {declined ? "Declined" : expired ? "Subscription expired" : "Payment not received"}
             </Badge>
           </div>
 
