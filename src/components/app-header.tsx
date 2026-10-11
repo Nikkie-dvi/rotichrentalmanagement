@@ -18,6 +18,7 @@ import {
 } from "@/lib/notifications";
 import { toast } from "sonner";
 import { QuickStartGuide } from "@/components/quick-start-guide";
+import { InstallAppButton } from "@/components/install-app-button";
 
 const LANDLORD_GUIDE = [
   {
@@ -188,6 +189,7 @@ export function AppHeader() {
         <Badge variant="destructive" className="hidden lg:inline-flex">
           Arrears: <span className="ml-1 font-semibold">{money(summary?.arrears ?? 0)}</span>
         </Badge>
+        <InstallAppButton />
         <Button
           variant="ghost"
           size="icon"
