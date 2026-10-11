@@ -54,6 +54,7 @@ import { Route as ApiPublicHooksWelcomeSweepRouteImport } from './routes/api/pub
 import { Route as ApiPublicMpesaSimulateCallbackRouteImport } from './routes/api/public/mpesa/simulate-callback'
 import { Route as ApiPublicMpesaStkPushRouteImport } from './routes/api/public/mpesa/stk-push'
 import { Route as ApiPublicMpesaSubscriptionCallbackRouteImport } from './routes/api/public/mpesa/subscription-callback'
+import { Route as ApiPublicPaywaveCallbackRouteImport } from './routes/api/public/paywave/callback'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -301,6 +302,12 @@ const ApiPublicMpesaSubscriptionCallbackRoute =
     path: '/api/public/mpesa/subscription-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPaywaveCallbackRoute =
+  ApiPublicPaywaveCallbackRouteImport.update({
+    id: '/api/public/paywave/callback',
+    path: '/api/public/paywave/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -362,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
   '/api/public/mpesa/subscription-callback': typeof ApiPublicMpesaSubscriptionCallbackRoute
+  '/api/public/paywave/callback': typeof ApiPublicPaywaveCallbackRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -410,6 +418,7 @@ export interface FileRoutesByTo {
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
   '/api/public/mpesa/subscription-callback': typeof ApiPublicMpesaSubscriptionCallbackRoute
+  '/api/public/paywave/callback': typeof ApiPublicPaywaveCallbackRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -461,6 +470,7 @@ export interface FileRoutesById {
   '/api/public/mpesa/simulate-callback': typeof ApiPublicMpesaSimulateCallbackRoute
   '/api/public/mpesa/stk-push': typeof ApiPublicMpesaStkPushRoute
   '/api/public/mpesa/subscription-callback': typeof ApiPublicMpesaSubscriptionCallbackRoute
+  '/api/public/paywave/callback': typeof ApiPublicPaywaveCallbackRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -511,6 +521,7 @@ export interface FileRouteTypes {
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
     | '/api/public/mpesa/subscription-callback'
+    | '/api/public/paywave/callback'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -559,6 +570,7 @@ export interface FileRouteTypes {
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
     | '/api/public/mpesa/subscription-callback'
+    | '/api/public/paywave/callback'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -609,6 +621,7 @@ export interface FileRouteTypes {
     | '/api/public/mpesa/simulate-callback'
     | '/api/public/mpesa/stk-push'
     | '/api/public/mpesa/subscription-callback'
+    | '/api/public/paywave/callback'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -635,6 +648,7 @@ export interface RootRouteChildren {
   ApiPublicMpesaSimulateCallbackRoute: typeof ApiPublicMpesaSimulateCallbackRoute
   ApiPublicMpesaStkPushRoute: typeof ApiPublicMpesaStkPushRoute
   ApiPublicMpesaSubscriptionCallbackRoute: typeof ApiPublicMpesaSubscriptionCallbackRoute
+  ApiPublicPaywaveCallbackRoute: typeof ApiPublicPaywaveCallbackRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -957,6 +971,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMpesaSubscriptionCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/paywave/callback': {
+      id: '/api/public/paywave/callback'
+      path: '/api/public/paywave/callback'
+      fullPath: '/api/public/paywave/callback'
+      preLoaderRoute: typeof ApiPublicPaywaveCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -1074,6 +1095,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMpesaStkPushRoute: ApiPublicMpesaStkPushRoute,
   ApiPublicMpesaSubscriptionCallbackRoute:
     ApiPublicMpesaSubscriptionCallbackRoute,
+  ApiPublicPaywaveCallbackRoute: ApiPublicPaywaveCallbackRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
