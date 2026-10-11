@@ -82,9 +82,11 @@ export function LandlordGate({ children }: { children: ReactNode }) {
 
   if (account.status === "approved") {
     const sub = subscriptionState(account);
-    return (
-      <>
-        {sub.tone !== "active" && (
+    // Expired subscription: block the dashboard until payment is recorded.
+    if (sub.tone !== "overdue") {
+      return (
+        <>
+          {sub.tone !== "active" && (
           <div
             className={`mb-3 flex flex-wrap items-center gap-2 rounded-lg border p-3 text-sm ${
               sub.tone === "overdue"
