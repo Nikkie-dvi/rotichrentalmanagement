@@ -43,58 +43,6 @@ export const Route = createFileRoute("/_authenticated/landlords")({
 
 type PayDraft = { amount: string; date: string; months: string; reference: string };
 
-/** Main-account-only: how this landlord should pay their monthly fee. */
-function PaymentSettingsBlock({ row }: { row: LandlordAccount }) {
-  const qc = useQueryClient();
-  const [number, setNumber] = useState(row.payment_number ?? "");
-  const [method, setMethod] = useState(row.payment_method ?? "mpesa_send_money");
-  const [saving, setSaving] = useState(false);
-
-  const save = async () => {
-    setSaving(true);
-    const { error } = await supabase
-      .from("landlord_accounts")
-      .update({ payment_number: number.trim() || null, payment_method: method })
-      .eq("id", row.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Payment details updated");
-    qc.invalidateQueries({ queryKey: ["landlord-accounts-all"] });
-    qc.invalidateQueries({ queryKey: ["landlord-account"] });
-  };
-
-  return (
-    <div className="mt-3 border-t pt-3">
-      <div className="text-sm font-medium">Payment instructions shown to this landlord</div>
-      <div className="mt-2 grid gap-2 sm:grid-cols-3">
-        <div>
-          <Label className="text-xs">Payment number</Label>
-          <Input value={number} onChange={(e) => setNumber(e.target.value)} placeholder={PAYMENT_NUMBER} />
-        </div>
-        <div>
-          <Label className="text-xs">Method</Label>
-          <Select value={method} onValueChange={setMethod}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {PAYMENT_METHODS.map((m) => (
-                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-end">
-          <Button size="sm" variant="outline" disabled={saving} onClick={save}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Save details
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SubscriptionBlock({ row }: { row: LandlordAccount }) {
   const qc = useQueryClient();
   const sub = subscriptionState(row);
