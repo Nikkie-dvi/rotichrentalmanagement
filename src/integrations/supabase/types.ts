@@ -806,6 +806,68 @@ export type Database = {
           },
         ]
       }
+      paywave_payments: {
+        Row: {
+          amount: number
+          checkout_request_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          landlord_account_id: string | null
+          merchant_request_id: string | null
+          months_covered: number
+          mpesa_receipt_no: string | null
+          owner_id: string
+          phone_number: string
+          result_desc: string | null
+          status: string
+          transaction_request_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          landlord_account_id?: string | null
+          merchant_request_id?: string | null
+          months_covered?: number
+          mpesa_receipt_no?: string | null
+          owner_id: string
+          phone_number: string
+          result_desc?: string | null
+          status?: string
+          transaction_request_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          landlord_account_id?: string | null
+          merchant_request_id?: string | null
+          months_covered?: number
+          mpesa_receipt_no?: string | null
+          owner_id?: string
+          phone_number?: string
+          result_desc?: string | null
+          status?: string
+          transaction_request_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paywave_payments_landlord_account_id_fkey"
+            columns: ["landlord_account_id"]
+            isOneToOne: false
+            referencedRelation: "landlord_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_pricing: {
         Row: {
           annual_discount_percent: number
