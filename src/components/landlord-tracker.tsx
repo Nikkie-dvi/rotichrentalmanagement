@@ -42,7 +42,7 @@ export function LandlordTracker({ accounts }: { accounts: LandlordAccount[] }) {
     for (const a of approved) {
       const s = subscriptionState(a);
       if (s.tone === "active" || s.tone === "due") paid++;
-      else if (trialState(a.trial_ends_at).active) trial++;
+      else if (trialState(a).active) trial++;
       else if (s.tone === "overdue") overdue++;
       else none++;
     }
