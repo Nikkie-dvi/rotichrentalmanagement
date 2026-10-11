@@ -2,6 +2,7 @@
 // for tenants whose rent is due today, in the next 3 days, or overdue with an
 // unpaid invoice for the current month.
 import { createFileRoute } from "@tanstack/react-router";
+import { assertCronCaller } from "@/lib/cron-guard.server";
 
 type Sub = {
   id: string;
@@ -16,7 +17,9 @@ type Reminder = { title: string; body: string; tag: string };
 export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }: { request: Request }) => {
+        const denied = assertCronCaller(request);
+        if (denied) return denied;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         // web-push pulls in Node-oriented buffer helpers. Keep it out of the
         // global route graph so ordinary page requests remain Worker-safe.

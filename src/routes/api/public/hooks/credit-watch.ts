@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { assertCronCaller } from "@/lib/cron-guard.server";
 
 // Daily cron endpoint: checks every landlord's tenants for credit that appeared,
 // was applied to a new invoice, or has sat unused past the expiry window, and
@@ -6,7 +7,9 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/hooks/credit-watch")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }: { request: Request }) => {
+        const denied = assertCronCaller(request);
+        if (denied) return denied;
         const { scanAllCredits } = await import("@/lib/credit.server");
         const { auditAllLedgers } = await import("@/lib/ledger-audit.server");
         try {

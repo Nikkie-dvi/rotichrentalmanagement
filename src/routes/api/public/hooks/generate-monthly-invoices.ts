@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { assertCronCaller } from "@/lib/cron-guard.server";
 
 // Daily reconciliation cron endpoint. pg_cron calls this every day at 00:05 UTC.
 // For every landlord that has the daily job switched on it:
@@ -10,7 +11,9 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/hooks/generate-monthly-invoices")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }: { request: Request }) => {
+        const denied = assertCronCaller(request);
+        if (denied) return denied;
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const {
