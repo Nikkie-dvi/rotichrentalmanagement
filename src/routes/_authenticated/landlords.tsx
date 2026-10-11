@@ -113,6 +113,19 @@ function SubscriptionBlock({ row }: { row: LandlordAccount }) {
         </div>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-end gap-2">
+        <div className="w-36">
+          <Label className="text-xs">Price / month (KES)</Label>
+          <Input type="number" min={0} value={fee} onChange={(e) => setFee(e.target.value)} />
+        </div>
+        <Button size="sm" variant="outline" disabled={savingFee} onClick={saveFee}>
+          {savingFee ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Save price
+        </Button>
+        <p className="w-full text-xs text-muted-foreground">
+          This is what their M-Pesa prompt asks for — lower it to give this landlord a discount.
+        </p>
+      </div>
+
       <div className="mt-3 grid gap-2 sm:grid-cols-4">
         <div>
           <Label className="text-xs">Amount</Label>
