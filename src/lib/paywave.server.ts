@@ -99,6 +99,7 @@ export async function settlePaywavePayment(p: {
       _by: row.owner_id,
     } as never);
   } else {
+    if (!row.landlord_account_id) return claimed;
     await supabaseAdmin.from("landlord_subscription_payments").insert({
       landlord_account_id: row.landlord_account_id,
       amount: Number(row.amount),

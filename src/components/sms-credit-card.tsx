@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RegisteredPaymentPhone } from "@/components/registered-payment-phone";
 import { requestSmsRecharge } from "@/lib/sms-wallet.functions";
+import { PaywavePayButton } from "@/components/paywave-pay-button";
 import { fetchSmsWalletSafe } from "@/lib/sms-wallet-client";
 import { usePlatformPricing, whatsappSupportLink, useLandlordAccount } from "@/hooks/use-landlord-account";
 
