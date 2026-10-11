@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RegisteredPaymentPhone } from "@/components/registered-payment-phone";
-import { requestSmsRecharge } from "@/lib/sms-wallet.functions";
 import { PaywavePayButton } from "@/components/paywave-pay-button";
 import { fetchSmsWalletSafe } from "@/lib/sms-wallet-client";
 import { usePlatformPricing, whatsappSupportLink, useLandlordAccount } from "@/hooks/use-landlord-account";
@@ -39,22 +38,6 @@ export function SmsCreditCard() {
   const pending = (data?.requests ?? []).find((r: any) => r.status === "pending");
   const low = (data?.messagesLeft ?? 0) < 10;
   const empty = (data?.messagesLeft ?? 0) < 1;
-
-  const submit = async () => {
-    setBusy(true);
-    try {
-      await requestSmsRecharge({ data: { amount: Number(amount), note } });
-      toast.success("Recharge requested — the main account will confirm it shortly");
-      setNote("");
-      setOpen(false);
-      setReview(false);
-      qc.invalidateQueries({ queryKey: ["sms-wallet"] });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not send the request");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <Card id="sms-credit" className={`glass-card min-w-0 max-w-full ${empty ? "border-destructive/60 glow-red" : ""}`}>
@@ -86,20 +69,20 @@ export function SmsCreditCard() {
                 <p className="font-medium text-destructive">Your SMS credit has run out</p>
                 <p className="text-xs text-muted-foreground">
                   Tenant texts are paused until you top up. SMS credit is bought separately and is not part of your
-                  monthly app subscription — pick an amount below and request it.
+                  monthly app subscription — pick an amount below and pay with M-Pesa.
                 </p>
               </div>
             )}
 
-            {pending ? (
+            {false && pending ? (
               <div className="flex items-start gap-3 rounded-lg border bg-muted/40 p-3 text-sm" role="status"><Clock3 className="h-5 w-5 shrink-0 text-primary" /><div><p className="font-semibold">{ksh(pending.amount)} recharge requested</p><p className="text-xs text-muted-foreground">Waiting for approval. Your SMS balance will update once confirmed.</p></div></div>
             ) : (
               <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (!value) setReview(false); }}>
                 <DialogTrigger asChild><Button className="w-full"><MessageSquare className="h-4 w-4" /> Top up SMS credit <ArrowRight className="h-4 w-4" /></Button></DialogTrigger>
                 <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
-                  <DialogHeader><div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><MessageSquare className="h-5 w-5" /></div><DialogTitle>{review ? "Confirm SMS recharge" : "Top up SMS credit"}</DialogTitle><DialogDescription>SMS credit is separate from your subscription. Recharges are approved by the main account.</DialogDescription></DialogHeader>
+                  <DialogHeader><div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><MessageSquare className="h-5 w-5" /></div><DialogTitle>{review ? "Confirm SMS recharge" : "Top up SMS credit"}</DialogTitle><DialogDescription>SMS credit is separate from your subscription. Pay with M-Pesa and your credit is added automatically.</DialogDescription></DialogHeader>
                   <RegisteredPaymentPhone phone={account?.phone} />
-                  {review ? <div className="space-y-4"><div className="flex items-baseline justify-between gap-3 border-y py-4"><span className="text-sm text-muted-foreground">Recharge total</span><span className="text-2xl font-semibold">{ksh(Number(amount))}</span></div><p className="text-sm text-muted-foreground">Approximately {Math.floor(Number(amount) / (data?.rate ?? 1.2)).toLocaleString()} tenant texts</p>{note && <p className="break-words text-sm">{note}</p>}<PaywavePayButton full kind="sms_recharge" amount={Number(amount)} phone={account?.phone} onDone={() => { setOpen(false); setReview(false); qc.invalidateQueries({ queryKey: ["sms-wallet"] }); }} /><p className="text-center text-xs text-muted-foreground">or request it and pay manually</p><Button variant="outline" onClick={submit} disabled={busy || !account?.phone} className="w-full">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {busy ? "Requesting recharge" : "Confirm recharge request"}</Button><Button variant="ghost" className="w-full" disabled={busy} onClick={() => setReview(false)}>Back</Button></div> : <div className="grid min-w-0 grid-cols-1 gap-3">
+                  {review ? <div className="space-y-4"><div className="flex items-baseline justify-between gap-3 border-y py-4"><span className="text-sm text-muted-foreground">Recharge total</span><span className="text-2xl font-semibold">{ksh(Number(amount))}</span></div><p className="text-sm text-muted-foreground">Approximately {Math.floor(Number(amount) / (data?.rate ?? 1.2)).toLocaleString()} tenant texts</p>{note && <p className="break-words text-sm">{note}</p>}<PaywavePayButton full kind="sms_recharge" amount={Number(amount)} phone={account?.phone} onDone={() => { setOpen(false); setReview(false); qc.invalidateQueries({ queryKey: ["sms-wallet"] }); }} /><Button variant="ghost" className="w-full" disabled={busy} onClick={() => setReview(false)}>Back</Button></div> : <div className="grid min-w-0 grid-cols-1 gap-3">
                 <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
                   {[300, 600, 1200, 3000].map((v) => (
                     <Button
