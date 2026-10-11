@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LandlordTracker } from "@/components/landlord-tracker";
 import { ManagerFeesAdmin } from "@/components/manager-fees-admin";
 
@@ -20,8 +19,6 @@ import {
   useIsSuperAdmin,
   subscriptionState,
   MONTHLY_FEE,
-  PAYMENT_NUMBER,
-  PAYMENT_METHODS,
   trialState,
   type LandlordAccount,
 
