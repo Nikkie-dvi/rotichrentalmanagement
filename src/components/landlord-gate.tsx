@@ -109,6 +109,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
             <span className="text-muted-foreground">
               {payMethod}: send {money(price.dueNow)} ({price.label}) to {payNumber} to stay active.
             </span>
+            <PaywavePayButton kind="subscription" amount={price.dueNow} phone={account.phone} />
             <SubscriptionStkButton amount={price.dueNow} defaultPhone={account.phone} />
             <Button size="sm" variant="ghost" className="ml-auto" onClick={() => copyText(payNumber)}>
               <Copy className="h-4 w-4" /> Copy number
@@ -135,6 +136,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
           <span className="text-muted-foreground">
             After that, send {money(price.dueNow)} ({payMethod} {payNumber}) to keep your account active.
           </span>
+          <PaywavePayButton kind="subscription" amount={price.dueNow} phone={account.phone} />
           <SubscriptionStkButton amount={price.dueNow} defaultPhone={account.phone} />
           <Button size="sm" variant="ghost" onClick={() => copyText(payNumber)}>
             <Copy className="h-4 w-4" /> Copy number
@@ -196,7 +198,10 @@ export function LandlordGate({ children }: { children: ReactNode }) {
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Smartphone className="h-4 w-4" /> Pay your monthly fee
               </div>
-              <div className="mt-3"><SubscriptionStkButton full amount={price.dueNow} defaultPhone={account.phone} /></div>
+              <div className="mt-3 space-y-2">
+                <PaywavePayButton full kind="subscription" amount={price.dueNow} phone={account.phone} />
+                <SubscriptionStkButton full amount={price.dueNow} defaultPhone={account.phone} />
+              </div>
               <p className="mt-3 text-xs text-muted-foreground">Or pay manually:</p>
               <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
                 <li>
