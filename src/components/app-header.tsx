@@ -18,6 +18,7 @@ import {
 } from "@/lib/notifications";
 import { toast } from "sonner";
 import { QuickStartGuide } from "@/components/quick-start-guide";
+import { InstallAppButton } from "@/components/install-app-button";
 
 const LANDLORD_GUIDE = [
   {
