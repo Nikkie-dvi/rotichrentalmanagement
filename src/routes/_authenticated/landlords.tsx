@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LandlordTracker } from "@/components/landlord-tracker";
 import { ManagerFeesAdmin } from "@/components/manager-fees-admin";
 
@@ -20,8 +19,6 @@ import {
   useIsSuperAdmin,
   subscriptionState,
   MONTHLY_FEE,
-  PAYMENT_NUMBER,
-  PAYMENT_METHODS,
   trialState,
   type LandlordAccount,
 
@@ -43,62 +40,12 @@ export const Route = createFileRoute("/_authenticated/landlords")({
 
 type PayDraft = { amount: string; date: string; months: string; reference: string };
 
-/** Main-account-only: how this landlord should pay their monthly fee. */
-function PaymentSettingsBlock({ row }: { row: LandlordAccount }) {
-  const qc = useQueryClient();
-  const [number, setNumber] = useState(row.payment_number ?? "");
-  const [method, setMethod] = useState(row.payment_method ?? "mpesa_send_money");
-  const [saving, setSaving] = useState(false);
-
-  const save = async () => {
-    setSaving(true);
-    const { error } = await supabase
-      .from("landlord_accounts")
-      .update({ payment_number: number.trim() || null, payment_method: method })
-      .eq("id", row.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Payment details updated");
-    qc.invalidateQueries({ queryKey: ["landlord-accounts-all"] });
-    qc.invalidateQueries({ queryKey: ["landlord-account"] });
-  };
-
-  return (
-    <div className="mt-3 border-t pt-3">
-      <div className="text-sm font-medium">Payment instructions shown to this landlord</div>
-      <div className="mt-2 grid gap-2 sm:grid-cols-3">
-        <div>
-          <Label className="text-xs">Payment number</Label>
-          <Input value={number} onChange={(e) => setNumber(e.target.value)} placeholder={PAYMENT_NUMBER} />
-        </div>
-        <div>
-          <Label className="text-xs">Method</Label>
-          <Select value={method} onValueChange={setMethod}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {PAYMENT_METHODS.map((m) => (
-                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-end">
-          <Button size="sm" variant="outline" disabled={saving} onClick={save}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Save details
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SubscriptionBlock({ row }: { row: LandlordAccount }) {
   const qc = useQueryClient();
   const sub = subscriptionState(row);
   const [busy, setBusy] = useState(false);
+  const [fee, setFee] = useState(String(row.monthly_fee ?? MONTHLY_FEE));
+  const [savingFee, setSavingFee] = useState(false);
   const [draft, setDraft] = useState<PayDraft>({
     amount: String(row.monthly_fee ?? MONTHLY_FEE),
     date: new Date().toISOString().slice(0, 10),
@@ -106,6 +53,22 @@ function SubscriptionBlock({ row }: { row: LandlordAccount }) {
     reference: "",
   });
   const set = (patch: Partial<PayDraft>) => setDraft((d) => ({ ...d, ...patch }));
+
+  const saveFee = async () => {
+    const value = Number(fee);
+    if (!(value >= 0)) return toast.error("Enter a valid price");
+    setSavingFee(true);
+    const { error } = await supabase
+      .from("landlord_accounts")
+      .update({ monthly_fee: value })
+      .eq("id", row.id);
+    setSavingFee(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Price set to ${money(value)}/month for this landlord`);
+    setDraft((d) => ({ ...d, amount: String(value) }));
+    qc.invalidateQueries({ queryKey: ["landlord-accounts-all"] });
+    qc.invalidateQueries({ queryKey: ["landlord-account"] });
+  };
 
   const record = async () => {
     setBusy(true);
@@ -147,6 +110,19 @@ function SubscriptionBlock({ row }: { row: LandlordAccount }) {
         </div>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-end gap-2">
+        <div className="w-36">
+          <Label className="text-xs">Price / month (KES)</Label>
+          <Input type="number" min={0} value={fee} onChange={(e) => setFee(e.target.value)} />
+        </div>
+        <Button size="sm" variant="outline" disabled={savingFee} onClick={saveFee}>
+          {savingFee ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Save price
+        </Button>
+        <p className="w-full text-xs text-muted-foreground">
+          This is what their M-Pesa prompt asks for — lower it to give this landlord a discount.
+        </p>
+      </div>
+
       <div className="mt-3 grid gap-2 sm:grid-cols-4">
         <div>
           <Label className="text-xs">Amount</Label>
@@ -169,8 +145,6 @@ function SubscriptionBlock({ row }: { row: LandlordAccount }) {
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
         Record payment
       </Button>
-
-      <PaymentSettingsBlock row={row} />
     </div>
   );
 }
@@ -338,8 +312,8 @@ function LandlordsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Landlord accounts</h1>
         <p className="text-sm text-muted-foreground">
-          New landlords stay locked out until you confirm them. They are shown to send {money(MONTHLY_FEE)} monthly to{" "}
-          {PAYMENT_NUMBER}.
+          New landlords stay locked out until you confirm them. They pay {money(MONTHLY_FEE)} monthly by M-Pesa prompt
+          on their phone.
         </p>
       </div>
 
