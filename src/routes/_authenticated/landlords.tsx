@@ -148,8 +148,6 @@ function SubscriptionBlock({ row }: { row: LandlordAccount }) {
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
         Record payment
       </Button>
-
-      <PaymentSettingsBlock row={row} />
     </div>
   );
 }
