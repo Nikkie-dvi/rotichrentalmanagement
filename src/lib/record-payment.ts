@@ -4,6 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 export async function recordTenantPayment(p: {
   tenantId: string; invoiceId?: string | null; amount: number; method: string; reference: string | null; date: string;
 }) {
+  const ref = p.reference?.trim().replace(/[^A-Za-z0-9-]/g, "").toUpperCase() || null;
+  if (ref) {
+    const { data: dup } = await supabase.from("payments").select("id")
+      .or(`reference_no.ilike.${ref},mpesa_receipt_no.ilike.${ref}`).limit(1);
+    if (dup?.length) throw new Error(`Transaction ${ref} is already recorded — this payment was not saved again.`);
+    p = { ...p, reference: ref };
+  }
   const { data: invoices, error: invErr } = await supabase
     .from("invoices")
     .select("id, balance_remaining, month_year")
