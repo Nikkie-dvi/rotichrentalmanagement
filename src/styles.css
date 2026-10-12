@@ -129,6 +129,34 @@
   --sidebar-ring: oklch(0.76 0.15 174);
 }
 
+/* Rental home: familiar wallet-style hierarchy, with the existing theme. */
+.app-bottom-nav {
+  position: fixed;
+  z-index: 30;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(620px, calc(100% - 24px));
+  display: flex;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--sidebar);
+  border: 1px solid var(--sidebar-border);
+  box-shadow: 0 8px 28px -8px color-mix(in oklab, var(--foreground) 30%, transparent);
+}
+.home-action-icon {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+}
+.home-action:hover .home-action-icon { border-color: var(--primary); background: var(--accent); }
+.home-transaction { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+.rental-app-shell { --sidebar-width: 0rem; }
+
 @layer base {
   * {
     border-color: var(--color-border);

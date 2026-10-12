@@ -34,9 +34,9 @@ function nextDelay(urgency: number): number {
   return (base / dayMood()) * (0.6 + Math.random() * 1.3);
 }
 const corners = [
-  "bottom-5 left-5 md:left-[calc(var(--sidebar-width,16rem)+1.25rem)]",
+  "bottom-24 left-5",
   "top-20 right-5",
-  "top-20 left-5 md:left-[calc(var(--sidebar-width,16rem)+1.25rem)]",
+  "top-20 left-5",
 ];
 
 const VACANT_TIPS = [

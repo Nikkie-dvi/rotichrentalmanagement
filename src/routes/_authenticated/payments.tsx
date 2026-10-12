@@ -35,6 +35,8 @@ export const Route = createFileRoute("/_authenticated/payments")({
       { name: "description", content: "Log tenant payments across M-Pesa, bank and cash, and print receipts." },
       { property: "og:title", content: "Payments & Receipts — Rotich Management Systems" },
       { property: "og:description", content: "Log payments and generate receipts." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PaymentsPage,
@@ -255,7 +257,7 @@ function PaymentsPage() {
         <p className="text-sm text-muted-foreground">Log payments; balances auto-adjust across invoices.</p>
       </div>
 
-      <Card className="glass-card glow-green">
+      <Card id="log-payment" className="glass-card glow-green scroll-mt-20">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Log New Payment</CardTitle>
           <p className="text-xs text-muted-foreground">

@@ -35,9 +35,9 @@ export function AssistantDock() {
   const toggle = () => { setOpen((o) => !o); setHint(false); localStorage.setItem(HINT_KEY, "1"); };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2">
+    <div className="fixed bottom-24 right-4 z-40 flex flex-col items-end gap-2">
       {open && (
-        <div role="dialog" aria-label="Rent assistant" className="assistant-shell thought-in w-[min(26rem,calc(100vw-2.5rem))] max-h-[75vh] overflow-y-auto overflow-x-hidden rounded-xl border p-4 text-card-foreground">
+        <div role="dialog" aria-label="Rent assistant" className="assistant-shell thought-in w-[min(26rem,calc(100vw-2.5rem))] max-h-[calc(100svh-12rem)] overflow-y-auto overflow-x-hidden rounded-xl border p-4 text-card-foreground">
           <div className="mb-3 flex items-start justify-between gap-2">
             <div>
               <div className="flex items-center gap-2 font-semibold"><span className="grid h-9 w-9 place-items-center rounded-lg border border-primary/30 bg-accent"><Sparkles className="h-5 w-5 text-primary" /></span><div>Rent assistant<p className="text-xs font-normal text-primary">Account intelligence</p></div></div>

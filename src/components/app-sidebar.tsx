@@ -52,7 +52,7 @@ type NavSection = {
   items: NavItem[];
 };
 
-const sections: NavSection[] = [
+export const sections: NavSection[] = [
   {
     id: "overview",
     label: "Overview & Insights",

@@ -14,8 +14,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppNavigation } from "@/components/app-navigation";
 import { AppHeader } from "@/components/app-header";
 import { ThoughtBuddy } from "@/components/thought-buddy";
 import { AssistantDock } from "@/components/assistant-dock";
@@ -122,8 +121,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Rotich Rental Management — Rental Property Software for Landlords" },
       { name: "twitter:description", content: "Manage rental properties, tenants, leases, utility meters, invoices and M-Pesa payments from one Kenyan-built landlord dashboard." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/4bda7630-6664-48bc-986c-3063a6de5ae1" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/4bda7630-6664-48bc-986c-3063a6de5ae1" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -232,13 +229,11 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
             <Outlet />
           </>
         ) : (
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
+          <div className="rental-app-shell min-h-svh w-full">
               <OfflineBanner />
               <AppHeader />
               <ReminderRunner />
-              <main className="flex-1 p-4 md:p-6">
+              <main className="mx-auto w-full max-w-6xl px-4 pt-5 pb-32 sm:px-6">
                 <div key={pathname} className="route-transition">
                   <Outlet />
                 </div>
@@ -247,9 +242,8 @@ function AppInner({ queryClient, isAuthRoute }: { queryClient: QueryClient; isAu
               <ThoughtBuddy />
               <AssistantDock />
               <GuidedTour />
-
-            </SidebarInset>
-          </SidebarProvider>
+              <AppNavigation />
+          </div>
         )}
         <Toaster richColors position="top-right" />
       </ThemeProvider>

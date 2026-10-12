@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Building2, Users, DollarSign, AlertCircle, Plus, Gauge, FileText, Trash2, Download, BellRing, Receipt as ReceiptIcon, Loader2 } from "lucide-react";
+import { Building2, Users, DollarSign, AlertCircle, Plus, Gauge, FileText, Trash2, Download, MessageSquareText, DoorOpen, ArrowDownLeft, Eye, EyeOff, ReceiptText, Zap, Droplets, Shield, BellRing, Receipt as ReceiptIcon, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,11 +22,13 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { loadTenantLedgers } from "@/lib/dashboard-ledgers";
+import { HomeExtraCharges } from "@/components/home-extra-charges";
 import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
 import { DashboardFocus } from "@/components/dashboard-focus";
 import { SimplePropertyPerformance } from "@/components/property-performance";
 import { KpiOverview } from "@/components/kpi-overview";
 import { sendLateFeeNoticeSms, sendPaymentReceiptSms } from "@/lib/receipts.functions";
+import { useIsPropertyManager, useLandlordAccount } from "@/hooks/use-landlord-account";
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 
 
@@ -57,6 +59,9 @@ export const Route = createFileRoute("/_authenticated/")({
 
 
 function Dashboard() {
+  const { data: account } = useLandlordAccount();
+  const isManager = useIsPropertyManager();
+  const [hideAmount, setHideAmount] = useState(false);
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
@@ -318,38 +323,59 @@ function Dashboard() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+    <div className="space-y-7">
+      <section className="flex items-end justify-between gap-4 pt-3">
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">My properties</p>
+          <h2 className="mt-1 text-lg font-semibold">{account?.full_name?.split(" ")[0] ? `${account.full_name.split(" ")[0]}'s rentals` : "My rentals"}</h2>
+          <Button variant="ghost" className="mt-1 h-7 gap-1 px-0 text-xs text-muted-foreground" onClick={() => setDrill("units")}><Building2 className="h-3.5 w-3.5" />{stats?.totalUnits ?? 0} units · {stats?.occupancy ?? 0}% occupied</Button>
+        </div>
+        <div className="min-w-0 text-right">
+          <p className="text-xs text-muted-foreground">Collected this month</p>
+          <div className="mt-1 flex items-center justify-end gap-1">
+            <Button variant="ghost" className="h-auto whitespace-normal px-0 py-0 text-xl font-semibold sm:text-3xl" onClick={() => setDrill("collected")}>{hideAmount ? "••••••" : money(stats?.collected ?? 0)}</Button>
+            <Button variant="ghost" size="icon-sm" onClick={() => setHideAmount(v => !v)} aria-label={hideAmount ? "Show collected amount" : "Hide collected amount"}>{hideAmount ? <Eye /> : <EyeOff />}</Button>
+          </div>
+          <Button variant="ghost" className="h-7 px-0 text-[11px] text-destructive" onClick={() => setDrill("arrears")}>{money(stats?.arrears ?? 0)} outstanding</Button>
+        </div>
+      </section>
 
-        {kpis.map((k) => (
-          <Card
-            key={k.label}
-            role="button"
-            tabIndex={0}
-            onClick={() => setDrill(k.key)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDrill(k.key); } }}
-            className={`glass-card ${k.glow} cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring`}
-          >
-            <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 space-y-0 p-3 pb-1 sm:p-6 sm:pb-2">
-              <CardTitle className="min-w-0 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">{k.label}</CardTitle>
-              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md sm:h-8 sm:w-8 ${k.tone} ring-1 ring-inset ring-white/10`}>
-                <k.icon className="h-4 w-4" />
-              </div>
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              <div className="truncate text-lg font-bold tracking-tight sm:text-2xl">{k.value}</div>
-              {k.sub && <p className="mt-1 truncate text-[11px] text-muted-foreground sm:text-xs">{k.sub}</p>}
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-4 gap-2 sm:gap-5">
+        {[
+          { label: "Log payment", icon: Plus, url: "/payments", hash: "log-payment" },
+          { label: "Message tenants", icon: MessageSquareText, url: "/messages", hash: undefined },
+          { label: "Add property", icon: Building2, url: "/properties", hash: "add-property" },
+          { label: "Add units", icon: DoorOpen, url: "/properties", hash: "add-unit" },
+        ].map(action => <Button key={action.label} asChild variant="ghost" className="home-action h-auto min-w-0 flex-col gap-2 whitespace-normal px-0 py-1 text-center text-[11px] leading-tight sm:text-sm">
+          <Link to={action.url} hash={action.hash}><span className="home-action-icon"><action.icon className="!h-6 !w-6" /></span><span className="min-h-8">{action.label}</span></Link>
+        </Button>)}
       </div>
 
-      <KpiOverview />
+      <HomeExtraCharges />
 
+      <section>
+        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Recent transactions</h2><Button asChild variant="link" className="h-auto p-0 text-xs"><Link to={isManager ? "/billing" : "/payments"}>View all</Link></Button></div>
+        <div className="space-y-2">
+          {(recent ?? []).map((p: any) => <div key={p.id} className="home-transaction flex min-w-0 items-center gap-3 p-4">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent text-primary"><ArrowDownLeft className="h-5 w-5" /></span>
+            <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{p.tenants?.full_name ?? "Tenant payment"}</p><p className="mt-1 truncate text-[11px] text-muted-foreground">{p.payment_method === "mpesa" ? "M-Pesa" : p.payment_method} · {p.reference_no ?? "No reference"}</p></div>
+            <div className="shrink-0 text-right"><p className="text-sm font-semibold">{money(Number(p.amount_paid))}</p><p className="mt-1 text-[11px] text-muted-foreground">{p.payment_date}</p></div>
+          </div>)}
+          {(!recent || recent.length === 0) && <div className="py-5 text-center text-sm text-muted-foreground">No payments yet.</div>}
+        </div>
+      </section>
 
-      <DashboardFocus collected={stats?.collected ?? 0} />
-
-      <SimplePropertyPerformance arrearsByTenant={arrearsByTenant ?? new Map()} />
+      <details className="border-t pt-4">
+        <summary className="cursor-pointer text-sm font-semibold">Rental overview</summary>
+        <div className="mt-4 space-y-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{kpis.map(k => <Button key={k.key} variant="secondary" className="h-auto flex-col items-start whitespace-normal p-3 text-left" onClick={() => setDrill(k.key)}><span className="text-xs text-muted-foreground">{k.label}</span><span className="text-lg font-semibold">{k.value}</span></Button>)}</div>
+          <KpiOverview />
+          <DashboardFocus collected={stats?.collected ?? 0} />
+          <SimplePropertyPerformance arrearsByTenant={arrearsByTenant ?? new Map()} />
+          <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/meters"><Gauge />Add meter reading</Link></Button><Button asChild variant="outline"><Link to="/billing"><FileText />Generate monthly bills</Link></Button><Button asChild variant="outline"><Link to="/performance" hash="reports"><Download />Portfolio reports</Link></Button></div>
+          <SuggestedShortcuts />
+        </div>
+      </details>
 
       <Dialog open={drill !== null} onOpenChange={(o) => !o && setDrill(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -582,62 +608,6 @@ function Dashboard() {
 
         </DialogContent>
       </Dialog>
-
-      <Card className="glass-card">
-        <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
-          <CardTitle className="text-base">Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2 p-4 pt-0 sm:p-6 sm:pt-0">
-          <Button asChild className="glow-green bg-primary text-primary-foreground shadow-md hover:bg-primary/90">
-            <Link to="/payments"><Plus className="h-4 w-4" />Log Payment</Link>
-          </Button>
-          <Button asChild variant="outline" className="glass-btn glow-blue">
-            <Link to="/meters"><Gauge className="h-4 w-4" />Add Meter Reading</Link>
-          </Button>
-          <Button asChild variant="outline" className="glass-btn glow-amber">
-            <Link to="/billing"><FileText className="h-4 w-4" />Generate Monthly Bills</Link>
-          </Button>
-          <Button asChild variant="outline" className="glass-btn glow-amber">
-            <Link to="/performance" hash="reports"><Download className="h-4 w-4" />Portfolio Reports</Link>
-          </Button>
-        </CardContent>
-      </Card>
-
-      <SuggestedShortcuts />
-
-
-      <Card className="glass-card">
-        <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-3">
-          <CardTitle className="text-base">Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent className="p-2 sm:p-6 sm:pt-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Tenant</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Ref</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(recent ?? []).map((p: any) => (
-                <TableRow key={p.id}>
-                  <TableCell>{p.payment_date}</TableCell>
-                  <TableCell className="font-medium">{p.tenants?.full_name ?? "—"}</TableCell>
-                  <TableCell><Badge variant="outline" className="uppercase">{p.payment_method}</Badge></TableCell>
-                  <TableCell className="text-muted-foreground">{p.reference_no ?? "—"}</TableCell>
-                  <TableCell className="text-right font-semibold text-primary">{money(Number(p.amount_paid))}</TableCell>
-                </TableRow>
-              ))}
-              {(!recent || recent.length === 0) && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No payments yet.</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
 
     </div>
   );
