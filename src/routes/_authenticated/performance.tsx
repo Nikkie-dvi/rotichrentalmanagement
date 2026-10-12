@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { unitTypeLabel } from "@/lib/unit-types";
+import { KpiOverview } from "@/components/kpi-overview";
 import { PortfolioReports, thisMonth } from "@/components/portfolio-reports";
 import { compareCollections, comparisonPeriod } from "@/lib/collection-comparison";
 
@@ -384,6 +385,7 @@ function PerformancePage() {
           </div>
         </CardContent>
       </Card>
+      <KpiOverview />
       <PortfolioReports month={month} onMonthChange={setMonth} />
 
       <Card className="glass-card">
