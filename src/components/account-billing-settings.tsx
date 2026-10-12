@@ -149,21 +149,7 @@ export function AccountBillingSettings({ section }: { section: "invoicing" | "fe
 
   return (
     <div className="space-y-4">
-      {section === "invoicing" && <div className="space-y-4"><AutomaticInvoicing />          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <div className="font-medium text-sm">Daily automatic invoicing &amp; clean-up</div>
-              <div className="text-xs text-muted-foreground">
-                Each night the system raises rent only for tenants whose due day has arrived, re-applies any credit and
-                removes invoices that should not exist. Turn off to do all invoicing by hand.
-              </div>
-            </div>
-            <Switch
-              checked={!!form.auto_reconcile_enabled}
-              onCheckedChange={(v) => toggle("auto_reconcile_enabled", v, "Daily automatic invoicing")}
-            />
-          </div>
-
-</div>}
+      {section === "invoicing" && <AutomaticInvoicing />}
 
       {section === "fees" && <Card className="glass-card">
         <CardHeader>
@@ -171,12 +157,12 @@ export function AccountBillingSettings({ section }: { section: "invoicing" | "fe
           <CardDescription>Applies to every tenant under your account.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
             <div>
               <div className="font-medium text-sm">Automatic late fees</div>
               <div className="text-xs text-muted-foreground">Turn off to add penalties manually only.</div>
             </div>
-            <Switch checked={!!form.auto_penalties_enabled} onCheckedChange={(v) => toggle("auto_penalties_enabled", v, "Automatic late fees")} />
+            <Switch aria-label="Automatic late fees" checked={!!form.auto_penalties_enabled} onCheckedChange={(v) => toggle("auto_penalties_enabled", v, "Automatic late fees")} />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -229,12 +215,12 @@ export function AccountBillingSettings({ section }: { section: "invoicing" | "fe
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
             <div>
               <div className="text-sm font-medium">Send rent reminders</div>
               <div className="text-xs text-muted-foreground">Turn off to stop all before/after due reminders.</div>
             </div>
-            <Switch checked={!!form.rent_reminders_enabled} onCheckedChange={(v) => toggle("rent_reminders_enabled", v, "Rent reminders")} />
+            <Switch aria-label="Automatic rent reminders" checked={!!form.rent_reminders_enabled} onCheckedChange={(v) => toggle("rent_reminders_enabled", v, "Rent reminders")} />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
