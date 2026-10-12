@@ -86,12 +86,13 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
            const p = JSON.parse(m[1] ?? "");
           const amount = Math.round(Number(p.amount));
           const date = /^\d{4}-\d{2}-\d{2}$/.test(p.date) && p.date <= today ? p.date : today;
-          const reference = String(p.reference ?? "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 40) || null;
+          const pasted = question.match(/\b([A-Z0-9]{10})\b\s+(?:confirmed|imethibitishwa)/i)?.[1];
+          const reference = (String(p.reference ?? "") || pasted || "").replace(/[^A-Za-z0-9-]/g, "").toUpperCase().slice(0, 40) || null;
           const method = ["mpesa", "bank", "cash"].includes(p.method) ? p.method : "mpesa";
            if (amount > 0 && amount <= 10000000 && !correctionMatch && !/\b(refund|correct|correction|mistake|instead)\b/i.test(question)) {
             let duplicate = false;
             if (reference) {
-              const { data: dup } = await sb.from("payments").select("id").or(`reference_no.eq.${reference},mpesa_receipt_no.eq.${reference}`).limit(1);
+              const { data: dup } = await sb.from("payments").select("id").or(`reference_no.ilike.${reference},mpesa_receipt_no.ilike.${reference}`).limit(1);
               duplicate = !!dup?.length;
             }
             payment = { amount, date, reference, method, duplicate };
