@@ -342,7 +342,7 @@ function Dashboard() {
 
       <div className="grid grid-cols-4 gap-2 sm:gap-5">
         {[
-          { label: "Log payment", icon: Plus, url: "/payments", hash: "log-payment" },
+          { label: "Log payment", icon: Plus, url: "/payments" },
           { label: "Message tenants", icon: MessageSquareText, url: "/messages", hash: undefined },
           { label: "Add property", icon: Building2, url: "/properties", hash: "add-property" },
           { label: "Add units", icon: DoorOpen, url: "/properties", hash: "add-unit" },
