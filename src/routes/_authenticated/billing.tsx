@@ -27,7 +27,6 @@ import { money } from "@/lib/types";
 import { RecordPaymentButton } from "@/components/record-payment-button";
 import { InvoiceCharges } from "@/components/invoice-charges";
 import { InvoiceExtrasDialog } from "@/components/invoice-extras-dialog";
-import { runLateFeesNow } from "@/lib/billing.functions";
 import { sendInvoiceSms, sendBulkOverdueNoticesSms } from "@/lib/receipts.functions";
 import { notifyInvoiceCreated } from "@/lib/invoice-notify.functions";
 import {
@@ -35,10 +34,7 @@ import {
   listIncorrectInvoicesFn,
   removeIncorrectInvoicesFn,
   invoiceTenantFn,
-  getAutoInvoicingFn,
-  setAutoInvoicingFn,
 } from "@/lib/invoicing.functions";
-import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/billing")({
@@ -48,6 +44,8 @@ export const Route = createFileRoute("/_authenticated/billing")({
       { name: "description", content: "Generate monthly bills combining base rent and utility charges. Print or share invoices." },
       { property: "og:title", content: "Billing & Invoices — Rotich Management Systems" },
       { property: "og:description", content: "Generate and preview monthly rent invoices." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: BillingPage,
@@ -164,21 +162,6 @@ function BillingPage() {
     onError: (e: any) => toast.error(e?.message ?? "Could not raise today's invoices"),
   });
 
-  // Automatic invoicing switch (per landlord account, works for managers too).
-  const { data: auto } = useQuery({
-    queryKey: ["auto-invoicing"],
-    queryFn: async () => (getAutoInvoicingFn as any)(),
-  });
-  const autoOn = (auto as any)?.enabled !== false;
-  const setAuto = useMutation({
-    mutationFn: async (enabled: boolean) => (setAutoInvoicingFn as any)({ data: { enabled } }),
-    onSuccess: (_r, enabled) => {
-      qc.invalidateQueries({ queryKey: ["auto-invoicing"] });
-      toast.success(enabled ? "Automatic invoicing is on" : "Automatic invoicing is off");
-    },
-    onError: (e: any) => toast.error(e?.message ?? "Could not save"),
-  });
-
   // Rent bills and service bills (water, electricity, etc.) are raised separately.
   // Generating by hand is never blocked by the due day — the landlord decides.
   const generate = useMutation({
@@ -220,19 +203,6 @@ function BillingPage() {
     onError: (e: any) => toast.error(e?.message ?? "Could not clean up invoices"),
   });
 
-
-  const lateFees = useMutation({
-    mutationFn: async () => (runLateFeesNow as any)(),
-    onSuccess: (r: any) => {
-      qc.invalidateQueries();
-      toast.success(
-        r.applied > 0
-          ? `Late fees added to ${r.applied} invoice(s); ${r.notified} tenant(s) alerted`
-          : "No invoices are past the grace period right now",
-      );
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
 
   const bulkNotices = useMutation({
     mutationFn: async () => (sendBulkOverdueNoticesSms as any)({ data: { month } }),
@@ -315,33 +285,11 @@ function BillingPage() {
           <Button variant="outline" onClick={() => setSingleOpen(true)}>
             <UserPlus className="h-4 w-4" />Invoice one tenant
           </Button>
-          <Button variant="outline" onClick={() => lateFees.mutate()} disabled={lateFees.isPending}>
-            <Zap className="h-4 w-4" />Apply late fees now
-          </Button>
           <Button variant="outline" onClick={() => bulkNotices.mutate()} disabled={bulkNotices.isPending}>
             <MessageSquare className="h-4 w-4" />
             {bulkNotices.isPending ? "Texting tenants…" : `Text all unpaid for ${month}`}
           </Button>
 
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="flex items-center justify-between gap-4 p-4">
-          <div>
-            <div className="text-sm font-medium">Automatic invoicing</div>
-            <div className="text-xs text-muted-foreground">
-              {autoOn
-                ? "Each night rent is raised automatically for tenants whose due day (from their joining date) has arrived."
-                : "Off — nothing is raised automatically. Invoice by hand using the buttons above."}
-            </div>
-          </div>
-          <Switch
-            checked={autoOn}
-            disabled={setAuto.isPending}
-            onCheckedChange={(v) => setAuto.mutate(v === true)}
-            aria-label="Automatic invoicing"
-          />
         </CardContent>
       </Card>
 

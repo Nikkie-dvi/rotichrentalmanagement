@@ -90,13 +90,8 @@ export function SuggestedShortcuts() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="glass-btn justify-start">
-            <Link to="/settings/lease">
-              <FileSignature className="h-4 w-4" /> Lease template
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm" className="glass-btn justify-start">
-            <Link to="/settings/billing">
-              <Settings className="h-4 w-4" /> Billing rules
+            <Link to="/settings/account">
+              <Settings className="h-4 w-4" /> My Account
             </Link>
           </Button>
         </div>

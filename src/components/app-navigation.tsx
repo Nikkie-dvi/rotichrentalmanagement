@@ -38,10 +38,10 @@ export function AppNavigation() {
   const counts = usePendingCounts();
   const tabs = [
     { label: "Home", url: "/", icon: Home, active: pathname === "/" },
-    { label: "Bills", url: isManager ? "/billing" : "/payments", icon: ReceiptText, active: ["/payments", "/billing", "/settings/payments", "/settings/billing"].includes(pathname), count: counts.overdueInvoices },
-    { label: "Tenants", url: "/tenants", icon: Users, active: ["/tenants", "/applications", "/leases", "/settings/lease"].includes(pathname), count: counts.applications },
+    { label: "Bills", url: isManager ? "/billing" : "/payments", icon: ReceiptText, active: ["/payments", "/billing", "/settings/payments"].includes(pathname), count: counts.overdueInvoices },
+    { label: "Tenants", url: "/tenants", icon: Users, active: ["/tenants", "/applications", "/leases"].includes(pathname), count: counts.applications },
     { label: "History", url: "/performance", icon: ChartNoAxesCombined, active: ["/performance", "/reports"].includes(pathname) },
-    { label: "Account", url: isManager ? "/settings/notifications" : "/settings/account", icon: UserRound, active: pathname.startsWith("/settings/") && !["/settings/payments", "/settings/billing", "/settings/lease"].includes(pathname) },
+    { label: "Account", url: "/settings/account", icon: UserRound, active: pathname.startsWith("/settings/") && pathname !== "/settings/payments" },
   ];
   return <nav aria-label="Main navigation" className="app-bottom-nav">
     {tabs.map(tab => <Button key={tab.label} asChild variant="ghost" className={`relative h-16 min-w-0 flex-1 flex-col gap-1 rounded-none px-1 text-[11px] hover:bg-sidebar-accent hover:text-sidebar-foreground ${tab.active ? "text-sidebar-primary" : "text-sidebar-foreground/70"}`}>
