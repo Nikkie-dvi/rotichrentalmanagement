@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -15,9 +15,7 @@ import { useLandlordAccount, paymentMethodLabel } from "@/hooks/use-landlord-acc
 import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { sendBulkTenantDocsSms } from "@/lib/bulk-docs.functions";
 import { ModeTabs } from "@/components/mode-tabs";
-import { AutoTextingPanel } from "@/components/auto-texting-panel";
 import { RecentAlertsPanel } from "@/components/recent-alerts-panel";
-import { ReminderTrackerPanel } from "@/components/reminder-tracker-panel";
 import { AnimatePresence, motion } from "framer-motion";
 
 /** SMS Leopard messages are cut off past this length, so we stop typing there. */
@@ -66,13 +64,16 @@ export const Route = createFileRoute("/_authenticated/messages")({
   head: () => ({
     meta: [
       { title: "SMS Tenants — Rotich Management Systems" },
-      { name: "description", content: "Text tenants by apartment, rent status or all at once, send notices and manage automatic reminders." },
+      { name: "description", content: "Text tenants by apartment, rent status or all at once, send notices and review delivery history." },
       { property: "og:title", content: "SMS Tenants — Rotich Management Systems" },
-      { property: "og:description", content: "One place for every tenant message: by apartment, rent due, notices and automatic texting." },
+      { property: "og:description", content: "One place for every tenant message: by apartment, rent due, notices and delivery history." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  beforeLoad: ({ location }) => {
+    if (new URLSearchParams(location.searchStr).get("tab") === "auto") throw redirect({ to: "/settings/account", hash: "automatic-texting", replace: true });
+  },
   component: MessagesPage,
 });
 
@@ -93,13 +94,12 @@ function MessagesPage() {
   const [docSending, setDocSending] = useState(false);
   const [docPropertyId, setDocPropertyId] = useState<string>("all");
   const [docUnitIds, setDocUnitIds] = useState<string[]>([]);
-  const [mode, setMode] = useState<"send" | "auto" | "alerts">("send");
+  const [mode, setMode] = useState<"send" | "alerts">("send");
   const [target, setTarget] = useState<"all" | "property" | "tenants">("all");
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const a = p.get("audience");
     if (a === "due" || a === "overdue" || a === "all") setAudience(a);
-    if (p.get("tab") === "auto") setMode("auto");
   }, []);
 
 
@@ -189,7 +189,7 @@ function MessagesPage() {
         <h1 className="text-2xl font-semibold">SMS Tenants</h1>
         <p className="text-sm text-muted-foreground">
           Every tenant message in one place — text by apartment, chase rent that's due, send notices like a water
-          shortage, and control automatic reminders.
+          shortage.
         </p>
       </div>
 
@@ -213,12 +213,11 @@ function MessagesPage() {
 
       <ModeTabs
         items={[
-          { key: "auto", label: "Automatic texting" },
           { key: "alerts", label: "Recent alerts" },
           { key: "send", label: "Send a message" },
         ]}
         value={mode}
-        onChange={(k) => setMode(k as "send" | "auto" | "alerts")}
+        onChange={(k) => setMode(k as "send" | "alerts")}
         layoutId="messages-mode-pill"
       />
 
@@ -639,7 +638,7 @@ function MessagesPage() {
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
             className="space-y-4"
           >
-            {mode === "alerts" ? <RecentAlertsPanel /> : <div className="grid gap-4"><AutoTextingPanel /><ReminderTrackerPanel /></div>}
+            <RecentAlertsPanel />
           </motion.div>
         )}
       </AnimatePresence>
