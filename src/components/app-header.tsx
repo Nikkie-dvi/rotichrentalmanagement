@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Moon, Sun, Bell, BellOff, BellRing, LogOut, ClipboardCheck, Wrench, UserPlus, UserCog, Building2, Users, Receipt, LayoutDashboard } from "lucide-react";
+import { Moon, Sun, Bell, BellOff, BellRing, LogOut, ClipboardCheck, Wrench, UserPlus, UserCog, MoreVertical, Building2, Users, Receipt, LayoutDashboard } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { AppMenu } from "@/components/app-navigation";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+
 import { supabase } from "@/integrations/supabase/client";
 import { setActiveLandlordId, useIsPropertyManager, useIsSuperAdmin, useLandlordAccount, useManagerLinks } from "@/hooks/use-landlord-account";
 import { useTheme } from "@/lib/theme";
@@ -109,16 +110,15 @@ export function AppHeader() {
 
   return (
     <header
-      className={`sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur ${
-        isManager ? "border-b-2 border-b-amber-500/70" : ""
+      className={`sticky top-0 z-30 mx-auto flex min-h-16 max-w-6xl flex-wrap items-center gap-2 bg-background/95 px-4 py-2 backdrop-blur sm:px-6 ${
+        isManager ? "border-b-2 border-b-warning/70" : ""
       }`}
     >
-      <SidebarTrigger />
-      <Separator orientation="vertical" className="h-6" />
+      <AppMenu />
       <AppLogo className="h-8 w-8 shrink-0" />
       <div className="min-w-0">
         <h1 className="truncate text-base font-semibold leading-tight">
-          {isManager ? "Manager Dashboard" : "Rental Dashboard"}
+          {isManager ? "Rotich Manager" : "Rotich Rental"}
         </h1>
         <p className="hidden truncate text-xs text-muted-foreground sm:block">
           {isManager
@@ -127,7 +127,7 @@ export function AppHeader() {
         </p>
       </div>
       {isManager && (
-        <Badge className="shrink-0 gap-1 bg-amber-500 text-amber-950 hover:bg-amber-500">
+        <Badge className="shrink-0 gap-1 bg-warning text-warning-foreground hover:bg-warning">
           <UserCog className="h-3.5 w-3.5" />
           Manager
         </Badge>
@@ -143,7 +143,7 @@ export function AppHeader() {
             toast.success("Switched landlord");
           }}
         >
-          {showOwn && <option value={ownProps!.userId}>My own properties</option>}
+          {showOwn && ownProps && <option value={ownProps.userId}>My own properties</option>}
           {activeLinks.map((l) => (
             <option key={l.id} value={l.landlord_user_id}>
               {(l.landlord_name ?? "Landlord") + (l.property_names?.length ? ` · ${l.property_names.join(", ")}` : "")}
@@ -151,8 +151,8 @@ export function AppHeader() {
           ))}
         </select>
       )}
-      <div className="ml-auto flex items-center gap-2 overflow-x-auto">
-        {!isManager && <QuickStartGuide audience="landlord" steps={LANDLORD_GUIDE} compact />}
+      <div className="ml-auto flex items-center gap-1">
+        {!isManager && <span className="hidden sm:inline-flex"><QuickStartGuide audience="landlord" steps={LANDLORD_GUIDE} compact /></span>}
         {counts.applications > 0 && (
           <Link to="/applications">
             <Badge className="bg-destructive text-destructive-foreground">
@@ -177,18 +177,6 @@ export function AppHeader() {
             </Badge>
           </Link>
         )}
-        <Badge variant="secondary" className="hidden sm:inline-flex">
-          Units: <span className="ml-1 font-semibold">{summary?.totalUnits ?? 0}</span>
-        </Badge>
-        <Badge variant="secondary" className="hidden md:inline-flex">
-          Occupied: <span className="ml-1 font-semibold">{summary?.occupied ?? 0}</span>
-        </Badge>
-        <Badge className="hidden md:inline-flex bg-primary text-primary-foreground">
-          Collected: <span className="ml-1 font-semibold">{money(summary?.collectedThisMonth ?? 0)}</span>
-        </Badge>
-        <Badge variant="destructive" className="hidden lg:inline-flex">
-          Arrears: <span className="ml-1 font-semibold">{money(summary?.arrears ?? 0)}</span>
-        </Badge>
         <InstallAppButton />
         <Button
           variant="ghost"
@@ -207,12 +195,13 @@ export function AppHeader() {
         >
           <NotifIcon className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
-          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
-        <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out" title="Sign out">
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Account options" title="Account options"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={toggle}>{theme === "dark" ? <Sun /> : <Moon />}Switch theme</DropdownMenuItem>
+            <DropdownMenuItem onClick={signOut}><LogOut />Sign out</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
