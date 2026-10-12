@@ -278,8 +278,6 @@ function MessagesPage() {
                 {picked.length > 0 && <SelectItem value="selected">{picked.length} selected tenant(s)</SelectItem>}
               </SelectContent>
             </Select>
-          </div>
-
           </div>}
 
           {target !== "all" && <div className="grid gap-1.5">
@@ -308,7 +306,7 @@ function MessagesPage() {
             </Select>
           </div>
 
-          <div className="rounded-lg border bg-muted/40 p-3">
+          {target === "property" && <div className="rounded-lg border bg-muted/40 p-3">
             <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
               <span>Units {unitIds.length > 0 ? `(${unitIds.length} selected)` : "(all)"}</span>
               {scopedUnits.length > 0 && (
@@ -348,12 +346,12 @@ function MessagesPage() {
             <p className="mt-2 text-xs text-muted-foreground">
               {scopedTenants.length} tenant(s) in this selection.
             </p>
-          </div>
+          </div>}
 
-          <div className="rounded-lg border bg-muted/40 p-3">
+          {target === "tenants" && <div className="rounded-lg border bg-muted/40 p-3">
             <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
               <span className="flex items-center gap-2">
-                <Users className="h-4 w-4" /> Or pick specific tenants
+                <Users className="h-4 w-4" /> Tick the tenants to message
               </span>
               {scopedTenants.length > 0 && (
                 <label className="flex items-center gap-2 text-xs font-normal">
@@ -391,7 +389,7 @@ function MessagesPage() {
                 Clear selection
               </Button>
             )}
-          </div>
+          </div>}
 
           <div className="flex flex-wrap gap-4 rounded-lg border bg-muted/40 p-3">
             <label className="flex items-center gap-2 text-sm font-medium">
