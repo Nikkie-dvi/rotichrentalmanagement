@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Building2, Users, DollarSign, AlertCircle, Plus, Gauge, FileText, Trash2, Download, MessageSquareText, DoorOpen, ArrowDownLeft, Eye, EyeOff, ReceiptText, Zap, Droplets, Shield, BellRing, Receipt as ReceiptIcon, Loader2 } from "lucide-react";
+import { Building2, Users, DollarSign, AlertCircle, Plus, Gauge, FileText, Trash2, Download, MessageSquareText, DoorOpen, ArrowDownLeft, ChevronRight, Eye, EyeOff, ReceiptText, Zap, Droplets, Shield, BellRing, Receipt as ReceiptIcon, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -330,15 +330,19 @@ function Dashboard() {
           <h2 className="mt-1 text-lg font-semibold">{account?.full_name?.split(" ")[0] ? `${account.full_name.split(" ")[0]}'s rentals` : "My rentals"}</h2>
           <Button variant="ghost" className="mt-1 h-7 gap-1 px-0 text-xs text-muted-foreground" onClick={() => setDrill("units")}><Building2 className="h-3.5 w-3.5" />{stats?.totalUnits ?? 0} units · {stats?.occupancy ?? 0}% occupied</Button>
         </div>
-        <div className="min-w-0 text-right">
-          <p className="text-xs text-muted-foreground">Collected this month</p>
-          <div className="mt-1 flex items-center justify-end gap-1">
-            <Button variant="ghost" className="h-auto whitespace-normal px-0 py-0 text-xl font-semibold sm:text-3xl" onClick={() => setDrill("collected")}>{hideAmount ? "••••••" : money(stats?.collected ?? 0)}</Button>
-            <Button variant="ghost" size="icon-sm" onClick={() => setHideAmount(v => !v)} aria-label={hideAmount ? "Show collected amount" : "Hide collected amount"}>{hideAmount ? <Eye /> : <EyeOff />}</Button>
-          </div>
-          <Button variant="ghost" className="h-7 px-0 text-[11px] text-destructive" onClick={() => setDrill("arrears")}>{money(stats?.arrears ?? 0)} outstanding</Button>
-        </div>
+        <Button variant="ghost" size="icon-sm" onClick={() => setHideAmount(v => !v)} aria-label={hideAmount ? "Show collected amount" : "Hide collected amount"}>{hideAmount ? <Eye /> : <EyeOff />}</Button>
       </section>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Button variant="outline" className="h-auto min-w-0 flex-col items-start gap-3 whitespace-normal rounded-lg border-primary/25 bg-accent/50 p-4 text-left shadow-sm hover:bg-accent" onClick={() => setDrill("collected")} aria-label="Rent collected — open transactions">
+          <span className="flex w-full items-center justify-between gap-2 text-primary"><ArrowDownLeft className="h-5 w-5" /><ChevronRight className="h-4 w-4" /></span>
+          <span className="min-w-0 w-full"><span className="block text-xs font-normal text-muted-foreground">Rent collected</span><span className="mt-1 block break-words text-lg font-semibold sm:text-2xl">{hideAmount ? "••••••" : money(stats?.collected ?? 0)}</span><span className="mt-2 block text-[11px] font-normal text-muted-foreground">This month · Transactions</span></span>
+        </Button>
+        <Button variant="outline" className="h-auto min-w-0 flex-col items-start gap-3 whitespace-normal rounded-lg border-destructive/25 bg-destructive/5 p-4 text-left shadow-sm hover:bg-destructive/10" onClick={() => setDrill("arrears")} aria-label="Outstanding — open arrears">
+          <span className="flex w-full items-center justify-between gap-2 text-destructive"><AlertCircle className="h-5 w-5" /><ChevronRight className="h-4 w-4" /></span>
+          <span className="min-w-0 w-full"><span className="block text-xs font-normal text-muted-foreground">Outstanding</span><span className="mt-1 block break-words text-lg font-semibold sm:text-2xl">{hideAmount ? "••••••" : money(stats?.arrears ?? 0)}</span><span className="mt-2 block text-[11px] font-normal text-muted-foreground">Unpaid rent · Arrears</span></span>
+        </Button>
+      </div>
 
       <div className="grid grid-cols-4 gap-2 sm:gap-5">
         {[

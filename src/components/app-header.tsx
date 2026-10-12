@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { Moon, Sun, Bell, BellOff, BellRing, LogOut, ClipboardCheck, Wrench, UserPlus, UserCog, MoreVertical, Building2, Users, Receipt, LayoutDashboard } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
@@ -46,7 +46,6 @@ const LANDLORD_GUIDE = [
 
 export function AppHeader() {
   const { theme, toggle } = useTheme();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
   const counts = usePendingCounts();
@@ -67,13 +66,6 @@ export function AppHeader() {
     },
   });
   const showOwn = !!ownProps && ownProps.count > 0;
-
-  const signOut = async () => {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  };
 
   useEffect(() => {
     setPerm(notificationPermission());
@@ -199,7 +191,7 @@ export function AppHeader() {
           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Account options" title="Account options"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={toggle}>{theme === "dark" ? <Sun /> : <Moon />}Switch theme</DropdownMenuItem>
-            <DropdownMenuItem onClick={signOut}><LogOut />Sign out</DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/settings/account"><UserCog />My Account</Link></DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
