@@ -210,7 +210,7 @@ function PerformancePage() {
   return (
     <div className="space-y-6">
       {null}
-      <SectionPanel items={FINANCE_TABS}>
+      <SectionPanel items={[]}>
       <div>
         <div className="flex flex-col gap-4 border-b border-border/70 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
