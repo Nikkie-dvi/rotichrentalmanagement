@@ -22,6 +22,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { loadTenantLedgers } from "@/lib/dashboard-ledgers";
+import { HomeExtraCharges } from "@/components/home-extra-charges";
 import { SuggestedShortcuts } from "@/components/suggested-shortcuts";
 import { DashboardFocus } from "@/components/dashboard-focus";
 import { SimplePropertyPerformance } from "@/components/property-performance";
@@ -350,17 +351,7 @@ function Dashboard() {
         </Button>)}
       </div>
 
-      <section>
-        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Extra charges</h2><Button asChild variant="link" className="h-auto p-0 text-xs"><Link to="/billing">View bills</Link></Button></div>
-        <div className="grid grid-cols-4 gap-2 sm:gap-4">
-          {[
-            { label: "Add charges", icon: ReceiptText, tone: "text-primary" },
-            { label: "Water", icon: Droplets, tone: "text-primary" },
-            { label: "Electricity", icon: Zap, tone: "text-warning" },
-            { label: "Service fees", icon: Shield, tone: "text-success" },
-          ].map(item => <Button key={item.label} asChild variant="secondary" className="h-24 min-w-0 flex-col gap-2 whitespace-normal rounded-lg p-2 text-center text-[11px] sm:text-sm"><Link to="/billing"><item.icon className={`!h-7 !w-7 ${item.tone}`} /><span>{item.label}</span></Link></Button>)}
-        </div>
-      </section>
+      <HomeExtraCharges />
 
       <section>
         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Recent transactions</h2><Button asChild variant="link" className="h-auto p-0 text-xs"><Link to={isManager ? "/billing" : "/payments"}>View all</Link></Button></div>
