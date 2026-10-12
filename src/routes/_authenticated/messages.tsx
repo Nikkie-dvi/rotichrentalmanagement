@@ -94,6 +94,7 @@ function MessagesPage() {
   const [docPropertyId, setDocPropertyId] = useState<string>("all");
   const [docUnitIds, setDocUnitIds] = useState<string[]>([]);
   const [mode, setMode] = useState<"send" | "auto" | "alerts">("send");
+  const [target, setTarget] = useState<"all" | "property" | "tenants">("all");
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const a = p.get("audience");
@@ -246,7 +247,19 @@ function MessagesPage() {
         </CardHeader>
         <CardContent className="grid gap-3 pt-4">
           <div className="grid gap-1.5">
-            <Label>Who should get this?</Label>
+            <Label>Send to</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {([["all", "All tenants", Users], ["property", "One apartment", Building2], ["tenants", "Specific tenants", BellRing]] as const).map(([k, label, Icon]) => (
+                <Button key={k} type="button" variant={target === k ? "default" : "outline"} className="h-auto flex-col gap-1 whitespace-normal py-3 text-xs"
+                  onClick={() => { setTarget(k); setPicked([]); setUnitIds([]); if (k === "all") setPropertyId("all"); if (k === "tenants") setAudience("all"); }}>
+                  <Icon className="h-4 w-4" />{label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {target !== "tenants" && <div className="grid gap-1.5">
+            <Label>Which tenants?</Label>
             <Select
               value={picked.length ? "selected" : audience}
               onValueChange={(v) => {
@@ -265,11 +278,11 @@ function MessagesPage() {
                 {picked.length > 0 && <SelectItem value="selected">{picked.length} selected tenant(s)</SelectItem>}
               </SelectContent>
             </Select>
-          </div>
+          </div>}
 
-          <div className="grid gap-1.5">
+          {target !== "all" && <div className="grid gap-1.5">
             <Label className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" /> Property
+              <Building2 className="h-4 w-4" /> {target === "property" ? "Apartment" : "Apartment (optional)"}
             </Label>
             <Select
               value={propertyId}
@@ -291,9 +304,9 @@ function MessagesPage() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </div>}
 
-          <div className="rounded-lg border bg-muted/40 p-3">
+          {target === "property" && <div className="rounded-lg border bg-muted/40 p-3">
             <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
               <span>Units {unitIds.length > 0 ? `(${unitIds.length} selected)` : "(all)"}</span>
               {scopedUnits.length > 0 && (
@@ -333,12 +346,12 @@ function MessagesPage() {
             <p className="mt-2 text-xs text-muted-foreground">
               {scopedTenants.length} tenant(s) in this selection.
             </p>
-          </div>
+          </div>}
 
-          <div className="rounded-lg border bg-muted/40 p-3">
+          {target === "tenants" && <div className="rounded-lg border bg-muted/40 p-3">
             <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
               <span className="flex items-center gap-2">
-                <Users className="h-4 w-4" /> Or pick specific tenants
+                <Users className="h-4 w-4" /> Tick the tenants to message
               </span>
               {scopedTenants.length > 0 && (
                 <label className="flex items-center gap-2 text-xs font-normal">
@@ -376,7 +389,7 @@ function MessagesPage() {
                 Clear selection
               </Button>
             )}
-          </div>
+          </div>}
 
           <div className="flex flex-wrap gap-4 rounded-lg border bg-muted/40 p-3">
             <label className="flex items-center gap-2 text-sm font-medium">

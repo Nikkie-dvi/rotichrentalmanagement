@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, Clock, FileDown, Gauge, Wrench } from "lucide-react";
-import { SectionSwitcher, SectionPanel, FINANCE_TABS } from "@/components/section-switcher";
+import { SectionPanel } from "@/components/section-switcher";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/types";
 import { unitTypeLabel } from "@/lib/unit-types";
+import { KpiOverview } from "@/components/kpi-overview";
 import { PortfolioReports, thisMonth } from "@/components/portfolio-reports";
 import { compareCollections, comparisonPeriod } from "@/lib/collection-comparison";
 
@@ -208,8 +209,8 @@ function PerformancePage() {
 
   return (
     <div className="space-y-6">
-      <SectionSwitcher items={FINANCE_TABS} />
-      <SectionPanel items={FINANCE_TABS}>
+      {null}
+      <SectionPanel items={[]}>
       <div>
         <div className="flex flex-col gap-4 border-b border-border/70 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -384,6 +385,7 @@ function PerformancePage() {
           </div>
         </CardContent>
       </Card>
+      <KpiOverview />
       <PortfolioReports month={month} onMonthChange={setMonth} />
 
       <Card className="glass-card">

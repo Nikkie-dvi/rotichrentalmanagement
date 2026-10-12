@@ -342,7 +342,7 @@ function Dashboard() {
 
       <div className="grid grid-cols-4 gap-2 sm:gap-5">
         {[
-          { label: "Log payment", icon: Plus, url: "/payments", hash: "log-payment" },
+          { label: "Log payment", icon: Plus, url: "/payments" },
           { label: "Message tenants", icon: MessageSquareText, url: "/messages", hash: undefined },
           { label: "Add property", icon: Building2, url: "/properties", hash: "add-property" },
           { label: "Add units", icon: DoorOpen, url: "/properties", hash: "add-unit" },
@@ -365,17 +365,7 @@ function Dashboard() {
         </div>
       </section>
 
-      <details className="border-t pt-4">
-        <summary className="cursor-pointer text-sm font-semibold">Rental overview</summary>
-        <div className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{kpis.map(k => <Button key={k.key} variant="secondary" className="h-auto flex-col items-start whitespace-normal p-3 text-left" onClick={() => setDrill(k.key)}><span className="text-xs text-muted-foreground">{k.label}</span><span className="text-lg font-semibold">{k.value}</span></Button>)}</div>
-          <KpiOverview />
-          <DashboardFocus collected={stats?.collected ?? 0} />
-          <SimplePropertyPerformance arrearsByTenant={arrearsByTenant ?? new Map()} />
-          <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/meters"><Gauge />Add meter reading</Link></Button><Button asChild variant="outline"><Link to="/billing"><FileText />Generate monthly bills</Link></Button><Button asChild variant="outline"><Link to="/performance" hash="reports"><Download />Portfolio reports</Link></Button></div>
-          <SuggestedShortcuts />
-        </div>
-      </details>
+      <Button asChild variant="outline" className="w-full"><Link to="/performance">View portfolio & analytics</Link></Button>
 
       <Dialog open={drill !== null} onOpenChange={(o) => !o && setDrill(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
