@@ -304,7 +304,7 @@ function MessagesPage() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </div>}
 
           {target === "property" && <div className="rounded-lg border bg-muted/40 p-3">
             <div className="mb-2 flex items-center justify-between gap-2 text-sm font-medium">
