@@ -13,10 +13,9 @@ export const FINANCE_TABS: SwitcherItem[] = [
   { label: "Payments", url: "/payments" },
 ];
 
-/** Lease group — the signed agreements and the template that produces them. */
+/** Lease agreements only; template editing lives in My Account. */
 export const LEASE_TABS: SwitcherItem[] = [
   { label: "Agreements", url: "/leases" },
-  { label: "Template", url: "/settings/lease" },
 ];
 
 /** Main-account group — company analytics, landlord accounts and branding. */

@@ -96,11 +96,11 @@ export const sections: NavSection[] = [
         matches: ["/tenants", "/applications"],
       },
       {
-        title: "Leases & Templates",
-        description: "Contracts & legal templates",
+        title: "Lease agreements",
+        description: "Signed & pending agreements",
         url: "/leases",
         icon: FileSignature,
-        matches: ["/leases", "/settings/lease"],
+        matches: ["/leases"],
       },
       { title: "Rent Calendar", description: "Payment schedules", url: "/calendar", icon: CalendarDays },
     ],
@@ -124,13 +124,6 @@ export const sections: NavSection[] = [
         matches: ["/payments", "/settings/payments"],
         landlordOnly: true,
       },
-      {
-        title: "Late Fees & Collections",
-        description: "Penalties & alert logs",
-        url: "/settings/billing",
-        icon: ShieldCheck,
-        landlordOnly: true,
-      },
     ],
   },
   {
@@ -139,14 +132,13 @@ export const sections: NavSection[] = [
     items: [
       {
         title: "My Account",
-        description: "Code, subscription & profile",
+        description: "Profile, subscription & rental settings",
         url: "/settings/account",
         icon: UserRound,
-        landlordOnly: true,
       },
       {
         title: "SMS Tenants",
-        description: "Texts, notices & auto reminders",
+        description: "Texts, notices & delivery history",
         url: "/messages",
         icon: MessageSquareText,
       },

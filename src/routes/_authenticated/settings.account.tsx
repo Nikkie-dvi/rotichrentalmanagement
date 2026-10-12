@@ -23,14 +23,15 @@ import {
 import { money } from "@/lib/types";
 import { SmsCreditCard } from "@/components/sms-credit-card";
 import { VacancyNotices } from "@/components/vacancy-notices";
+import { AccountControls, AccountLogout } from "@/components/account-controls";
 
 export const Route = createFileRoute("/_authenticated/settings/account")({
   head: () => ({
     meta: [
       { title: "My Account — Rotich Rental Management" },
-      { name: "description", content: "View your landlord code, profile, subscription status and billing details." },
+      { name: "description", content: "Manage your profile, subscription, automatic invoicing, late fees, lease template and tenant texting." },
       { property: "og:title", content: "My Account — Rotich Rental Management" },
-      { property: "og:description", content: "View your landlord code, profile, subscription status and billing details." },
+      { property: "og:description", content: "Your rental settings, tenant texting, lease template and account details in one place." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -53,7 +54,7 @@ function AccountPage() {
   const statusTone = subscription.tone === "active" ? "default" : subscription.tone === "due" ? "secondary" : "destructive";
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-5">
       <div>
         <h2 className="text-2xl font-bold">My Account</h2>
         <p className="text-sm text-muted-foreground">Your landlord profile, tenant access code, and subscription details.</p>
@@ -120,8 +121,10 @@ function AccountPage() {
         </CardContent>
       </Card>
 
+      <AccountControls />
       <SmsCreditCard />
       <VacancyNotices />
+      <AccountLogout />
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <CheckCircle2 className="h-4 w-4 text-primary" /> Account information is visible only to the landlord.
@@ -238,7 +241,9 @@ function ManagerAccountView() {
           ))}
         </CardContent>
       </Card>
+      <AccountControls manager />
       <VacancyNotices />
+      <AccountLogout />
     </div>
   );
 }
