@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, UserRound } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -40,6 +40,8 @@ export const Route = createFileRoute("/_authenticated/properties")({
       { name: "description", content: "Manage buildings and rental units, monthly rent and occupancy status." },
       { property: "og:title", content: "Properties & Units — Rotich Management Systems" },
       { property: "og:description", content: "Manage buildings and rental units." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   // Warm the cache on hover/touch so the tab paints instantly when opened.
@@ -53,9 +55,14 @@ export const Route = createFileRoute("/_authenticated/properties")({
 
 function PropertiesPage() {
   const qc = useQueryClient();
+  const actionHash = useRouterState({ select: state => state.location.hash });
   const [propOpen, setPropOpen] = useState(false);
   const [unitOpen, setUnitOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  useEffect(() => {
+    if (actionHash === "add-property") setPropOpen(true);
+    if (actionHash === "add-unit") setUnitOpen(true);
+  }, [actionHash]);
   // Property managers work read-only here: they cannot add, edit or delete stock.
   const isManager = useIsPropertyManager();
   const { data: account } = useLandlordAccount();
