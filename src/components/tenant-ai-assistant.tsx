@@ -42,6 +42,7 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
   const [rename, setRename] = useState<{ tenantId: string; from: string; to: string } | null>(null);
   const [picked, setPicked] = useState(false);
   const [history, setHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [quickReplies, setQuickReplies] = useState<string[]>([]);
   const renameFn = useServerFn(renameTenantToPayer);
   const saveRename = async () => {
     if (!rename) return;
@@ -83,17 +84,18 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
     queryFn: async () => (await supabase.from("tenants").select("id, full_name, units(unit_number)").eq("active", true).order("full_name")).data ?? [],
   });
 
-  const run = async (forTenant?: string) => {
+  const run = async (forTenant?: string, text?: string) => {
+    const q = text ?? question;
     const tid = forTenant ?? tenantId;
-    if (!tid && !question.trim()) return setError("Paste an M-Pesa message or describe the problem.");
-    setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setSubmitted(question || "Summarize this tenant's account");
+    if (!tid && !q.trim()) return setError("Paste an M-Pesa message or describe the problem.");
+    setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setQuickReplies([]); setSubmitted(q || "Summarize this tenant's account");
     try {
-      const r: any = await ask({ data: { tenantId: tid || null, question, history: history.slice(-10) } });
+      const r: any = await ask({ data: { tenantId: tid || null, question: q, history: history.slice(-10) } });
       if (r.ok) {
         setTenantId(r.tenantId);
-        setHistory((h) => [...h, { role: "user" as const, content: question || "Summarize this tenant's account" }, { role: "assistant" as const, content: String(r.text).slice(0, 3900) }].slice(-10));
+        setHistory((h) => [...h, { role: "user" as const, content: q || "Summarize this tenant's account" }, { role: "assistant" as const, content: String(r.text).slice(0, 3900) }].slice(-10));
         setQuestion("");
-        setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null);
+        setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null); setQuickReplies(Array.isArray(r.quickReplies) ? r.quickReplies : []);
         const norm = (x: string) => x.toLowerCase().replace(/\s+/g, " ").trim();
         if (forTenant && r.payerName && norm(r.payerName) !== norm(r.tenantName ?? "")) setRename({ tenantId: r.tenantId, from: r.tenantName, to: r.payerName.replace(/\b\w+/g, (w: string) => w[0]!.toUpperCase() + w.slice(1).toLowerCase()) });
       } else { setError(r.error); if (r.needTenant) setCandidates(r.candidates ?? []); }
