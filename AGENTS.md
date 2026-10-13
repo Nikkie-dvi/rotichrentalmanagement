@@ -19,3 +19,4 @@
 - Resolve recharge payment phones from the authenticated account server-side and claim rate limits atomically before requests; shared registered-phone presentation and database locks prevent arbitrary recipients and concurrent prompt spam.
 - Use shared bottom navigation and an all-pages menu sourced from the existing sidebar inventory, preserving role filtering; homepage shortcuts reuse existing payment, property, messaging and invoice-charge workflows without duplicating business logic.
 - Mount rental configuration in focused My Account panels and redirect legacy settings URLs there; a single settings surface avoids duplicate controls while preserving saved rules and service calls.
+- Keep History visualizations in focused presentation components fed by the existing performance query and collection-comparison helper; dynamically load the Three.js building after hydration to keep browser graphics outside SSR.

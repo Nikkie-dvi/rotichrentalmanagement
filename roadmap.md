@@ -20,6 +20,7 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
+- [x] Redesign History with screenshot-inspired collection graphs, payment timing statistics and an interactive building; authenticated tabs, month selection, phone/desktop layout and comparison tests verified without recording payments or sending texts.
 - [x] Consolidate invoicing, late fees, lease template, automatic texting and logout in My Account; verified phone/desktop panels, legacy redirects, balance cards and logout with sample data, no texts or account changes.
 - [x] Refresh homepage with screenshot-inspired rental shortcuts, extra charges, transactions and bottom tabs; preserve existing actions and all-pages role filtering. Verified desktop/phone, light/dark, navigation and existing forms using sample data without changing real accounts.
 - [x] Modernize SMS recharge and subscription payment windows; prompts resolve the saved account phone server-side, with atomic cooldown/hourly limits and simulated desktop/phone checks without sending payments.
