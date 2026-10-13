@@ -36,8 +36,8 @@ export function PortfolioBuilding({ units }: { units: BuildingUnit[] }) {
       const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
       camera.position.set(6, 4.5, 8);
       camera.lookAt(0, 0.3, 0);
-      scene.add(new THREE.AmbientLight(token("--foreground"), 2.2));
-      const light = new THREE.DirectionalLight(token("--foreground"), 4);
+      scene.add(new THREE.AmbientLight(token("--building-light"), 2.2));
+      const light = new THREE.DirectionalLight(token("--building-light"), 4);
       light.position.set(4, 8, 5); scene.add(light);
       const building = new THREE.Group(); scene.add(building);
       const materials: InstanceType<typeof THREE.MeshStandardMaterial>[] = [];
