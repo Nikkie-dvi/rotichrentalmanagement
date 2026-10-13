@@ -131,3 +131,13 @@ export const confirmAssistantCorrection = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, result };
   });
+
+/** After landlord confirmation, rename a tenant to match the name on their M-Pesa payments. */
+export const renameTenantToPayer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ tenantId: z.string().uuid(), name: z.string().trim().min(2).max(80) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.from("tenants").update({ full_name: data.name }).eq("id", data.tenantId).select("id").maybeSingle();
+    if (error || !row) throw new Error("Could not update the tenant's name.");
+    return { ok: true };
+  });
