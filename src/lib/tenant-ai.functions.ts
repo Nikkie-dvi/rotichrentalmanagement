@@ -87,6 +87,14 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       );
       let text = (await result.text).trim();
       if (!text) return { ok: false as const, error: "The assistant couldn't answer that. Try again later." };
+      let quickReplies: string[] = [];
+      const qr = text.match(/QUICK_REPLIES:\s*(\[[^\n]*\])/);
+      if (qr) {
+        text = text.replace(qr[0], "").trim();
+        try {
+          quickReplies = z.array(z.string().trim().min(1).max(30)).max(4).parse(JSON.parse(qr[1] ?? "[]"));
+        } catch { /* ignore malformed quick replies */ }
+      }
       let payment: { amount: number; date: string; reference: string | null; method: string; duplicate: boolean } | null = null;
       let correction: { paymentId: string; oldAmount: number; amount: number; date: string; reason: string } | null = null;
       const correctionMatch = text.match(/CORRECTION_JSON:\s*(\{[^\n]*\})/);
