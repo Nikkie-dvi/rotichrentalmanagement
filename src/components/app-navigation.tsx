@@ -7,6 +7,9 @@ import { sections } from "@/components/app-sidebar";
 import { useIsPropertyManager, useIsSuperAdmin } from "@/hooks/use-landlord-account";
 import { usePendingCounts } from "@/hooks/use-pending-counts";
 
+// Home shortcuts and persistent bottom tabs already provide these destinations.
+const homeAccessiblePages = new Set(["/", "/properties", "/messages", "/payments", "/billing", "/tenants", "/performance", "/settings/account"]);
+
 export function AppMenu() {
   const [open, setOpen] = useState(false);
   const isManager = useIsPropertyManager();
@@ -18,7 +21,7 @@ export function AppMenu() {
     <DialogContent className="max-h-[85svh] max-w-lg overflow-y-auto">
       <DialogHeader><DialogTitle>All pages</DialogTitle></DialogHeader>
       <div className="space-y-4">{sections.map(section => {
-        const items = section.items.filter(item => (!item.landlordOnly || !isManager) && (!item.superOnly || isSuper));
+        const items = section.items.filter(item => !homeAccessiblePages.has(item.url) && (!item.landlordOnly || !isManager) && (!item.superOnly || isSuper));
         return items.length > 0 && <section key={section.id}>
           <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{section.label}</h3>
           <div className="grid gap-1 sm:grid-cols-2">{items.map(item => <Button key={item.url} asChild variant={(item.matches ?? [item.url]).includes(pathname) ? "secondary" : "ghost"} className="h-11 justify-start whitespace-normal text-left text-xs">
