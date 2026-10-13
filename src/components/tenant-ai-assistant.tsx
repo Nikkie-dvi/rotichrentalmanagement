@@ -41,6 +41,7 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
   const [candidates, setCandidates] = useState<{ id: string; name: string; unit: string | null; score: number }[] | null>(null);
   const [rename, setRename] = useState<{ tenantId: string; from: string; to: string } | null>(null);
   const [picked, setPicked] = useState(false);
+  const [history, setHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const renameFn = useServerFn(renameTenantToPayer);
   const saveRename = async () => {
     if (!rename) return;
@@ -87,8 +88,11 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
     if (!tid && !question.trim()) return setError("Paste an M-Pesa message or describe the problem.");
     setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setSubmitted(question || "Summarize this tenant's account");
     try {
-      const r: any = await ask({ data: { tenantId: tid || null, question } });
+      const r: any = await ask({ data: { tenantId: tid || null, question, history: history.slice(-10) } });
       if (r.ok) {
+        setTenantId(r.tenantId);
+        setHistory((h) => [...h, { role: "user" as const, content: question || "Summarize this tenant's account" }, { role: "assistant" as const, content: String(r.text).slice(0, 3900) }].slice(-10));
+        setQuestion("");
         setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null);
         const norm = (x: string) => x.toLowerCase().replace(/\s+/g, " ").trim();
         if (forTenant && r.payerName && norm(r.payerName) !== norm(r.tenantName ?? "")) setRename({ tenantId: r.tenantId, from: r.tenantName, to: r.payerName.replace(/\b\w+/g, (w: string) => w[0]!.toUpperCase() + w.slice(1).toLowerCase()) });
@@ -101,7 +105,7 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
   const body = (
       <div className="grid min-w-0 gap-3">
 
-        {(picked || tenantId) && <Select value={tenantId} onValueChange={(v) => { setTenantId(v); setAnswer(null); setPayment(null); setCorrection(null); setSubmitted(""); }} disabled={busy || saving}>
+        {(picked || tenantId) && <Select value={tenantId} onValueChange={(v) => { setTenantId(v); setHistory([]); setAnswer(null); setPayment(null); setCorrection(null); setSubmitted(""); }} disabled={busy || saving}>
           <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Tenant (optional)" /></SelectTrigger>
           <SelectContent>
             {(tenants as any[]).map((t) => (
