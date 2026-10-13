@@ -126,7 +126,7 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
           }
         } catch { /* ignore malformed */ }
       }
-      return { ok: true as const, text, payment, correction, tenantId: tid, tenantName: tenant.full_name };
+      return { ok: true as const, text, payment, correction, quickReplies, tenantId: tid, tenantName: tenant.full_name };
     } catch (e: any) {
       const status = e?.statusCode ?? e?.status ?? e?.lastError?.statusCode;
       console.error("tenant assistant failed", status, e?.message);
