@@ -72,7 +72,8 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       'For an explicit correction of an EXISTING recorded payment, NEVER output PAYMENT_JSON. Only if exactly one payment in the account matches the date, reference or recorded amount, end with CORRECTION_JSON: {"paymentId":"existing UUID", "amount":2500, "reason":"short reason"}. Amount is the corrected total, not a difference. If ambiguous ask which date/reference; do not guess. No mutation has happened; the landlord must confirm. For refunds explain that actual transfers are unavailable until an M-Pesa B2C/Reversal provider is connected. Never propose a payment/correction to imitate a refund or claim money was transferred.\n' +
       "PROBLEM SOLVING: the landlord may describe a recording mistake (e.g. 'tenant joined in January and paid 6 months upfront but I recorded it wrong'). Act like a careful bookkeeper: compare what SHOULD be on the account (move-in date, rent x months, what the tenant says they paid) with the recorded invoices, payments and ledger; explain in plain words what is wrong and the exact fix. " +
       "When information is missing, ask ONE short step-by-step question at a time (e.g. 'When did the tenant move in?', 'How many months ahead did they pay, and how much in total?') instead of guessing; you may skip the Summary section while asking. Once you know, compare against the records: tell the landlord clearly if a payment looks recorded TWICE (same amount and date/reference), or recorded SHORT (e.g. 'recorded short by 2 months = KES 20,000'), then offer the fix as a question, e.g. 'Should I record the missing 2 months (KES 20,000) so the account is correct?' with the matching PAYMENT_JSON. For a duplicate, explain it and offer a CORRECTION_JSON only if a single payment covers it; otherwise say which entry to remove. " +
-      "Propose only ONE fix per reply: either a CORRECTION_JSON for a wrong recorded amount, or a PAYMENT_JSON for a missing payment (use the actual date it was paid). If several steps are needed, propose the first and say what comes next after confirming. Never claim anything was changed — every fix waits for the landlord's confirmation.";
+      "Propose only ONE fix per reply: either a CORRECTION_JSON for a wrong recorded amount, or a PAYMENT_JSON for a missing payment (use the actual date it was paid). If several steps are needed, propose the first and say what comes next after confirming. Never claim anything was changed — every fix waits for the landlord's confirmation.\n" +
+      "QUICK REPLIES: end EVERY reply with one final line exactly: QUICK_REPLIES: [\"<reply 1>\", \"<reply 2>\"] with 1-4 short buttons (max 30 chars each) the landlord can tap to answer or act. Match them to what you just asked or offered: when offering a fix use [\"Yes, fix it\", \"Not now\"]; when asking a question offer the likely answers (e.g. [\"It was intentional\", \"It was a mistake\"], [\"2 months\", \"3 months\", \"Not sure\"]); for a plain summary use [\"What should I do next?\"]. When the landlord taps a fix reply such as 'Yes, fix it', respond with the matching PAYMENT_JSON or CORRECTION_JSON so they can confirm.";
     try {
       const { result } = createResponsesCall(
         getRequest(),
@@ -86,6 +87,14 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       );
       let text = (await result.text).trim();
       if (!text) return { ok: false as const, error: "The assistant couldn't answer that. Try again later." };
+      let quickReplies: string[] = [];
+      const qr = text.match(/QUICK_REPLIES:\s*(\[[^\n]*\])/);
+      if (qr) {
+        text = text.replace(qr[0], "").trim();
+        try {
+          quickReplies = z.array(z.string().trim().min(1).max(30)).max(4).parse(JSON.parse(qr[1] ?? "[]"));
+        } catch { /* ignore malformed quick replies */ }
+      }
       let payment: { amount: number; date: string; reference: string | null; method: string; duplicate: boolean } | null = null;
       let correction: { paymentId: string; oldAmount: number; amount: number; date: string; reason: string } | null = null;
       const correctionMatch = text.match(/CORRECTION_JSON:\s*(\{[^\n]*\})/);
@@ -117,7 +126,7 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
           }
         } catch { /* ignore malformed */ }
       }
-      return { ok: true as const, text, payment, correction, tenantId: tid, tenantName: tenant.full_name };
+      return { ok: true as const, text, payment, correction, quickReplies, tenantId: tid, tenantName: tenant.full_name };
     } catch (e: any) {
       const status = e?.statusCode ?? e?.status ?? e?.lastError?.statusCode;
       console.error("tenant assistant failed", status, e?.message);

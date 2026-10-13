@@ -42,6 +42,7 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
   const [rename, setRename] = useState<{ tenantId: string; from: string; to: string } | null>(null);
   const [picked, setPicked] = useState(false);
   const [history, setHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [quickReplies, setQuickReplies] = useState<string[]>([]);
   const renameFn = useServerFn(renameTenantToPayer);
   const saveRename = async () => {
     if (!rename) return;
@@ -83,17 +84,18 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
     queryFn: async () => (await supabase.from("tenants").select("id, full_name, units(unit_number)").eq("active", true).order("full_name")).data ?? [],
   });
 
-  const run = async (forTenant?: string) => {
+  const run = async (forTenant?: string, text?: string) => {
+    const q = text ?? question;
     const tid = forTenant ?? tenantId;
-    if (!tid && !question.trim()) return setError("Paste an M-Pesa message or describe the problem.");
-    setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setSubmitted(question || "Summarize this tenant's account");
+    if (!tid && !q.trim()) return setError("Paste an M-Pesa message or describe the problem.");
+    setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setQuickReplies([]); setSubmitted(q || "Summarize this tenant's account");
     try {
-      const r: any = await ask({ data: { tenantId: tid || null, question, history: history.slice(-10) } });
+      const r: any = await ask({ data: { tenantId: tid || null, question: q, history: history.slice(-10) } });
       if (r.ok) {
         setTenantId(r.tenantId);
-        setHistory((h) => [...h, { role: "user" as const, content: question || "Summarize this tenant's account" }, { role: "assistant" as const, content: String(r.text).slice(0, 3900) }].slice(-10));
+        setHistory((h) => [...h, { role: "user" as const, content: q || "Summarize this tenant's account" }, { role: "assistant" as const, content: String(r.text).slice(0, 3900) }].slice(-10));
         setQuestion("");
-        setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null);
+        setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null); setQuickReplies(Array.isArray(r.quickReplies) ? r.quickReplies : []);
         const norm = (x: string) => x.toLowerCase().replace(/\s+/g, " ").trim();
         if (forTenant && r.payerName && norm(r.payerName) !== norm(r.tenantName ?? "")) setRename({ tenantId: r.tenantId, from: r.tenantName, to: r.payerName.replace(/\b\w+/g, (w: string) => w[0]!.toUpperCase() + w.slice(1).toLowerCase()) });
       } else { setError(r.error); if (r.needTenant) setCandidates(r.candidates ?? []); }
@@ -105,7 +107,7 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
   const body = (
       <div className="grid min-w-0 gap-3">
 
-        {(picked || tenantId) && <Select value={tenantId} onValueChange={(v) => { setTenantId(v); setHistory([]); setAnswer(null); setPayment(null); setCorrection(null); setSubmitted(""); }} disabled={busy || saving}>
+        {(picked || tenantId) && <Select value={tenantId} onValueChange={(v) => { setTenantId(v); setHistory([]); setAnswer(null); setPayment(null); setCorrection(null); setSubmitted(""); setQuickReplies([]); }} disabled={busy || saving}>
           <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Tenant (optional)" /></SelectTrigger>
           <SelectContent>
             {(tenants as any[]).map((t) => (
@@ -125,6 +127,7 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
         {candidates && candidates.length > 0 && <div className="grid gap-2 rounded-lg border border-border p-3 text-sm"><p className="font-medium">Pick the tenant who paid</p><div className="flex flex-wrap gap-2">{candidates.map((c) => <Button key={c.id} size="sm" variant={c.score > 0 ? "default" : "outline"} disabled={busy} onClick={() => { setTenantId(c.id); run(c.id); }}>{c.name}{c.unit ? ` · ${c.unit}` : ""}</Button>)}</div><button type="button" className="justify-self-start text-xs text-muted-foreground hover:underline" onClick={() => { setCandidates(null); setPicked(true); }}>Not listed? Choose from all tenants</button></div>}
         {rename && <div className="grid gap-2 rounded-lg border border-primary/40 bg-accent/30 p-3 text-sm"><p>The M-Pesa name is <strong>{rename.to}</strong> but this tenant is saved as <strong>{rename.from}</strong>. Switch the tenant's name so future payments match automatically?</p><div className="flex gap-2"><Button size="sm" onClick={saveRename} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Switch to {rename.to}</Button><Button size="sm" variant="ghost" disabled={saving} onClick={() => setRename(null)}>Keep {rename.from}</Button></div></div>}
         {answer && <div className="border-l-2 border-primary pl-3 py-2 break-words"><Rendered text={answer} /></div>}
+        {!busy && quickReplies.length > 0 && <div className="flex flex-wrap gap-2">{quickReplies.map((r) => <Button key={r} size="sm" variant="outline" className="rounded-full border-primary/40 text-primary hover:bg-primary/10" disabled={saving} onClick={() => { setQuestion(""); run(undefined, r); }}>{r}</Button>)}</div>}
         {correction && <div className="grid gap-2 rounded-lg border border-primary/40 bg-accent/30 p-3 text-sm"><div className="flex items-center gap-2 font-medium"><ShieldCheck className="h-4 w-4 text-primary" /> Confirm correction for {correction.tenantName}</div><p>{correction.date} · {money(correction.oldAmount)} → {money(correction.amount)}</p><p className="text-muted-foreground">{correction.reason}</p><p className="text-xs text-muted-foreground">Invoice balances will be recalculated. No money will be transferred.</p><div className="flex flex-wrap gap-2"><Button size="sm" onClick={saveCorrection} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Confirm correction</Button><Button size="sm" variant="ghost" disabled={saving} onClick={() => setCorrection(null)}>Cancel</Button></div></div>}
         {payment && (
           <div className="grid gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
