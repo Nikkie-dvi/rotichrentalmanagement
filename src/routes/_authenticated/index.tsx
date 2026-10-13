@@ -334,13 +334,13 @@ function Dashboard() {
       </section>
 
       <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" className="h-auto min-w-0 flex-col items-start gap-3 whitespace-normal rounded-lg border-primary/25 bg-accent/50 p-4 text-left shadow-sm hover:bg-accent" onClick={() => setDrill("collected")} aria-label="Rent collected — open transactions">
-          <span className="flex w-full items-center justify-between gap-2 text-primary"><ArrowDownLeft className="h-5 w-5" /><ChevronRight className="h-4 w-4" /></span>
-          <span className="min-w-0 w-full"><span className="block text-xs font-normal text-muted-foreground">Rent collected</span><span className="mt-1 block break-words text-lg font-semibold sm:text-2xl">{hideAmount ? "••••••" : money(stats?.collected ?? 0)}</span><span className="mt-2 block text-[11px] font-normal text-muted-foreground">This month · Transactions</span></span>
+        <Button variant="outline" className="h-auto min-w-0 flex-col items-start gap-1 whitespace-normal rounded-lg border-primary/25 bg-accent/50 px-3 pb-3 pt-2 text-left shadow-sm hover:bg-accent" onClick={() => setDrill("collected")} aria-label="Rent collected — open transactions">
+          <span className="flex w-full items-center justify-between gap-2 text-primary"><ArrowDownLeft className="h-4 w-4" /><ChevronRight className="h-4 w-4" /></span>
+          <span className="min-w-0 w-full"><span className="block text-xs font-normal text-muted-foreground">Rent collected</span><span className="mt-0.5 block break-words text-lg font-semibold sm:text-2xl">{hideAmount ? "••••••" : money(stats?.collected ?? 0)}</span><span className="mt-1 block text-[11px] font-normal text-muted-foreground">This month · Transactions</span></span>
         </Button>
-        <Button variant="outline" className="h-auto min-w-0 flex-col items-start gap-3 whitespace-normal rounded-lg border-destructive/25 bg-destructive/5 p-4 text-left shadow-sm hover:bg-destructive/10" onClick={() => setDrill("arrears")} aria-label="Outstanding — open arrears">
-          <span className="flex w-full items-center justify-between gap-2 text-destructive"><AlertCircle className="h-5 w-5" /><ChevronRight className="h-4 w-4" /></span>
-          <span className="min-w-0 w-full"><span className="block text-xs font-normal text-muted-foreground">Outstanding</span><span className="mt-1 block break-words text-lg font-semibold sm:text-2xl">{hideAmount ? "••••••" : money(stats?.arrears ?? 0)}</span><span className="mt-2 block text-[11px] font-normal text-muted-foreground">Unpaid rent · Arrears</span></span>
+        <Button variant="outline" className="h-auto min-w-0 flex-col items-start gap-1 whitespace-normal rounded-lg border-destructive/25 bg-destructive/5 px-3 pb-3 pt-2 text-left shadow-sm hover:bg-destructive/10" onClick={() => setDrill("arrears")} aria-label="Outstanding — open arrears">
+          <span className="flex w-full items-center justify-between gap-2 text-destructive"><AlertCircle className="h-4 w-4" /><ChevronRight className="h-4 w-4" /></span>
+          <span className="min-w-0 w-full"><span className="block text-xs font-normal text-muted-foreground">Outstanding</span><span className="mt-0.5 block break-words text-lg font-semibold sm:text-2xl">{hideAmount ? "••••••" : money(stats?.arrears ?? 0)}</span><span className="mt-1 block text-[11px] font-normal text-muted-foreground">Unpaid rent · Arrears</span></span>
         </Button>
       </div>
 
