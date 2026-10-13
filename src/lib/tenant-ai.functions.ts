@@ -8,7 +8,7 @@ import { accruedRent, buildLedger, businessTodayIso } from "@/lib/ledger";
 
 export const askTenantAssistant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ tenantId: z.string().uuid().optional().nullable(), question: z.string().trim().max(2000) }).parse(d))
+  .inputValidator((d) => z.object({ tenantId: z.string().uuid().optional().nullable(), question: z.string().trim().max(2000), history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(4000) })).max(12).optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase;
     let tenantId = data.tenantId ?? null;
@@ -71,12 +71,17 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       "using the date in the message (or today). In that case the Next step is to confirm recording it. Never output PAYMENT_JSON otherwise.\n" +
       'For an explicit correction of an EXISTING recorded payment, NEVER output PAYMENT_JSON. Only if exactly one payment in the account matches the date, reference or recorded amount, end with CORRECTION_JSON: {"paymentId":"existing UUID", "amount":2500, "reason":"short reason"}. Amount is the corrected total, not a difference. If ambiguous ask which date/reference; do not guess. No mutation has happened; the landlord must confirm. For refunds explain that actual transfers are unavailable until an M-Pesa B2C/Reversal provider is connected. Never propose a payment/correction to imitate a refund or claim money was transferred.\n' +
       "PROBLEM SOLVING: the landlord may describe a recording mistake (e.g. 'tenant joined in January and paid 6 months upfront but I recorded it wrong'). Act like a careful bookkeeper: compare what SHOULD be on the account (move-in date, rent x months, what the tenant says they paid) with the recorded invoices, payments and ledger; explain in plain words what is wrong and the exact fix. " +
+      "When information is missing, ask ONE short step-by-step question at a time (e.g. 'When did the tenant move in?', 'How many months ahead did they pay, and how much in total?') instead of guessing; you may skip the Summary section while asking. Once you know, compare against the records: tell the landlord clearly if a payment looks recorded TWICE (same amount and date/reference), or recorded SHORT (e.g. 'recorded short by 2 months = KES 20,000'), then offer the fix as a question, e.g. 'Should I record the missing 2 months (KES 20,000) so the account is correct?' with the matching PAYMENT_JSON. For a duplicate, explain it and offer a CORRECTION_JSON only if a single payment covers it; otherwise say which entry to remove. " +
       "Propose only ONE fix per reply: either a CORRECTION_JSON for a wrong recorded amount, or a PAYMENT_JSON for a missing payment (use the actual date it was paid). If several steps are needed, propose the first and say what comes next after confirming. Never claim anything was changed — every fix waits for the landlord's confirmation.";
     try {
       const { result } = createResponsesCall(
         getRequest(),
         { baseURL: "https://ai.gateway.lovable.dev/v1", apiKey, model: "openai/gpt-6-astra" },
-        [{ role: "user", content: `Account data:\n${account}\n\nLandlord's question: ${question}` }],
+        [
+          { role: "user", content: `Account data:\n${account}` },
+          ...(data.history ?? []).map((h) => ({ role: h.role, content: h.content })),
+          { role: "user", content: `Landlord: ${question}` },
+        ],
         instructions,
       );
       let text = (await result.text).trim();
