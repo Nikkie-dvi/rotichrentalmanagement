@@ -12,21 +12,32 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase;
     let tenantId = data.tenantId ?? null;
+    // Name of the payer in a pasted M-Pesa message, e.g. "received from JOHN DOE 0712…".
+    const payerName = (data.question.match(/\bfrom\s+([A-Za-z][A-Za-z'.-]+(?:\s+[A-Za-z][A-Za-z'.-]+){0,3})/i)?.[1] ?? "")
+      .replace(/\s+(on|at|ksh|kes|account|acc)\b.*$/i, "").trim().slice(0, 80) || null;
     if (!tenantId) {
       // Work out who the message is about: phone number first, then name.
-      const { data: all } = await sb.from("tenants").select("id, full_name, phone_number").eq("active", true).limit(1000);
+      const { data: all } = await sb.from("tenants").select("id, full_name, phone_number, units(unit_number)").eq("active", true).limit(1000);
       const text = data.question.toLowerCase();
       const digits = data.question.replace(/\D/g, " ");
       const local = (p: string | null) => (p ?? "").replace(/\D/g, "").replace(/^254/, "0").slice(-9);
+      const words = (s: string) => String(s ?? "").toLowerCase().split(/\s+/).map((w) => w.replace(/[^a-z0-9]/g, "")).filter((w) => w.length > 2);
       let hits = ((all ?? []) as any[]).filter((t) => { const l = local(t.phone_number); return l.length === 9 && digits.replace(/\s/g, "").includes(l); });
       if (!hits.length) {
         hits = ((all ?? []) as any[]).filter((t) => {
-          const parts = String(t.full_name ?? "").toLowerCase().split(/\s+/).filter((w) => w.length > 2);
-          return parts.length > 0 && parts.filter((w) => new RegExp(`\\b${w.replace(/[^a-z0-9]/g, "")}\\b`).test(text)).length >= Math.min(2, parts.length);
+          const parts = words(t.full_name);
+          return parts.length > 0 && parts.filter((w) => new RegExp(`\\b${w}\\b`).test(text)).length >= Math.min(2, parts.length);
         });
       }
       if (hits.length !== 1) {
-        return { ok: false as const, needTenant: true, error: hits.length ? "That matches more than one tenant — pick who paid below." : "I couldn't tell which tenant this is — pick them below." };
+        // Rank tenants by how many name words overlap with the payer name.
+        const payerWords = words(payerName ?? data.question);
+        const pool = hits.length ? hits : ((all ?? []) as any[]);
+        const candidates = pool
+          .map((t) => ({ id: t.id as string, name: t.full_name as string, unit: t.units?.unit_number ?? null, score: words(t.full_name).filter((w) => payerWords.some((p) => p.startsWith(w.slice(0, 4)) || w.startsWith(p.slice(0, 4)))).length }))
+          .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+          .slice(0, 8);
+        return { ok: false as const, needTenant: true, payerName, candidates, error: hits.length ? "That matches more than one tenant — who paid?" : `I couldn't match ${payerName ? `"${payerName}"` : "this payment"} to a tenant — who paid?` };
       }
       tenantId = hits[0].id as string;
     }
@@ -58,7 +69,9 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       "If the landlord pasted a payment confirmation (e.g. an M-Pesa SMS) or says the tenant paid an amount, ALSO end with one final line exactly: " +
       'PAYMENT_JSON: {"amount": <number>, "date": "YYYY-MM-DD", "reference": "<code or empty>", "method": "mpesa"|"bank"|"cash"} ' +
       "using the date in the message (or today). In that case the Next step is to confirm recording it. Never output PAYMENT_JSON otherwise.\n" +
-      'For an explicit correction of an EXISTING recorded payment, NEVER output PAYMENT_JSON. Only if exactly one payment in the account matches the date, reference or recorded amount, end with CORRECTION_JSON: {"paymentId":"existing UUID", "amount":2500, "reason":"short reason"}. Amount is the corrected total, not a difference. If ambiguous ask which date/reference; do not guess. No mutation has happened; the landlord must confirm. For refunds explain that actual transfers are unavailable until an M-Pesa B2C/Reversal provider is connected. Never propose a payment/correction to imitate a refund or claim money was transferred.';
+      'For an explicit correction of an EXISTING recorded payment, NEVER output PAYMENT_JSON. Only if exactly one payment in the account matches the date, reference or recorded amount, end with CORRECTION_JSON: {"paymentId":"existing UUID", "amount":2500, "reason":"short reason"}. Amount is the corrected total, not a difference. If ambiguous ask which date/reference; do not guess. No mutation has happened; the landlord must confirm. For refunds explain that actual transfers are unavailable until an M-Pesa B2C/Reversal provider is connected. Never propose a payment/correction to imitate a refund or claim money was transferred.\n' +
+      "PROBLEM SOLVING: the landlord may describe a recording mistake (e.g. 'tenant joined in January and paid 6 months upfront but I recorded it wrong'). Act like a careful bookkeeper: compare what SHOULD be on the account (move-in date, rent x months, what the tenant says they paid) with the recorded invoices, payments and ledger; explain in plain words what is wrong and the exact fix. " +
+      "Propose only ONE fix per reply: either a CORRECTION_JSON for a wrong recorded amount, or a PAYMENT_JSON for a missing payment (use the actual date it was paid). If several steps are needed, propose the first and say what comes next after confirming. Never claim anything was changed — every fix waits for the landlord's confirmation.";
     try {
       const { result } = createResponsesCall(
         getRequest(),
@@ -117,4 +130,14 @@ export const confirmAssistantCorrection = createServerFn({ method: "POST" })
     const { data: result, error } = await context.supabase.rpc("correct_assistant_payment", { _payment_id: data.paymentId, _expected_amount: data.oldAmount, _new_amount: data.amount, _reason: data.reason });
     if (error) throw new Error(error.message);
     return { ok: true, result };
+  });
+
+/** After landlord confirmation, rename a tenant to match the name on their M-Pesa payments. */
+export const renameTenantToPayer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ tenantId: z.string().uuid(), name: z.string().trim().min(2).max(80) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.from("tenants").update({ full_name: data.name }).eq("id", data.tenantId).select("id").maybeSingle();
+    if (error || !row) throw new Error("Could not update the tenant's name.");
+    return { ok: true };
   });

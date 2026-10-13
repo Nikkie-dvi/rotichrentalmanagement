@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { askTenantAssistant, confirmAssistantCorrection } from "@/lib/tenant-ai.functions";
+import { askTenantAssistant, confirmAssistantCorrection, renameTenantToPayer } from "@/lib/tenant-ai.functions";
 
 function Rendered({ text }: { text: string }) {
   return (
@@ -38,6 +38,17 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [payment, setPayment] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [candidates, setCandidates] = useState<{ id: string; name: string; unit: string | null; score: number }[] | null>(null);
+  const [rename, setRename] = useState<{ tenantId: string; from: string; to: string } | null>(null);
+  const [picked, setPicked] = useState(false);
+  const renameFn = useServerFn(renameTenantToPayer);
+  const saveRename = async () => {
+    if (!rename) return;
+    setSaving(true);
+    try { await renameFn({ data: { tenantId: rename.tenantId, name: rename.to } }); await qc.invalidateQueries(); toast.success(`Tenant renamed to ${rename.to}`); setRename(null); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Could not rename tenant"); }
+    finally { setSaving(false); }
+  };
   const qc = useQueryClient();
   const save = async () => {
     if (!payment || payment.duplicate || saving) return;
@@ -71,12 +82,17 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
     queryFn: async () => (await supabase.from("tenants").select("id, full_name, units(unit_number)").eq("active", true).order("full_name")).data ?? [],
   });
 
-  const run = async () => {
-    if (!tenantId && !question.trim()) return setError("Paste an M-Pesa message or pick a tenant.");
-    setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setSubmitted(question || "Summarize this tenant's account");
+  const run = async (forTenant?: string) => {
+    const tid = forTenant ?? tenantId;
+    if (!tid && !question.trim()) return setError("Paste an M-Pesa message or describe the problem.");
+    setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setSubmitted(question || "Summarize this tenant's account");
     try {
-      const r: any = await ask({ data: { tenantId: tenantId || null, question } });
-      if (r.ok) { setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null); } else setError(r.error);
+      const r: any = await ask({ data: { tenantId: tid || null, question } });
+      if (r.ok) {
+        setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null);
+        const norm = (x: string) => x.toLowerCase().replace(/\s+/g, " ").trim();
+        if (forTenant && r.payerName && norm(r.payerName) !== norm(r.tenantName ?? "")) setRename({ tenantId: r.tenantId, from: r.tenantName, to: r.payerName.replace(/\b\w+/g, (w: string) => w[0]!.toUpperCase() + w.slice(1).toLowerCase()) });
+      } else { setError(r.error); if (r.needTenant) setCandidates(r.candidates ?? []); }
     } catch (e: any) {
       setError(e?.message ?? "Something went wrong.");
     } finally { setBusy(false); }
@@ -85,22 +101,25 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
   const body = (
       <div className="grid min-w-0 gap-3">
 
-        <Select value={tenantId} onValueChange={(v) => { setTenantId(v); setAnswer(null); setPayment(null); setCorrection(null); setSubmitted(""); }} disabled={busy || saving}>
+        {(picked || tenantId) && <Select value={tenantId} onValueChange={(v) => { setTenantId(v); setAnswer(null); setPayment(null); setCorrection(null); setSubmitted(""); }} disabled={busy || saving}>
           <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Tenant (optional)" /></SelectTrigger>
           <SelectContent>
             {(tenants as any[]).map((t) => (
               <SelectItem key={t.id} value={t.id}>{t.full_name}{t.units?.unit_number ? ` · ${t.units.unit_number}` : ""}</SelectItem>
             ))}
           </SelectContent>
-        </Select>
+        </Select>}
         {submitted && <p className="ml-6 rounded-lg bg-secondary p-3 text-sm break-words">{submitted}</p>}
         {busy && <div role="status" className="assistant-thinking flex min-h-20 items-center gap-3 rounded-lg border border-primary/30 bg-accent/40 p-4"><Sparkles className="h-6 w-6 animate-pulse text-primary motion-reduce:animate-none" /><div><p className="font-medium text-sm">Thinking through the account</p><p className="text-xs text-muted-foreground">Checking balances and payment patterns…</p></div></div>}
         <Textarea aria-label="Ask rent assistant" rows={3} maxLength={2000} value={question} onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Paste an M-Pesa message, correct a payment, or compare this month with last month…" />
-        <Button onClick={run} disabled={busy || saving || (!tenantId && !question.trim())}>
+          placeholder="Paste an M-Pesa message, or describe a problem — e.g. ‘Jane joined in January and paid 6 months, I recorded it wrong’…" />
+        {!picked && !tenantId && <button type="button" className="justify-self-start text-xs text-primary underline-offset-2 hover:underline" onClick={() => setPicked(true)}>Ask about a specific tenant instead</button>}
+        <Button onClick={() => run()} disabled={busy || saving || (!tenantId && !question.trim())}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {busy ? "Analysing…" : "Send"}
         </Button>
         {error && <p className="text-sm text-destructive">{error}</p>}
+        {candidates && candidates.length > 0 && <div className="grid gap-2 rounded-lg border border-border p-3 text-sm"><p className="font-medium">Pick the tenant who paid</p><div className="flex flex-wrap gap-2">{candidates.map((c) => <Button key={c.id} size="sm" variant={c.score > 0 ? "default" : "outline"} disabled={busy} onClick={() => { setTenantId(c.id); run(c.id); }}>{c.name}{c.unit ? ` · ${c.unit}` : ""}</Button>)}</div><button type="button" className="justify-self-start text-xs text-muted-foreground hover:underline" onClick={() => { setCandidates(null); setPicked(true); }}>Not listed? Choose from all tenants</button></div>}
+        {rename && <div className="grid gap-2 rounded-lg border border-primary/40 bg-accent/30 p-3 text-sm"><p>The M-Pesa name is <strong>{rename.to}</strong> but this tenant is saved as <strong>{rename.from}</strong>. Switch the tenant's name so future payments match automatically?</p><div className="flex gap-2"><Button size="sm" onClick={saveRename} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Switch to {rename.to}</Button><Button size="sm" variant="ghost" disabled={saving} onClick={() => setRename(null)}>Keep {rename.from}</Button></div></div>}
         {answer && <div className="border-l-2 border-primary pl-3 py-2 break-words"><Rendered text={answer} /></div>}
         {correction && <div className="grid gap-2 rounded-lg border border-primary/40 bg-accent/30 p-3 text-sm"><div className="flex items-center gap-2 font-medium"><ShieldCheck className="h-4 w-4 text-primary" /> Confirm correction for {correction.tenantName}</div><p>{correction.date} · {money(correction.oldAmount)} → {money(correction.amount)}</p><p className="text-muted-foreground">{correction.reason}</p><p className="text-xs text-muted-foreground">Invoice balances will be recalculated. No money will be transferred.</p><div className="flex flex-wrap gap-2"><Button size="sm" onClick={saveCorrection} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Confirm correction</Button><Button size="sm" variant="ghost" disabled={saving} onClick={() => setCorrection(null)}>Cancel</Button></div></div>}
         {payment && (
