@@ -1397,6 +1397,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assistant_apply_fix: {
+        Args: {
+          _amount: number
+          _date: string
+          _expected: number
+          _kind: string
+          _reason: string
+          _reference: string
+          _target_id: string
+        }
+        Returns: Json
+      }
       claim_recharge_request: {
         Args: { _kind: string; _user_id: string }
         Returns: boolean
