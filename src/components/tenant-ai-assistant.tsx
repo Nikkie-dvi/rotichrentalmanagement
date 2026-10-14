@@ -72,11 +72,11 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
     if (!correction || saving) return;
     setSaving(true);
     try {
-      await correct({ data: correction });
+      const { tenantName: _n, label: _l, ...fix } = correction; await correct({ data: fix });
       await qc.invalidateQueries();
-      toast.success("Payment corrected and invoice balances recalculated");
-      setCorrection(null); setAnswer("**Correction saved**\nThe payment amount and invoice balances have been updated. Ask again to review the new account balance.");
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not correct payment"); }
+      toast.success("Change saved and invoice balances recalculated");
+      setCorrection(null); setAnswer("**Correction saved**\nThe account and invoice balances have been updated. Ask again to review the new account balance.");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not save the change"); }
     finally { setSaving(false); }
   };
   const { data: tenants = [] } = useQuery({
@@ -92,7 +92,7 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
     try {
       const r: any = await ask({ data: { tenantId: tid || null, question: q, history: history.slice(-10) } });
       if (r.ok) {
-        setTenantId(r.tenantId);
+        if (r.tenantId) setTenantId(r.tenantId);
         setHistory((h) => [...h, { role: "user" as const, content: q || "Summarize this tenant's account" }, { role: "assistant" as const, content: String(r.text).slice(0, 3900) }].slice(-10));
         setQuestion("");
         setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null); setQuickReplies(Array.isArray(r.quickReplies) ? r.quickReplies : []);
@@ -128,7 +128,7 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
         {rename && <div className="grid gap-2 rounded-lg border border-primary/40 bg-accent/30 p-3 text-sm"><p>The M-Pesa name is <strong>{rename.to}</strong> but this tenant is saved as <strong>{rename.from}</strong>. Switch the tenant's name so future payments match automatically?</p><div className="flex gap-2"><Button size="sm" onClick={saveRename} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Switch to {rename.to}</Button><Button size="sm" variant="ghost" disabled={saving} onClick={() => setRename(null)}>Keep {rename.from}</Button></div></div>}
         {answer && <div className="border-l-2 border-primary pl-3 py-2 break-words"><Rendered text={answer} /></div>}
         {!busy && quickReplies.length > 0 && <div className="flex flex-wrap gap-2">{quickReplies.map((r) => <Button key={r} size="sm" variant="outline" className="rounded-full border-primary/40 text-primary hover:bg-primary/10" disabled={saving} onClick={() => { setQuestion(""); run(undefined, r); }}>{r}</Button>)}</div>}
-        {correction && <div className="grid gap-2 rounded-lg border border-primary/40 bg-accent/30 p-3 text-sm"><div className="flex items-center gap-2 font-medium"><ShieldCheck className="h-4 w-4 text-primary" /> Confirm correction for {correction.tenantName}</div><p>{correction.date} · {money(correction.oldAmount)} → {correction.amount === 0 ? "Reversed (KES 0)" : money(correction.amount)}</p><p className="text-muted-foreground">{correction.reason}</p><p className="text-xs text-muted-foreground">Invoice balances will be recalculated. No money will be transferred.</p><div className="flex flex-wrap gap-2"><Button size="sm" onClick={saveCorrection} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Confirm correction</Button><Button size="sm" variant="ghost" disabled={saving} onClick={() => setCorrection(null)}>Cancel</Button></div></div>}
+        {correction && <div className="grid gap-2 rounded-lg border border-primary/40 bg-accent/30 p-3 text-sm"><div className="flex items-center gap-2 font-medium"><ShieldCheck className="h-4 w-4 text-primary" /> Approve change for {correction.tenantName}</div><p>{correction.label}</p><p className="text-muted-foreground">{correction.reason}</p><p className="text-xs text-muted-foreground">Invoice balances will be recalculated. No money will be transferred.</p><div className="flex flex-wrap gap-2"><Button size="sm" onClick={saveCorrection} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Confirm correction</Button><Button size="sm" variant="ghost" disabled={saving} onClick={() => setCorrection(null)}>Cancel</Button></div></div>}
         {payment && (
           <div className="grid gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
             <div className="font-medium">Record this payment for {payment.tenantName}?</div>
