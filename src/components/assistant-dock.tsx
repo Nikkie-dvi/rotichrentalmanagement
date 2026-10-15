@@ -42,7 +42,7 @@ export function AssistantDock() {
             <div>
               <div className="flex items-center gap-2 font-semibold"><span className="grid h-9 w-9 place-items-center rounded-lg border border-primary/30 bg-accent"><Sparkles className="h-5 w-5 text-primary" /></span><div>Rent assistant<p className="text-xs font-normal text-primary">Account intelligence</p></div></div>
               <p className="mt-1 text-xs text-muted-foreground">
-                 Invoices · Payments · Collection trends
+                 Payments · Fixes · Texting tenants · Forecasts
               </p>
             </div>
             <Button size="icon-sm" variant="ghost" onClick={toggle} aria-label="Close assistant"><X className="h-4 w-4" /></Button>

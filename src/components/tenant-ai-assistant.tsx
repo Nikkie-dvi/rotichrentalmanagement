@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { askTenantAssistant, confirmAssistantCorrection, renameTenantToPayer } from "@/lib/tenant-ai.functions";
 
 function Rendered({ text }: { text: string }) {
@@ -43,6 +44,19 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
   const [picked, setPicked] = useState(false);
   const [history, setHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [quickReplies, setQuickReplies] = useState<string[]>([]);
+  const [draft, setDraft] = useState<any>(null);
+  const notify = useServerFn(notifyMyTenants);
+  const sendDraft = async () => {
+    if (!draft || saving) return;
+    setSaving(true);
+    try {
+      const r: any = await notify({ data: { title: draft.title, body: draft.body, sms: true, push: true, audience: draft.audience, propertyId: draft.propertyId, tenantIds: draft.tenantIds } });
+      if (!r.recipients) toast.warning("No tenants matched that group — nothing was sent");
+      else toast.success(`Sent to ${r.recipients} tenant${r.recipients === 1 ? "" : "s"}${r.smsSkippedNoCredit ? ` (${r.smsSkippedNoCredit} SMS skipped — low SMS credit)` : ""}`);
+      setDraft(null); setAnswer("**Message sent**");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not send the message"); }
+    finally { setSaving(false); }
+  };
   const renameFn = useServerFn(renameTenantToPayer);
   const saveRename = async () => {
     if (!rename) return;
@@ -88,14 +102,14 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
     const q = text ?? question;
     const tid = forTenant ?? tenantId;
     if (!tid && !q.trim()) return setError("Paste an M-Pesa message or describe the problem.");
-    setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setQuickReplies([]); setSubmitted(q || "Summarize this tenant's account");
+    setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setQuickReplies([]); setDraft(null); setSubmitted(q || "Summarize this tenant's account");
     try {
       const r: any = await ask({ data: { tenantId: tid || null, question: q, history: history.slice(-10) } });
       if (r.ok) {
         if (r.tenantId) setTenantId(r.tenantId);
         setHistory((h) => [...h, { role: "user" as const, content: q || "Summarize this tenant's account" }, { role: "assistant" as const, content: String(r.text).slice(0, 3900) }].slice(-10));
         setQuestion("");
-        setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null); setQuickReplies(Array.isArray(r.quickReplies) ? r.quickReplies : []);
+        setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null); setQuickReplies(Array.isArray(r.quickReplies) ? r.quickReplies : []); setDraft(r.messageDraft ?? null);
         const norm = (x: string) => x.toLowerCase().replace(/\s+/g, " ").trim();
         if (forTenant && r.payerName && norm(r.payerName) !== norm(r.tenantName ?? "")) setRename({ tenantId: r.tenantId, from: r.tenantName, to: r.payerName.replace(/\b\w+/g, (w: string) => w[0]!.toUpperCase() + w.slice(1).toLowerCase()) });
       } else { setError(r.error); if (r.needTenant) setCandidates(r.candidates ?? []); }
@@ -117,6 +131,14 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
         </Select>}
         {submitted && <p className="ml-6 rounded-lg bg-secondary p-3 text-sm break-words">{submitted}</p>}
         {busy && <div role="status" className="assistant-thinking flex min-h-20 items-center gap-3 rounded-lg border border-primary/30 bg-accent/40 p-4"><Sparkles className="h-6 w-6 animate-pulse text-primary motion-reduce:animate-none" /><div><p className="font-medium text-sm">Thinking through the account</p><p className="text-xs text-muted-foreground">Checking balances and payment patterns…</p></div></div>}
+        {!submitted && !busy && !tenantId && <div className="grid gap-2"><p className="text-xs font-medium text-muted-foreground">Ask me about…</p><div className="flex flex-wrap gap-1.5">{[
+          { l: "Record an M-Pesa payment", q: "" , hint: "Paste the M-Pesa message here…" },
+          { l: "Remind tenants with arrears", q: "Remind all tenants with arrears to clear their balance by Friday" },
+          { l: "Text one apartment", q: "Text all tenants in " },
+          { l: "Expected rent next week", q: "What payments should I expect next week?" },
+          { l: "Fix a recording mistake", q: "I recorded a payment wrong for " },
+          { l: "Summarize a tenant", q: "", pick: true },
+        ].map((c) => <Button key={c.l} type="button" size="sm" variant="outline" className="h-auto rounded-full border-primary/30 px-3 py-1 text-xs" onClick={() => { if (c.pick) { setPicked(true); return; } setQuestion(c.q); (document.querySelector('[aria-label="Ask rent assistant"]') as HTMLTextAreaElement | null)?.focus(); }}>{c.l}</Button>)}</div></div>}
         <Textarea aria-label="Ask rent assistant" rows={3} maxLength={2000} value={question} onChange={(e) => setQuestion(e.target.value)}
           placeholder="Paste an M-Pesa message, or describe a problem — e.g. ‘Jane joined in January and paid 6 months, I recorded it wrong’…" />
         {!picked && !tenantId && <button type="button" className="justify-self-start text-xs text-primary underline-offset-2 hover:underline" onClick={() => setPicked(true)}>Ask about a specific tenant instead</button>}
@@ -128,6 +150,7 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
         {rename && <div className="grid gap-2 rounded-lg border border-primary/40 bg-accent/30 p-3 text-sm"><p>The M-Pesa name is <strong>{rename.to}</strong> but this tenant is saved as <strong>{rename.from}</strong>. Switch the tenant's name so future payments match automatically?</p><div className="flex gap-2"><Button size="sm" onClick={saveRename} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Switch to {rename.to}</Button><Button size="sm" variant="ghost" disabled={saving} onClick={() => setRename(null)}>Keep {rename.from}</Button></div></div>}
         {answer && <div className="border-l-2 border-primary pl-3 py-2 break-words"><Rendered text={answer} /></div>}
         {!busy && quickReplies.length > 0 && <div className="flex flex-wrap gap-2">{quickReplies.map((r) => <Button key={r} size="sm" variant="outline" className="rounded-full border-primary/40 text-primary hover:bg-primary/10" disabled={saving} onClick={() => { setQuestion(""); run(undefined, r); }}>{r}</Button>)}</div>}
+        {draft && <div className="grid gap-2 rounded-lg border border-primary/40 bg-accent/30 p-3 text-sm"><p className="font-medium">To: {draft.who}</p><Textarea rows={4} maxLength={400} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} aria-label="Message text" /><p className="text-xs text-muted-foreground">Sent by SMS (uses SMS credit) and app notification.</p><div className="flex gap-2"><Button size="sm" onClick={sendDraft} disabled={saving || draft.body.trim().length < 3}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send message</Button><Button size="sm" variant="ghost" disabled={saving} onClick={() => setDraft(null)}>Cancel</Button></div></div>}
         {correction && <div className="grid gap-2 rounded-lg border border-primary/40 bg-accent/30 p-3 text-sm"><div className="flex items-center gap-2 font-medium"><ShieldCheck className="h-4 w-4 text-primary" /> Approve change for {correction.tenantName}</div><p>{correction.label}</p><p className="text-muted-foreground">{correction.reason}</p><p className="text-xs text-muted-foreground">Invoice balances will be recalculated. No money will be transferred.</p><div className="flex flex-wrap gap-2"><Button size="sm" onClick={saveCorrection} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Confirm correction</Button><Button size="sm" variant="ghost" disabled={saving} onClick={() => setCorrection(null)}>Cancel</Button></div></div>}
         {payment && (
           <div className="grid gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
