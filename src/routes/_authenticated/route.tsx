@@ -11,12 +11,14 @@ let gateCache: { userId: string; isTenantOnly: boolean } | null = null;
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     // Local read from storage — no network call, unlike getUser().
     const { data: sessionData } = await supabase.auth.getSession();
     const user = sessionData.session?.user;
     if (!user) {
       gateCache = null;
+      // Visitors opening the home address see the public landing page.
+      if (location.pathname === "/") throw redirect({ to: "/welcome" });
       throw redirect({ to: "/auth" });
     }
 
