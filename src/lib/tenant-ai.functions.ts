@@ -17,6 +17,8 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       .replace(/\s+(on|at|ksh|kes|account|acc)\b.*$/i, "").trim().slice(0, 80) || null;
     const wantsForecast = !tenantId && /\b(expect|expected|forecast|upcoming|projected|next week|next month|due (between|from|until|by)|coming in|will (i|we) (get|receive|collect))\b/i.test(data.question);
     if (wantsForecast) return await portfolioForecast(sb, data.question, data.history ?? []);
+    const wantsMessage = !tenantId && !/\b(received|confirmed)\b/i.test(data.question) && /\b(remind|text|sms|message|notify|announce|let (them|all|the|my)|tell (all|the|my|them))\b/i.test(data.question) && /\b(tenants?|everyone|all|apartment|building|property|block)\b/i.test(data.question);
+    if (wantsMessage) return await tenantMessageDraft(sb, data.question);
     if (!tenantId) {
       // Work out who the message is about: phone number first, then name.
       const { data: all } = await sb.from("tenants").select("id, full_name, phone_number, units(unit_number)").eq("active", true).limit(1000);
@@ -218,5 +220,31 @@ async function portfolioForecast(sb: any, question: string, history: { role: "us
   } catch (e: any) {
     console.error("portfolio forecast failed", e?.message);
     return { ok: false as const, error: "The assistant couldn't answer right now. Please try again." };
+  }
+}
+
+/** Turns "remind tenants with arrears…" / "text all tenants in X…" into a draft the landlord confirms. */
+async function tenantMessageDraft(sb: any, question: string) {
+  const [{ data: props }, { data: tenants }] = await Promise.all([
+    sb.from("properties").select("id, name").limit(200),
+    sb.from("tenants").select("id, full_name, units(unit_number, properties(name))").eq("active", true).limit(1000),
+  ]);
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  if (!apiKey) return { ok: false as const, error: "The AI assistant isn't set up yet." };
+  const { createResponsesCall } = await import("./ai/responses.server");
+  const instructions = "You draft SMS messages a Kenyan landlord sends to tenants. From the request work out: audience ('overdue' for tenants with arrears/unpaid/late rent, 'due' for rent due soon, otherwise 'all'), the property name if one is mentioned (must be one of the given names, else null), named tenants if specific people are mentioned (exact names from the list, else []), and a short polite professional SMS body under 300 characters, no placeholders. Reply with ONLY one line: DRAFT_JSON: {\"audience\":\"all\"|\"due\"|\"overdue\",\"property\":<name or null>,\"tenants\":[names],\"title\":<max 40 chars>,\"body\":<text>}";
+  try {
+    const { result } = createResponsesCall(getRequest(), { baseURL: "https://ai.gateway.lovable.dev/v1", apiKey, model: "openai/gpt-6-astra" },
+      [{ role: "user", content: `Properties: ${JSON.stringify((props ?? []).map((p: any) => p.name))}\nTenants: ${JSON.stringify((tenants ?? []).map((t: any) => `${t.full_name} (${t.units?.properties?.name ?? ""})`))}\nRequest: ${question}` }], instructions);
+    const raw = (await result.text).match(/DRAFT_JSON:\s*(\{[\s\S]*\})/)?.[1];
+    const d = z.object({ audience: z.enum(["all", "due", "overdue"]), property: z.string().nullable(), tenants: z.array(z.string()).default([]), title: z.string().max(80), body: z.string().min(3).max(400) }).parse(JSON.parse(raw ?? ""));
+    const prop = (props ?? []).find((p: any) => d.property && p.name.toLowerCase() === d.property.toLowerCase());
+    const picked = (tenants ?? []).filter((t: any) => d.tenants.some((n) => n.toLowerCase() === String(t.full_name).toLowerCase()));
+    const who = picked.length ? picked.map((t: any) => t.full_name).join(", ") : `${d.audience === "overdue" ? "Tenants with arrears" : d.audience === "due" ? "Tenants with rent due" : "All tenants"}${prop ? ` in ${prop.name}` : ""}`;
+    return { ok: true as const, text: `**Message ready**\nReview the text below, then tap Send to text: ${who}.`, payment: null, correction: null, quickReplies: [] as string[], tenantId: null as string | null, tenantName: "your tenants",
+      messageDraft: { audience: d.audience, propertyId: prop?.id ?? null, tenantIds: picked.map((t: any) => t.id as string), who, title: d.title || "Message from your landlord", body: d.body } };
+  } catch (e: any) {
+    console.error("message draft failed", e?.message);
+    return { ok: false as const, error: "I couldn't draft that message. Try e.g. 'Remind tenants with arrears in Sunrise Apartments to pay by Friday'." };
   }
 }
