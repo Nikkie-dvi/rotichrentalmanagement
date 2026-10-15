@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyMyTenants } from "@/lib/notify-tenants.functions";
 import { askTenantAssistant, confirmAssistantCorrection, renameTenantToPayer } from "@/lib/tenant-ai.functions";
 
 function Rendered({ text }: { text: string }) {
@@ -43,6 +44,19 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
   const [picked, setPicked] = useState(false);
   const [history, setHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [quickReplies, setQuickReplies] = useState<string[]>([]);
+  const [draft, setDraft] = useState<any>(null);
+  const notify = useServerFn(notifyMyTenants);
+  const sendDraft = async () => {
+    if (!draft || saving) return;
+    setSaving(true);
+    try {
+      const r: any = await notify({ data: { title: draft.title, body: draft.body, sms: true, push: true, audience: draft.audience, propertyId: draft.propertyId, tenantIds: draft.tenantIds } });
+      if (!r.recipients) toast.warning("No tenants matched that group — nothing was sent");
+      else toast.success(`Sent to ${r.recipients} tenant${r.recipients === 1 ? "" : "s"}${r.smsSkippedNoCredit ? ` (${r.smsSkippedNoCredit} SMS skipped — low SMS credit)` : ""}`);
+      setDraft(null); setAnswer("**Message sent**");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not send the message"); }
+    finally { setSaving(false); }
+  };
   const renameFn = useServerFn(renameTenantToPayer);
   const saveRename = async () => {
     if (!rename) return;
@@ -88,14 +102,14 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
     const q = text ?? question;
     const tid = forTenant ?? tenantId;
     if (!tid && !q.trim()) return setError("Paste an M-Pesa message or describe the problem.");
-    setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setQuickReplies([]); setSubmitted(q || "Summarize this tenant's account");
+    setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setQuickReplies([]); setDraft(null); setSubmitted(q || "Summarize this tenant's account");
     try {
       const r: any = await ask({ data: { tenantId: tid || null, question: q, history: history.slice(-10) } });
       if (r.ok) {
         if (r.tenantId) setTenantId(r.tenantId);
         setHistory((h) => [...h, { role: "user" as const, content: q || "Summarize this tenant's account" }, { role: "assistant" as const, content: String(r.text).slice(0, 3900) }].slice(-10));
         setQuestion("");
-        setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null); setQuickReplies(Array.isArray(r.quickReplies) ? r.quickReplies : []);
+        setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null); setQuickReplies(Array.isArray(r.quickReplies) ? r.quickReplies : []); setDraft(r.messageDraft ?? null);
         const norm = (x: string) => x.toLowerCase().replace(/\s+/g, " ").trim();
         if (forTenant && r.payerName && norm(r.payerName) !== norm(r.tenantName ?? "")) setRename({ tenantId: r.tenantId, from: r.tenantName, to: r.payerName.replace(/\b\w+/g, (w: string) => w[0]!.toUpperCase() + w.slice(1).toLowerCase()) });
       } else { setError(r.error); if (r.needTenant) setCandidates(r.candidates ?? []); }
