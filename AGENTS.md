@@ -20,3 +20,5 @@
 - Use shared bottom navigation and an all-pages menu sourced from the existing sidebar inventory, excluding destinations already available through Home shortcuts and bottom tabs while preserving role filtering; homepage shortcuts reuse existing workflows without duplicating business logic.
 - Mount rental configuration in focused My Account panels and redirect legacy settings URLs there; a single settings surface avoids duplicate controls while preserving saved rules and service calls.
 - Keep History visualizations in focused presentation components fed by the existing performance query and collection-comparison helper; dynamically load the Three.js building after hydration to keep browser graphics outside SSR.
+- Track utility billing in a focused portfolio panel using service invoices; label invoice settlement separately from cash receipts because credit can settle invoices and receipts have no category-level allocation.
+- Resolve explicit assistant page-opening requests through a browser-safe allowlist of existing routes; navigation never changes records or sends notifications.

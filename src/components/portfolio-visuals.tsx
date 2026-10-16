@@ -9,6 +9,8 @@ import { PortfolioReports } from "@/components/portfolio-reports";
 import { compareCollections } from "@/lib/collection-comparison";
 import { money } from "@/lib/types";
 import { unitTypeLabel } from "@/lib/unit-types";
+import { PortfolioUtilities } from "@/components/portfolio-utilities";
+import type { UtilityInvoice } from "@/lib/utility-summary";
 
 type VisualView = {
   comparison: ReturnType<typeof compareCollections>;
@@ -42,7 +44,7 @@ function PlotCard({ title, value, suffix, children, footer, className = "" }: { 
   return <Card className={`portfolio-stat min-w-0 p-4 sm:p-5 ${className}`}><h2 className="text-sm font-medium text-muted-foreground">{title}</h2><p className="mt-1 break-words text-xl font-semibold tabular-nums sm:text-2xl">{value}<span className="ml-1 text-xs font-normal text-muted-foreground">{suffix}</span></p>{children}{footer && <div className="mt-2 text-[11px] text-muted-foreground">{footer}</div>}</Card>;
 }
 
-export function PortfolioVisuals({ view, units, payments, month, onMonthChange }: { view: VisualView; units: BuildingUnit[]; payments: Payment[]; month: string; onMonthChange: (month: string) => void }) {
+export function PortfolioVisuals({ view, units, payments, month, onMonthChange, invoices, tenants }: { view: VisualView; units: BuildingUnit[]; payments: Payment[]; month: string; onMonthChange: (month: string) => void; invoices: UtilityInvoice[]; tenants: { id: string; full_name: string; unit_id: string | null }[] }) {
   const [tab, setTab] = useState("collection");
   const c = view.comparison;
   const days = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).getUTCDate();
@@ -53,7 +55,7 @@ export function PortfolioVisuals({ view, units, payments, month, onMonthChange }
   });
   const timing = [{ name: "Early", value: view.punctuality.early, fill: config.early.color }, { name: "On time", value: view.punctuality.onTime, fill: config.onTime.color }, { name: "Late", value: view.punctuality.late, fill: config.late.color }];
   const unitRows = view.rows.map(r => ({ ...r, type: unitTypeLabel(r.type), vacant: r.units - r.occupied }));
-  const tabs = [{ id: "collection", label: "Collections", icon: ReceiptText }, { id: "timing", label: "Payment timing", icon: Clock3 }, { id: "units", label: "Units", icon: Building2 }, { id: "repairs", label: "Repairs", icon: Wrench }, { id: "reports", label: "Reports", icon: FileDown }];
+  const tabs = [{ id: "collection", label: "Collections", icon: ReceiptText }, { id: "timing", label: "Payment timing", icon: Clock3 }, { id: "utilities", label: "Utilities", icon: CircleDollarSign }, { id: "units", label: "Units", icon: Building2 }, { id: "repairs", label: "Repairs", icon: Wrench }, { id: "reports", label: "Reports", icon: FileDown }];
   const barPlot = (data: object[], key: string, keys: string[]) => <ChartContainer config={config} className="mt-4 h-40 w-full aspect-auto"><BarChart data={data} margin={{ left: -25, right: 0 }}><CartesianGrid vertical={false} /><XAxis dataKey={key} tickLine={false} axisLine={false} tick={{ fontSize: 10 }} /><YAxis tickFormatter={compact} tickLine={false} axisLine={false} /><ChartTooltip content={<ChartTooltipContent />} />{keys.map(k => <Bar key={k} dataKey={k} fill={`var(--color-${k})`} radius={[3, 3, 0, 0]} />)}</BarChart></ChartContainer>;
   return <div className="space-y-4">
     <section className="grid grid-cols-[1fr_1.15fr] items-center gap-1 sm:grid-cols-2 sm:gap-8" aria-label="Portfolio snapshot">
@@ -63,8 +65,9 @@ export function PortfolioVisuals({ view, units, payments, month, onMonthChange }
       <PortfolioBuilding units={units} />
     </section>
     <div className="portfolio-total flex flex-wrap items-center justify-between gap-2 px-4 py-3"><span className="flex items-center gap-2 text-sm"><CircleDollarSign className="h-5 w-5 text-primary" />Rent collected</span><span className="text-xl font-semibold tabular-nums">{money(c.collected)}</span></div>
-    <nav className="portfolio-stat-tabs grid grid-cols-5 gap-1 p-2" aria-label="Rent statistics">{tabs.map(t => <Button key={t.id} variant="ghost" className={`h-16 min-w-0 flex-col gap-2 px-0 text-[9px] sm:text-xs ${tab === t.id ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`} aria-pressed={tab === t.id} onClick={() => setTab(t.id)}><t.icon className="!h-5 !w-5" /><span className="max-w-full whitespace-normal leading-tight">{t.label}</span></Button>)}</nav>
+    <nav className="portfolio-stat-tabs grid grid-cols-3 gap-1 p-2 sm:grid-cols-6" aria-label="Rent statistics">{tabs.map(t => <Button key={t.id} variant="ghost" className={`h-16 min-w-0 flex-col gap-2 px-0 text-[9px] sm:text-xs ${tab === t.id ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`} aria-pressed={tab === t.id} onClick={() => setTab(t.id)}><t.icon className="!h-5 !w-5" /><span className="max-w-full whitespace-normal leading-tight">{t.label}</span></Button>)}</nav>
     <section aria-label={`${tabs.find(t => t.id === tab)?.label} statistics`} className="grid grid-cols-2 gap-3 sm:gap-4">
+      {tab === "utilities" && <PortfolioUtilities invoices={invoices} tenants={tenants} month={month} />}
       {tab === "collection" && <>
         <PlotCard title="Collection activity" value={money(c.collected)} className="col-span-2" footer={<div className="flex flex-wrap justify-between gap-2"><span className="text-primary">● Selected month <span className="ml-3 text-muted-foreground">● Previous month</span></span><span>Through {c.cutoff} · Cash received</span></div>}>
           <ChartContainer config={config} className="mt-4 h-44 w-full aspect-auto"><AreaChart data={daily} margin={{ left: -16, right: 8, top: 5 }}><CartesianGrid vertical={false} /><XAxis dataKey="day" tickLine={false} axisLine={false} minTickGap={22} /><YAxis tickFormatter={compact} tickLine={false} axisLine={false} width={48} /><ChartTooltip content={<ChartTooltipContent formatter={(value, name) => <span>{name === "collected" ? "Collected" : "Previous month"}: {money(Number(value))}</span>} />} /><Area type="stepAfter" dataKey="previous" stroke="var(--color-previous)" fill="var(--color-previous)" fillOpacity={0.05} strokeDasharray="4 4" /><Area type="monotone" dataKey="collected" stroke="var(--color-collected)" fill="var(--color-collected)" fillOpacity={0.15} strokeWidth={2} /></AreaChart></ChartContainer>
