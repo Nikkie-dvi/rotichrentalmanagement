@@ -55,7 +55,7 @@ function PerformancePage() {
         supabase.from("tenants").select("id,unit_id,full_name,active"),
         supabase
           .from("invoices")
-          .select("id,tenant_id,total_due,balance_remaining,due_date,month_year")
+          .select("id,tenant_id,total_due,balance_remaining,due_date,month_year,kind,utility_amount,water_amount,electricity_amount,garbage_amount,other_amount")
           .lte("month_year", month),
         supabase
           .from("payments")
@@ -207,7 +207,7 @@ function PerformancePage() {
       </header>
       {q.isError && <p role="alert" className="text-sm text-destructive">Portfolio records could not be loaded. Please refresh to try again.</p>}
       {q.isLoading && <div className="h-80 animate-pulse rounded-lg bg-muted" role="status" aria-label="Loading portfolio statistics" />}
-      {view && <PortfolioVisuals view={view} units={q.data?.units ?? []} payments={q.data?.comparisonPayments ?? []} month={month} onMonthChange={setMonth} />}
+      {view && <PortfolioVisuals view={view} units={q.data?.units ?? []} payments={q.data?.comparisonPayments ?? []} invoices={q.data?.invoices ?? []} tenants={q.data?.tenants ?? []} month={month} onMonthChange={setMonth} />}
     </div>
   );
 }
