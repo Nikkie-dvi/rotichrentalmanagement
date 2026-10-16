@@ -33,7 +33,7 @@
 - [x] Compact Tenants navigation, summaries and spacing; verified at 420px with no horizontal overflow and working expandable account checks.
 - [x] Redesign tenant status cards, property grouping, metrics and search/payment filters; desktop and phone layouts, invoice dialog and zero-balance filter verified.
 - [x] Simplify finding lease files for upload and clarify approval labels for self-applications versus landlord-added tenants; active tenant approval labels removed and direct assignment marked approved.
-- [ ] Actual refund transfers — blocked until M-Pesa B2C/Reversal provider credentials and transfer setup are supplied.
+- [x] Assistant edits financial records only; actual refund transfers are out of scope because landlords handle refunds themselves.
 
 ## Completed assistant and portfolio updates
 - [x] Compare collections with the same date last month in assistant analysis and buddy notices; comparison tests passed.

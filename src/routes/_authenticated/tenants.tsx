@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2, KeyRound, ArrowLeft, Home, Pencil, Search, ChevronDown, Building2, Phone, Wallet, FileText } from "lucide-react";
+import { UserPlus, LogOut, ContactRound, AlertTriangle, Clock, CheckCircle2, KeyRound, ArrowLeft, Home, Pencil, Search, ChevronDown, ChevronRight, Building2, Phone, Wallet, FileText } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ type RiskLevel = "clear" | "credit" | "soon" | "overdue" | "high";
 type Risk = { level: RiskLevel; total: number; monthsUnpaid: number; daysLate: number };
 
 function RiskBadge({ risk }: { risk: Risk }) {
-  if (risk.total < 0) return <Badge className="rounded-full border-paid-ahead-border bg-paid-ahead text-paid-ahead-foreground gap-1 whitespace-normal"><CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> +{money(Math.abs(risk.total))} Paid ahead</Badge>;
+  if (risk.total < 0) return <Badge className="rounded-full border-paid-ahead-border bg-paid-ahead text-paid-ahead-foreground gap-1 whitespace-normal"><CheckCircle2 className="h-3 w-3 shrink-0" />Paid ahead</Badge>;
   if (risk.total > 0) return <Badge className="rounded-full border-arrears-border bg-arrears text-arrears-foreground gap-1"><AlertTriangle className="h-3.5 w-3.5 shrink-0" /> {risk.daysLate > 0 ? `Overdue ${risk.daysLate}d` : "Balance due"}{risk.monthsUnpaid >= 2 ? ` · ${risk.monthsUnpaid} mo` : ""}</Badge>;
   return <Badge variant="secondary" className="rounded-full gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> KES 0 · Balanced</Badge>;
 }
@@ -374,14 +374,17 @@ function TenantsPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <section aria-label="Tenant search and filters" className="min-w-0 space-y-2 border-y border-primary/25 bg-accent/40 px-2.5 py-3 sm:px-3">
-        <Label htmlFor="tenant-search" className="flex items-center gap-1.5 text-xs font-semibold text-primary"><Search className="h-3.5 w-3.5 shrink-0" />Find a tenant</Label>
+      <nav aria-label="Tenant payment status" className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
+        {[{ id: "all", label: "All" }, { id: "paid", label: "Paid ahead" }, { id: "overdue", label: "Overdue" }].map(tab => <Button key={tab.id} size="sm" variant={paymentFilter === tab.id ? "default" : "ghost"} className="h-8 min-w-0 rounded-full px-1 text-xs" aria-pressed={paymentFilter === tab.id} onClick={() => setPaymentFilter(tab.id)}>{tab.label}</Button>)}
+      </nav>
+      <section aria-label="Tenant search and filters" className="min-w-0 space-y-2 border-b py-2">
         <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" /><Input id="tenant-search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Name, phone or unit" aria-label="Search tenants" className="h-10 min-w-0 border-primary/40 bg-background pl-9 text-sm shadow-sm" /></div>
         <div className="grid min-w-0 grid-cols-2 gap-2">
           <Select value={propFilter} onValueChange={setPropFilter}><SelectTrigger aria-label="Filter by property" className="h-8 w-full min-w-0 bg-background text-xs [&>span]:truncate"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All properties</SelectItem>{propertyNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}</SelectContent></Select>
           <Select value={paymentFilter} onValueChange={setPaymentFilter}><SelectTrigger aria-label="Filter by payment status" className="h-8 w-full min-w-0 bg-background text-xs [&>span]:truncate"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem><SelectItem value="overdue">Overdue / Arrears</SelectItem><SelectItem value="paid">Paid ahead / Credit</SelectItem><SelectItem value="zero">Zero balance</SelectItem></SelectContent></Select>
         </div>
       </section>
+      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground"><span>{active.length} tenants</span><span>Grouped by property · Unit order</span></div>
       <details className="group min-w-0 border-b pb-2">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs font-medium"><span className="flex min-w-0 items-center gap-1.5"><Wallet className="h-3.5 w-3.5 shrink-0 text-primary" />Account summary</span><ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" /></summary>
       <div className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-4" aria-label="Tenant account highlights">
@@ -424,7 +427,7 @@ function TenantsPage() {
           <h3 className="flex min-w-0 items-center gap-1.5 text-sm font-bold uppercase"><Building2 className="h-4 w-4 shrink-0 text-primary" /><span className="[overflow-wrap:anywhere]">{groupName}</span></h3>
           <Badge variant="secondary" className="shrink-0 rounded-full">{members.length} tenants</Badge>
         </div>
-      <div className="grid grid-cols-1 gap-2 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="overflow-hidden rounded-lg border bg-card divide-y">
         {members.map((t: any) => {
           const ledger = ledgers.get(t.id) ?? buildLedger({ invoiced: 0, paid: 0 });
           const balance = balances?.get(t.id) ?? 0;
@@ -508,14 +511,12 @@ function TenantCard({
 
 
   return (
-    <Card className={`relative min-w-0 overflow-hidden rounded-xl border shadow-sm ${balance > 0 ? "border-arrears-border" : inCredit ? "border-paid-ahead-border" : "border-border"}`}>
-      <div className={`h-1 ${balance > 0 ? "bg-arrears-foreground" : inCredit ? "bg-paid-ahead-foreground" : "bg-border"}`} />
-      <div className="p-3 sm:p-4">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2"><div className="min-w-0"><p className="flex items-center gap-1.5 text-xs font-semibold text-primary"><Home className="h-4 w-4 shrink-0" /><span className="break-words">Unit {t.units?.unit_number ?? "Unassigned"}</span></p><h4 className="mt-2 break-words text-lg font-semibold leading-tight">{t.full_name}</h4></div><Button size="icon" variant="ghost" aria-label={`Expand ${t.full_name}`} aria-expanded={expanded} onClick={() => setExpanded(v => !v)}><ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} /></Button></div>
-        <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" /><span className="[overflow-wrap:anywhere]">{t.phone_number ?? "No phone"}</span></p>
-        <div className="mt-2 flex flex-wrap gap-1.5"><RiskBadge risk={{ ...risk, total: balance }} />{duplicate && <Badge variant="outline"><AlertTriangle className="h-3 w-3" /> Possible duplicate</Badge>}</div>
-        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-baseline gap-2"><span className="min-w-0 text-xs text-muted-foreground">{balance > 0 ? "Outstanding" : inCredit ? "Available credit" : "Account balance"}</span><span className={`min-w-0 break-words text-right text-base font-bold ${balance > 0 ? "text-arrears-foreground" : inCredit ? "text-paid-ahead-foreground" : "text-foreground"}`}>{money(Math.abs(balance))}</span></div>
-        <div className="mt-2 flex flex-wrap gap-2 border-t pt-2">{balance > 0 && <TenantReminderButton tenantId={t.id} name={t.full_name} balance={balance} />}<TenantInvoicesButton tenantId={t.id} name={t.full_name} /></div>
+    <article className="relative min-w-0 bg-card">
+      <div className="grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-start gap-2 px-3 py-3 sm:gap-3 sm:px-4">
+        <span aria-hidden="true" className={`mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold ${balance > 0 ? "bg-arrears text-arrears-foreground" : inCredit ? "bg-paid-ahead text-paid-ahead-foreground" : "bg-accent text-accent-foreground"}`}>{String(t.full_name ?? "T").split(/\s+/).slice(0, 2).map((name: string) => name.charAt(0)).join("").toUpperCase()}</span>
+        <div className="min-w-0"><h4 className="break-words text-sm font-semibold leading-tight">{t.full_name}</h4><p className="mt-1 break-words text-[11px] text-muted-foreground"><span className="font-semibold text-foreground">Unit {t.units?.unit_number ?? "Unassigned"}</span> · {t.units?.properties?.name ?? "No property"}</p><p className="mt-0.5 text-[11px] text-muted-foreground">{money(Number(t.units?.rent_amount ?? 0))} / month · Due {t.rent_due_day ?? "—"}</p><p className="mt-0.5 break-words text-[11px] text-muted-foreground">{t.phone_number ?? "No phone"}</p>{duplicate && <Badge variant="outline" className="mt-1 text-[10px]"><AlertTriangle className="h-3 w-3" /> Possible duplicate</Badge>}</div>
+        <div className="flex max-w-[8.5rem] items-start gap-0.5"><div className="min-w-0 text-right"><RiskBadge risk={{ ...risk, total: balance }} /><p className={`mt-1 break-words text-xs font-semibold tabular-nums ${balance > 0 ? "text-arrears-foreground" : inCredit ? "text-paid-ahead-foreground" : "text-muted-foreground"}`}>{money(Math.abs(balance))}</p></div><Button size="icon-sm" variant="ghost" aria-label={`Expand ${t.full_name}`} aria-expanded={expanded} onClick={() => setExpanded(v => !v)}><ChevronRight className={`h-4 w-4 transition-transform ${expanded ? "rotate-90" : ""}`} /></Button></div>
+        <div className="col-start-2 col-end-4 flex flex-wrap gap-2 pt-1">{balance > 0 && <TenantReminderButton tenantId={t.id} name={t.full_name} balance={balance} />}<TenantInvoicesButton tenantId={t.id} name={t.full_name} /></div>
       </div>
 
       {expanded && (
@@ -589,7 +590,7 @@ function TenantCard({
           </div>
         </CardContent>
       )}
-    </Card>
+    </article>
   );
 }
 
