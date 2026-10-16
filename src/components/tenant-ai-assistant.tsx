@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { assistantDestination } from "@/lib/assistant-navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { recordTenantPayment } from "@/lib/record-payment";
@@ -28,6 +30,7 @@ function Rendered({ text }: { text: string }) {
 
 /** Ask the AI about one tenant's invoices and payments. */
 export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
+  const navigate = useNavigate();
   const ask = useServerFn(askTenantAssistant);
   const correct = useServerFn(confirmAssistantCorrection);
   const [correction, setCorrection] = useState<any>(null);
@@ -100,6 +103,14 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
 
   const run = async (forTenant?: string, text?: string) => {
     const q = text ?? question;
+    const destination = assistantDestination(q);
+    if (destination) {
+      setQuestion(""); setError(null); setPayment(null); setCorrection(null); setDraft(null); setQuickReplies([]); setCandidates(null); setRename(null);
+      setSubmitted(q); setAnswer(`Opened **${destination.label}**.`);
+      await navigate({ to: destination.to });
+      toast.success(`Opened ${destination.label}`);
+      return;
+    }
     const tid = forTenant ?? tenantId;
     if (!tid && !q.trim()) return setError("Paste an M-Pesa message or describe the problem.");
     setBusy(true); setError(null); setAnswer(null); setPayment(null); setCorrection(null); setCandidates(null); setRename(null); setQuickReplies([]); setDraft(null); setSubmitted(q || "Summarize this tenant's account");
@@ -111,7 +122,7 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
         setQuestion("");
         setAnswer(r.text); setPayment(r.payment ? { ...r.payment, tenantId: r.tenantId, tenantName: r.tenantName } : null); setCorrection(r.correction ? { ...r.correction, tenantName: r.tenantName } : null); setQuickReplies(Array.isArray(r.quickReplies) ? r.quickReplies : []); setDraft(r.messageDraft ?? null);
         const norm = (x: string) => x.toLowerCase().replace(/\s+/g, " ").trim();
-        if (forTenant && r.payerName && norm(r.payerName) !== norm(r.tenantName ?? "")) setRename({ tenantId: r.tenantId, from: r.tenantName, to: r.payerName.replace(/\b\w+/g, (w: string) => w[0]!.toUpperCase() + w.slice(1).toLowerCase()) });
+        if (forTenant && r.payerName && norm(r.payerName) !== norm(r.tenantName ?? "")) setRename({ tenantId: r.tenantId, from: r.tenantName, to: r.payerName.replace(/\b\w+/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()) });
       } else { setError(r.error); if (r.needTenant) setCandidates(r.candidates ?? []); }
     } catch (e: any) {
       setError(e?.message ?? "Something went wrong.");
@@ -138,7 +149,8 @@ export function TenantAiAssistant({ bare = false }: { bare?: boolean }) {
           { l: "Expected rent next week", q: "What payments should I expect next week?" },
           { l: "Fix a recording mistake", q: "I recorded a payment wrong for " },
           { l: "Summarize a tenant", q: "", pick: true },
-        ].map((c) => <Button key={c.l} type="button" size="sm" variant="outline" className="h-auto rounded-full border-primary/30 px-3 py-1 text-xs" onClick={() => { if (c.pick) { setPicked(true); return; } setQuestion(c.q); (document.querySelector('[aria-label="Ask rent assistant"]') as HTMLTextAreaElement | null)?.focus(); }}>{c.l}</Button>)}</div></div>}
+          { l: "Open Tenants", q: "Take me to the Tenants page", open: true },
+        ].map((c) => <Button key={c.l} type="button" size="sm" variant="outline" className="h-auto rounded-full border-primary/30 px-3 py-1 text-xs" onClick={() => { if (c.pick) { setPicked(true); return; } if (c.open) { void run(undefined, c.q); return; } setQuestion(c.q); (document.querySelector('[aria-label="Ask rent assistant"]') as HTMLTextAreaElement | null)?.focus(); }}>{c.l}</Button>)}</div></div>}
         <Textarea aria-label="Ask rent assistant" rows={3} maxLength={2000} value={question} onChange={(e) => setQuestion(e.target.value)}
           placeholder="Paste an M-Pesa message, or describe a problem — e.g. ‘Jane joined in January and paid 6 months, I recorded it wrong’…" />
         {!picked && !tenantId && <button type="button" className="justify-self-start text-xs text-primary underline-offset-2 hover:underline" onClick={() => setPicked(true)}>Ask about a specific tenant instead</button>}
