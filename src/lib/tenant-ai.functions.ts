@@ -221,11 +221,11 @@ async function portfolioForecast(sb: any, question: string, history: { role: "us
   const collectedThisMonth = (pr.data ?? []).filter((p: any) => String(p.payment_date).startsWith(today.slice(0, 7))).reduce((s: number, p: any) => s + Number(p.amount_paid || 0), 0);
   const totalArrears = tenants.reduce((s, t) => s + t.arrears, 0);
   const totalCredit = tenants.reduce((s, t) => s + t.credit, 0);
-  const inArrears = tenants.filter((t) => t.arrears > 0).sort((a, b) => b.arrears - a.arrears);
+  const inArrears = tenants.filter((t) => t.arrears > 0).sort((a: any, b: any) => b.arrears - a.arrears);
   const wantsExpected = /\b(expect|expected|forecast|upcoming|next week|next month|due|coming in|will (i|we) (get|receive|collect))\b/i.test(question);
   const lines: string[] = [];
   if (wantsExpected) {
-    const upcoming = tenants.flatMap((t) => t.upcoming_due_dates.map((d: string) => ({ ...t, due: d }))).sort((a: any, b: any) => a.due.localeCompare(b.due));
+    const upcoming = tenants.flatMap((t: any) => t.upcoming_due_dates.map((d: string) => ({ ...t, due: d }))).sort((a: any, b: any) => a.due.localeCompare(b.due));
     const uncovered = upcoming.filter((u: any) => u.credit < u.rent);
     const expectedTotal = uncovered.reduce((s: number, u: any) => s + Math.max(0, u.rent - u.credit), 0);
     const prepaidTotal = upcoming.reduce((s: number, u: any) => s + Math.min(u.credit, u.rent), 0);
