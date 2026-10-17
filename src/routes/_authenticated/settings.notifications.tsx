@@ -19,7 +19,6 @@ import {
   type ToneMeta,
 } from "@/lib/notification-sounds";
 import { notify, requestNotificationPermission } from "@/lib/notifications";
-import { disablePush, enablePush, hasActiveSubscription, pushStatus, pushSupported } from "@/lib/push";
 
 export const Route = createFileRoute("/_authenticated/settings/notifications")({
   head: () => ({

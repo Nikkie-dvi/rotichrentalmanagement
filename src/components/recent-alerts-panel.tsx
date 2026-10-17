@@ -10,6 +10,7 @@ export function RecentAlertsPanel() {
       const { data } = await supabase
         .from("notification_logs")
         .select("id, channel, recipient, message, status, error, created_at, tenants(full_name)")
+        .neq("channel", "push")
         .order("created_at", { ascending: false })
         .limit(30);
       return data ?? [];
