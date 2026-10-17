@@ -227,8 +227,8 @@ async function portfolioForecast(sb: any, question: string, history: { role: "us
   if (wantsExpected) {
     const upcoming = tenants.flatMap((t) => t.upcoming_due_dates.map((d: string) => ({ ...t, due: d }))).sort((a, b) => a.due.localeCompare(b.due));
     const uncovered = upcoming.filter((u) => u.credit < u.rent);
-    const expectedTotal = uncovered.reduce((s, u) => s + Math.max(0, u.rent - u.credit), 0);
-    const prepaidTotal = upcoming.reduce((s, u) => s + Math.min(u.credit, u.rent), 0);
+    const expectedTotal = uncovered.reduce((s: number, u: any) => s + Math.max(0, u.rent - u.credit), 0);
+    const prepaidTotal = upcoming.reduce((s: number, u: any) => s + Math.min(u.credit, u.rent), 0);
     lines.push(`**Expected rent (next ~4 months of due dates)**`);
     if (!upcoming.length) lines.push("No rent due dates coming up.");
     for (const u of upcoming.slice(0, 15)) {
@@ -241,7 +241,7 @@ async function portfolioForecast(sb: any, question: string, history: { role: "us
   } else {
     lines.push(`**Your portfolio as of ${fmtD(today)}**`);
     lines.push(`- Collected this month: **${fmtK(collectedThisMonth)}**`);
-    lines.push(`- Owed in arrears: **${fmtK(totalArrears)}**${inArrears.length ? ` (${inArrears.slice(0, 5).map((t) => `${t.name} ${fmtK(t.arrears)}`).join(", ")}${inArrears.length > 5 ? ", …" : ""})` : ""}`);
+    lines.push(`- Owed in arrears: **${fmtK(totalArrears)}**${inArrears.length ? ` (${inArrears.slice(0, 5).map((t: any) => `${t.name} ${fmtK(t.arrears)}`).join(", ")}${inArrears.length > 5 ? ", …" : ""})` : ""}`);
     lines.push(`- Prepaid credit held: **${fmtK(totalCredit)}**`);
     lines.push(`- Active tenants: **${tenants.length}**`);
   }
