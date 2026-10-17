@@ -112,42 +112,6 @@ function NotificationTonesPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <BellRing className="h-4 w-4" /> Background notifications
-          </CardTitle>
-          <CardDescription>
-            Get rent reminders in your phone's notification bar even when the app is closed.
-            Install this app to your Home Screen first (iPhone: Share → Add to Home Screen).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between rounded-md border p-3">
-            <div className="min-w-0">
-              <Label htmlFor="push-toggle" className="cursor-pointer font-medium">
-                Enable push notifications on this device
-              </Label>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {pushPerm === "unsupported"
-                  ? "This browser doesn't support push notifications."
-                  : pushPerm === "denied"
-                  ? "Notifications are blocked. Enable them in your browser or phone settings."
-                  : pushOn
-                  ? "You're subscribed on this device. Daily rent reminders will arrive automatically."
-                  : "Turn on to receive alerts when rent is due or overdue."}
-              </p>
-            </div>
-            <Switch
-              id="push-toggle"
-              checked={pushOn}
-              disabled={pushBusy || pushPerm === "unsupported" || !pushSupported()}
-              onCheckedChange={togglePush}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
 
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
