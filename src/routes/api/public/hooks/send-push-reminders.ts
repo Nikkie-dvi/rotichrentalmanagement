@@ -20,6 +20,8 @@ export const Route = createFileRoute("/api/public/hooks/send-push-reminders")({
       POST: async ({ request }: { request: Request }) => {
         const denied = assertCronCaller(request);
         if (denied) return denied;
+        // Push alerts are disabled: the feature was removed from the app.
+        return Response.json({ ok: true, disabled: true, sent: 0 });
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         // web-push pulls in Node-oriented buffer helpers. Keep it out of the
         // global route graph so ordinary page requests remain Worker-safe.
