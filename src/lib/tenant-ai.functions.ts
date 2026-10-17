@@ -15,7 +15,8 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
     // Name of the payer in a pasted M-Pesa message, e.g. "received from JOHN DOE 0712…".
     const payerName = (data.question.match(/\bfrom\s+([A-Za-z][A-Za-z'.-]+(?:\s+[A-Za-z][A-Za-z'.-]+){0,3})/i)?.[1] ?? "")
       .replace(/\s+(on|at|ksh|kes|account|acc)\b.*$/i, "").trim().slice(0, 80) || null;
-    const wantsForecast = !tenantId && /\b(expect|expected|forecast|upcoming|projected|next week|next month|due (between|from|until|by)|coming in|will (i|we) (get|receive|collect))\b/i.test(data.question);
+    const looksLikePayment = /\b(paid|pay|payment|received|confirmed|ksh|kes|mpesa|m-pesa|deposit|refund)\b|\b\d{3,}\b/i.test(data.question);
+    const wantsForecast = !tenantId && (!looksLikePayment || /\b(expect|expected|forecast|upcoming|projected|next week|next month|due (between|from|until|by)|coming in|will (i|we) (get|receive|collect)|collect|collected|collection|arrears|balance|portfolio|occupancy|vacant|vacancy|how much|total|summary|summarize)\b/i.test(data.question));
     if (wantsForecast) return await portfolioForecast(sb, data.question, data.history ?? []);
     const wantsMessage = !tenantId && !/\b(received|confirmed)\b/i.test(data.question) && /\b(remind|text|sms|message|notify|announce|let (them|all|the|my)|tell (all|the|my|them))\b/i.test(data.question) && /\b(tenants?|everyone|all|apartment|building|property|block)\b/i.test(data.question);
     if (wantsMessage) return await tenantMessageDraft(sb, data.question);
@@ -151,12 +152,13 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
       }
       return { ok: true as const, text, payment, correction, quickReplies, tenantId: tid, tenantName: tenant.full_name };
     } catch (e: any) {
-      const status = e?.statusCode ?? e?.status ?? e?.lastError?.statusCode;
+      const status = e?.statusCode ?? e?.status ?? e?.lastError?.statusCode ?? e?.cause?.statusCode;
       console.error("tenant assistant failed", status, e?.message);
       if (status === 402) return { ok: false as const, error: "AI credits have run out. Add credits in Settings → Plans & credits." };
       if (status === 429) return { ok: false as const, error: "The assistant is busy. Please try again in a minute." };
       if (status === 403) return { ok: false as const, error: "The AI assistant isn't available for this workspace right now." };
-      return { ok: false as const, error: "The assistant couldn't answer right now. Please try again." };
+      const safe = typeof e?.message === "string" && e.message.length <= 160 && !/[\n]/.test(e.message) ? e.message : null;
+      return { ok: false as const, error: safe ?? "The assistant couldn't answer right now. Please try again." };
     }
   });
 
@@ -208,7 +210,7 @@ async function portfolioForecast(sb: any, question: string, history: { role: "us
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) return { ok: false as const, error: "The AI assistant isn't set up yet." };
   const { createResponsesCall } = await import("./ai/responses.server");
-  const instructions = "You are a Kenyan landlord's portfolio assistant. Use ONLY the data. Today is " + today + ". Answer questions about expected rent in a date range (e.g. 'from next week to the 30th'): work out the exact date range, list each tenant with a due date in that range (property, unit, due date, rent), and treat rent as already covered when credit covers it (months_prepaid) and add arrears that are still owed. Give the expected total, how much is already prepaid, and how much is at risk based on how late each tenant usually pays (from recent_payments vs due day). Group by property, amounts as 'KES 12,000', short plain English, under 250 words, label it an estimate. End with one final line exactly: QUICK_REPLIES: [\"...\"] with 1-3 short follow-ups (max 30 chars).";
+  const instructions = "You are a Kenyan landlord's portfolio assistant. Use ONLY the data. Today is " + today + ". Answer any portfolio question: expected rent in a date range (work out the exact dates, list each tenant with a due date in range — property, unit, due date, rent — treat rent as covered when credit covers it via months_prepaid, and add arrears still owed), collections so far, totals, balances, arrears, vacancies and occupancy. For expected payments give the expected total, how much is already prepaid, and how much is at risk based on how late each tenant usually pays (from recent_payments vs due day); label forecasts as estimates. Group by property, amounts as 'KES 12,000', short plain English, under 250 words. End with one final line exactly: QUICK_REPLIES: [\"...\"] with 1-3 short follow-ups (max 30 chars).";
   try {
     const { result } = createResponsesCall(getRequest(), { baseURL: "https://ai.gateway.lovable.dev/v1", apiKey, model: "openai/gpt-6-astra" },
       [{ role: "user", content: `Portfolio data:\n${JSON.stringify({ today, currency: "KES", tenants })}` }, ...history.map((h) => ({ role: h.role, content: h.content })), { role: "user", content: `Landlord: ${question}` }], instructions);
