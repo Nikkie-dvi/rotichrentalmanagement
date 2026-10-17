@@ -225,7 +225,7 @@ async function portfolioForecast(sb: any, question: string, history: { role: "us
   const wantsExpected = /\b(expect|expected|forecast|upcoming|next week|next month|due|coming in|will (i|we) (get|receive|collect))\b/i.test(question);
   const lines: string[] = [];
   if (wantsExpected) {
-    const upcoming = tenants.flatMap((t) => t.upcoming_due_dates.map((d: string) => ({ ...t, due: d }))).sort((a, b) => a.due.localeCompare(b.due));
+    const upcoming = tenants.flatMap((t) => t.upcoming_due_dates.map((d: string) => ({ ...t, due: d }))).sort((a: any, b: any) => a.due.localeCompare(b.due));
     const uncovered = upcoming.filter((u) => u.credit < u.rent);
     const expectedTotal = uncovered.reduce((s: number, u: any) => s + Math.max(0, u.rent - u.credit), 0);
     const prepaidTotal = upcoming.reduce((s: number, u: any) => s + Math.min(u.credit, u.rent), 0);
