@@ -219,9 +219,9 @@ async function portfolioForecast(sb: any, question: string, history: { role: "us
   const fmtK = (v: number) => `KES ${Math.round(v).toLocaleString("en-US")}`;
   const fmtD = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short" });
   const collectedThisMonth = (pr.data ?? []).filter((p: any) => String(p.payment_date).startsWith(today.slice(0, 7))).reduce((s: number, p: any) => s + Number(p.amount_paid || 0), 0);
-  const totalArrears = tenants.reduce((s, t) => s + t.arrears, 0);
-  const totalCredit = tenants.reduce((s, t) => s + t.credit, 0);
-  const inArrears = tenants.filter((t) => t.arrears > 0).sort((a: any, b: any) => b.arrears - a.arrears);
+  const totalArrears = tenants.reduce((s: number, t: any) => s + t.arrears, 0);
+  const totalCredit = tenants.reduce((s: number, t: any) => s + t.credit, 0);
+  const inArrears = tenants.filter((t: any) => t.arrears > 0).sort((a: any, b: any) => b.arrears - a.arrears);
   const wantsExpected = /\b(expect|expected|forecast|upcoming|next week|next month|due|coming in|will (i|we) (get|receive|collect))\b/i.test(question);
   const lines: string[] = [];
   if (wantsExpected) {
