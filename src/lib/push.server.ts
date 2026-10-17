@@ -20,6 +20,8 @@ export type PushPayload = {
 };
 
 export async function pushToUsers(userIds: string[], payload: PushPayload) {
+  // Push alerts are disabled app-wide; keep the signature so callers compile.
+  return { sent: 0, removed: 0 };
   const ids = Array.from(new Set(userIds.filter(Boolean)));
   if (ids.length === 0) return { sent: 0, removed: 0 };
 
