@@ -154,11 +154,19 @@ export const askTenantAssistant = createServerFn({ method: "POST" })
     } catch (e: any) {
       const status = e?.statusCode ?? e?.status ?? e?.lastError?.statusCode ?? e?.cause?.statusCode;
       console.error("tenant assistant failed", status, e?.message);
-      if (status === 402) return { ok: false as const, error: "AI credits have run out. Add credits in Settings → Plans & credits." };
-      if (status === 429) return { ok: false as const, error: "The assistant is busy. Please try again in a minute." };
-      if (status === 403) return { ok: false as const, error: "The AI assistant isn't available for this workspace right now." };
-      const safe = typeof e?.message === "string" && e.message.length <= 160 && !/[\n]/.test(e.message) ? e.message : null;
-      return { ok: false as const, error: safe ?? "The assistant couldn't answer right now. Please try again." };
+      // Fall back to an answer built straight from the account data — no AI credits needed.
+      const rent = Number(tenant.units?.rent_amount || 0);
+      const balance = ledger.arrears > 0 ? `owes **KES ${Math.round(ledger.arrears).toLocaleString("en-US")}**` : ledger.credit > 0 ? `is **KES ${Math.round(ledger.credit).toLocaleString("en-US")}** ahead (prepaid)` : "is fully balanced";
+      const lastPay = payments[0] ? `${payments[0].payment_date} — KES ${Math.round(Number(payments[0].amount_paid)).toLocaleString("en-US")}` : "none recorded";
+      const unpaid = invoices.filter((i: any) => Number(i.balance_remaining) > 0);
+      const lines = [
+        `**${tenant.full_name}** (${tenant.units?.properties?.name ?? "—"} ${tenant.units?.unit_number ?? ""}, rent KES ${Math.round(rent).toLocaleString("en-US")}/month)`,
+        `- Account: ${balance}`,
+        `- Last payment: ${lastPay}`,
+        unpaid.length ? `- Unpaid invoices: ${unpaid.slice(0, 5).map((i: any) => `${i.month_year} (KES ${Math.round(Number(i.balance_remaining)).toLocaleString("en-US")})`).join(", ")}` : `- No unpaid invoices`,
+        status === 402 ? `\n_AI credits have run out, so this is a data-only summary. Add credits in Settings → Plans & credits for payment parsing and fixes._` : `\n_The smart assistant is unavailable right now, so this is a data-only summary. Try again later for payment parsing and fixes._`,
+      ];
+      return { ok: true as const, text: lines.join("\n"), payment: null, correction: null, quickReplies: ["What should I do next?"], tenantId: tid, tenantName: tenant.full_name };
     }
   });
 
