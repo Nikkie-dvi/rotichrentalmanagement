@@ -207,22 +207,37 @@ async function portfolioForecast(sb: any, question: string, history: { role: "us
     const recent = (pr.data ?? []).filter((p: any) => p.tenant_id === t.id).slice(0, 6).map((p: any) => ({ date: p.payment_date, amount: Number(p.amount_paid) }));
     return { name: t.full_name, property: t.units?.properties?.name ?? null, unit: t.units?.unit_number ?? null, rent, upcoming_due_dates: dues, credit: ledger.credit, arrears: ledger.arrears, months_prepaid: rent ? Math.floor(ledger.credit / rent) : 0, recent_payments: recent };
   });
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) return { ok: false as const, error: "The AI assistant isn't set up yet." };
-  const { createResponsesCall } = await import("./ai/responses.server");
-  const instructions = "You are a Kenyan landlord's portfolio assistant. Use ONLY the data. Today is " + today + ". Answer any portfolio question: expected rent in a date range (work out the exact dates, list each tenant with a due date in range — property, unit, due date, rent — treat rent as covered when credit covers it via months_prepaid, and add arrears still owed), collections so far, totals, balances, arrears, vacancies and occupancy. For expected payments give the expected total, how much is already prepaid, and how much is at risk based on how late each tenant usually pays (from recent_payments vs due day); label forecasts as estimates. Group by property, amounts as 'KES 12,000', short plain English, under 250 words. End with one final line exactly: QUICK_REPLIES: [\"...\"] with 1-3 short follow-ups (max 30 chars).";
-  try {
-    const { result } = createResponsesCall(getRequest(), { baseURL: "https://ai.gateway.lovable.dev/v1", apiKey, model: "openai/gpt-6-astra" },
-      [{ role: "user", content: `Portfolio data:\n${JSON.stringify({ today, currency: "KES", tenants })}` }, ...history.map((h) => ({ role: h.role, content: h.content })), { role: "user", content: `Landlord: ${question}` }], instructions);
-    let text = (await result.text).trim();
-    let quickReplies: string[] = [];
-    const qr = text.match(/QUICK_REPLIES:\s*(\[[^\n]*\])/);
-    if (qr) { text = text.replace(qr[0], "").trim(); try { quickReplies = z.array(z.string().trim().min(1).max(30)).max(4).parse(JSON.parse(qr[1] ?? "[]")); } catch { /* ignore */ } }
-    return { ok: true as const, text, payment: null, correction: null, quickReplies, tenantId: null as string | null, tenantName: "your portfolio" };
-  } catch (e: any) {
-    console.error("portfolio forecast failed", e?.message);
-    return { ok: false as const, error: "The assistant couldn't answer right now. Please try again." };
+  // Answered straight from the app's own data — no AI credits needed.
+  const fmtK = (v: number) => `KES ${Math.round(v).toLocaleString("en-US")}`;
+  const fmtD = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short" });
+  const collectedThisMonth = (pr.data ?? []).filter((p: any) => String(p.payment_date).startsWith(today.slice(0, 7))).reduce((s: number, p: any) => s + Number(p.amount_paid || 0), 0);
+  const totalArrears = tenants.reduce((s, t) => s + t.arrears, 0);
+  const totalCredit = tenants.reduce((s, t) => s + t.credit, 0);
+  const inArrears = tenants.filter((t) => t.arrears > 0).sort((a, b) => b.arrears - a.arrears);
+  const wantsExpected = /\b(expect|expected|forecast|upcoming|next week|next month|due|coming in|will (i|we) (get|receive|collect))\b/i.test(question);
+  const lines: string[] = [];
+  if (wantsExpected) {
+    const upcoming = tenants.flatMap((t) => t.upcoming_due_dates.map((d: string) => ({ ...t, due: d }))).sort((a, b) => a.due.localeCompare(b.due));
+    const uncovered = upcoming.filter((u) => u.credit < u.rent);
+    const expectedTotal = uncovered.reduce((s, u) => s + Math.max(0, u.rent - u.credit), 0);
+    const prepaidTotal = upcoming.reduce((s, u) => s + Math.min(u.credit, u.rent), 0);
+    lines.push(`**Expected rent (next ~4 months of due dates)**`);
+    if (!upcoming.length) lines.push("No rent due dates coming up.");
+    for (const u of upcoming.slice(0, 15)) {
+      const covered = u.credit >= u.rent;
+      lines.push(`- ${u.name} (${u.property ?? "—"} ${u.unit ?? ""}) — ${fmtD(u.due)}: ${fmtK(u.rent)}${covered ? " — already covered by prepaid credit" : u.arrears > 0 ? ` — plus ${fmtK(u.arrears)} arrears` : ""}`);
+    }
+    if (upcoming.length > 15) lines.push(`- …and ${upcoming.length - 15} more`);
+    lines.push(`**Totals:** expected ${fmtK(expectedTotal)} still to come in; ${fmtK(prepaidTotal)} already covered by tenants who paid ahead.`);
+    if (totalArrears > 0) lines.push(`On top of that, ${fmtK(totalArrears)} is owed in arrears by ${inArrears.length} tenant${inArrears.length === 1 ? "" : "s"}.`);
+  } else {
+    lines.push(`**Your portfolio as of ${fmtD(today)}**`);
+    lines.push(`- Collected this month: **${fmtK(collectedThisMonth)}**`);
+    lines.push(`- Owed in arrears: **${fmtK(totalArrears)}**${inArrears.length ? ` (${inArrears.slice(0, 5).map((t) => `${t.name} ${fmtK(t.arrears)}`).join(", ")}${inArrears.length > 5 ? ", …" : ""})` : ""}`);
+    lines.push(`- Prepaid credit held: **${fmtK(totalCredit)}**`);
+    lines.push(`- Active tenants: **${tenants.length}**`);
   }
+  return { ok: true as const, text: lines.join("\n"), payment: null, correction: null, quickReplies: wantsExpected ? ["What have I collected?", "Who owes arrears?"] : ["What rent is due next?", "Who owes arrears?"], tenantId: null as string | null, tenantName: "your portfolio" };
 }
 
 /** Turns "remind tenants with arrears…" / "text all tenants in X…" into a draft the landlord confirms. */
