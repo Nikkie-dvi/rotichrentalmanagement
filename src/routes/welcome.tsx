@@ -36,9 +36,10 @@ const features = [
 function Welcome() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="mx-auto flex max-w-6xl items-center justify-between py-4 pl-4 pr-16">
+      <header className="mx-auto flex max-w-6xl items-center gap-2 py-4 pl-4 pr-16">
+        <AppLogo className="h-8 w-8" />
         <span className="font-semibold">{NAME}</span>
-        <Button asChild variant="ghost" size="sm"><Link to="/auth">Sign in</Link></Button>
+        <Button asChild variant="ghost" size="sm" className="ml-auto"><Link to="/auth">Sign in</Link></Button>
       </header>
 
       <section className="mx-auto grid max-w-6xl items-center gap-8 px-4 pb-12 pt-6 md:grid-cols-2">
