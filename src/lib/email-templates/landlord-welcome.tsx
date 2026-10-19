@@ -10,10 +10,10 @@ interface Props {
 const Email = ({ name, landlordCode }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Welcome to Rotich Management Systems</Preview>
+    <Preview>Welcome to Eden Point Real Estate</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Welcome to Rotich Management Systems</Heading>
+        <Heading style={h1}>Welcome to Eden Point Real Estate</Heading>
         <Text style={text}>{name ? `Hi ${name},` : "Hi there,"}</Text>
         <Text style={text}>
           Your landlord account is ready. Add your properties, units and tenants, and start tracking rent,
@@ -34,7 +34,7 @@ const Email = ({ name, landlordCode }: Props) => (
 
 export const template = {
   component: Email,
-  subject: "Welcome to Rotich Management Systems",
+  subject: "Welcome to Eden Point Real Estate",
   displayName: "Landlord welcome",
   previewData: { name: "Jane", landlordCode: "RMS-1234" },
 } satisfies TemplateEntry;

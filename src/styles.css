@@ -365,18 +365,18 @@
   box-shadow: 0 0 20px -4px color-mix(in oklab, var(--accent) 30%, transparent);
 }
 
-/* Repeating "ROTICH / RENTALS" square watermark — adapts to light & dark mode */
+/* Repeating "EDEN POINT / REAL ESTATE" square watermark — adapts to light & dark mode */
 @utility tenant-watermark {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background-repeat: repeat;
   background-size: 300px 300px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ctext x='150' y='140' font-family='system-ui,sans-serif' font-size='58' font-weight='800' letter-spacing='2' text-anchor='middle' fill='%231f2937' opacity='0.05'%3EROTICH%3C/text%3E%3Ctext x='150' y='175' font-family='system-ui,sans-serif' font-size='22' font-weight='600' letter-spacing='8' text-anchor='middle' fill='%231f2937' opacity='0.06'%3ERENTALS%3C/text%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ctext x='150' y='140' font-family='system-ui,sans-serif' font-size='58' font-weight='800' letter-spacing='2' text-anchor='middle' fill='%231f2937' opacity='0.05'%3EEDEN POINT%3C/text%3E%3Ctext x='150' y='175' font-family='system-ui,sans-serif' font-size='22' font-weight='600' letter-spacing='8' text-anchor='middle' fill='%231f2937' opacity='0.06'%3EREAL ESTATE%3C/text%3E%3C/svg%3E");
   opacity: 0.9;
 }
 .dark .tenant-watermark {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ctext x='150' y='140' font-family='system-ui,sans-serif' font-size='58' font-weight='800' letter-spacing='2' text-anchor='middle' fill='%23e5e7eb' opacity='0.05'%3EROTICH%3C/text%3E%3Ctext x='150' y='175' font-family='system-ui,sans-serif' font-size='22' font-weight='600' letter-spacing='8' text-anchor='middle' fill='%23e5e7eb' opacity='0.06'%3ERENTALS%3C/text%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ctext x='150' y='140' font-family='system-ui,sans-serif' font-size='58' font-weight='800' letter-spacing='2' text-anchor='middle' fill='%23e5e7eb' opacity='0.05'%3EEDEN POINT%3C/text%3E%3Ctext x='150' y='175' font-family='system-ui,sans-serif' font-size='22' font-weight='600' letter-spacing='8' text-anchor='middle' fill='%23e5e7eb' opacity='0.06'%3EREAL ESTATE%3C/text%3E%3C/svg%3E");
 }
 
 

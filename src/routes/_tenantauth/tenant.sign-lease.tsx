@@ -15,7 +15,7 @@ import { signMyLease } from "@/lib/lease-sign.functions";
 export const Route = createFileRoute("/_tenantauth/tenant/sign-lease")({
   head: () => ({
     meta: [
-      { title: "Sign your lease — Rotich Management Systems" },
+      { title: "Sign your lease — Eden Point Real Estate" },
       { name: "description", content: "Read and sign your lease agreement from your tenant portal." },
       { property: "og:title", content: "Sign your lease" },
       { property: "og:description", content: "Read and sign your lease agreement from your tenant portal." },

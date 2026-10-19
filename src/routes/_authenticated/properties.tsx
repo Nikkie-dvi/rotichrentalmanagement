@@ -36,9 +36,9 @@ import { loadTenantLedgers } from "@/lib/dashboard-ledgers";
 export const Route = createFileRoute("/_authenticated/properties")({
   head: () => ({
     meta: [
-      { title: "Properties & Units — Rotich Management Systems" },
+      { title: "Properties & Units — Eden Point Real Estate" },
       { name: "description", content: "Manage buildings and rental units, monthly rent and occupancy status." },
-      { property: "og:title", content: "Properties & Units — Rotich Management Systems" },
+      { property: "og:title", content: "Properties & Units — Eden Point Real Estate" },
       { property: "og:description", content: "Manage buildings and rental units." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

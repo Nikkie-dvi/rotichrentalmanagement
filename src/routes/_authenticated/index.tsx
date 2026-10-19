@@ -37,13 +37,13 @@ type DrillKey = "units" | "occupancy" | "collected" | "arrears" | null;
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
-      { title: "Landlord Dashboard — Rotich Rental Management" },
+      { title: "Landlord Dashboard — Eden Point Real Estate" },
       { name: "description", content: "Live view of your units, occupancy, rent collected this month and outstanding arrears." },
-      { property: "og:title", content: "Landlord Dashboard — Rotich Rental Management" },
+      { property: "og:title", content: "Landlord Dashboard — Eden Point Real Estate" },
       { property: "og:description", content: "Live view of your units, occupancy, rent collected this month and outstanding arrears." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Landlord Dashboard — Rotich Rental Management" },
+      { name: "twitter:title", content: "Landlord Dashboard — Eden Point Real Estate" },
       { name: "twitter:description", content: "Live view of your units, occupancy, rent collected this month and outstanding arrears." },
       { name: "robots", content: "noindex" },
     ],

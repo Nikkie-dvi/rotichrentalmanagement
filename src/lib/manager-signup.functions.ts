@@ -197,7 +197,7 @@ export const registerPropertyManager = createServerFn({ method: "POST" })
         // 3. Notify landlord by SMS + email
         const landlordFirst = (landlord.full_name ?? first.landlordName).split(" ")[0];
         const sms = isNew
-          ? `Hi ${landlordFirst}, ${data.fullName} (${data.phone}) registered as property manager for ${names.join(", ")} on Rotich Management Systems. Track every payment they record at homebasemanager.app/auth - sign in with ${first.landlordEmail}, tap "Forgot password" and use this phone to set your password.`
+          ? `Hi ${landlordFirst}, ${data.fullName} (${data.phone}) registered as property manager for ${names.join(", ")} on Eden Point Real Estate. Track every payment they record at homebasemanager.app/auth - sign in with ${first.landlordEmail}, tap "Forgot password" and use this phone to set your password.`
           : `Hi ${landlordFirst}, ${data.fullName} (${data.phone}) registered as property manager for ${names.join(", ")}. Approve them at homebasemanager.app Settings > Property Managers. Ignore if you don't know them.`;
         await sendSms(msisdn, sms, { portalLink: false }).catch(() => null);
         try {

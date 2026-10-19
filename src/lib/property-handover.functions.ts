@@ -128,8 +128,8 @@ export const savePropertyLandlord = createServerFn({ method: "POST" })
 
     const first = data.landlordName.split(" ")[0];
     const sms = isNew
-      ? `Hi ${first}, your property ${prop.name} is now on Rotich Management Systems, run by your property manager. Track rent and payments at homebasemanager.app/auth - sign in with ${data.landlordEmail}, tap "Forgot password" and use this phone to set your password.`
-      : `Hi ${first}, your property manager added ${prop.name} to your account on Rotich Management Systems. Sign in at homebasemanager.app to track rent and payments.`;
+      ? `Hi ${first}, your property ${prop.name} is now on Eden Point Real Estate, run by your property manager. Track rent and payments at homebasemanager.app/auth - sign in with ${data.landlordEmail}, tap "Forgot password" and use this phone to set your password.`
+      : `Hi ${first}, your property manager added ${prop.name} to your account on Eden Point Real Estate. Sign in at homebasemanager.app to track rent and payments.`;
     await sendSms(msisdn, sms, { portalLink: false }).catch(() => null);
 
     return { handedOver: true, landlordId, moved: { units: unitIds.length, tenants: tenantIds.length } };

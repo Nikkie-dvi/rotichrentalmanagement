@@ -27,9 +27,9 @@ import {
 export const Route = createFileRoute("/_authenticated/landlords")({
   head: () => ({
     meta: [
-      { title: "Landlord accounts — Rotich Management Systems" },
+      { title: "Landlord accounts — Eden Point Real Estate" },
       { name: "description", content: "Review, approve or decline landlord accounts and their monthly subscription." },
-      { property: "og:title", content: "Landlord accounts — Rotich Management Systems" },
+      { property: "og:title", content: "Landlord accounts — Eden Point Real Estate" },
       { property: "og:description", content: "Review, approve or decline landlord accounts and their monthly subscription." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

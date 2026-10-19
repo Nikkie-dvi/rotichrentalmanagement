@@ -28,9 +28,9 @@ import { AccountControls, AccountLogout } from "@/components/account-controls";
 export const Route = createFileRoute("/_authenticated/settings/account")({
   head: () => ({
     meta: [
-      { title: "My Account — Rotich Rental Management" },
+      { title: "My Account — Eden Point Real Estate" },
       { name: "description", content: "Manage your profile, subscription, automatic invoicing, late fees, lease template and tenant texting." },
-      { property: "og:title", content: "My Account — Rotich Rental Management" },
+      { property: "og:title", content: "My Account — Eden Point Real Estate" },
       { property: "og:description", content: "Your rental settings, tenant texting, lease template and account details in one place." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

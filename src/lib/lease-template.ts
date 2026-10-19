@@ -6,7 +6,7 @@ export type LeaseTemplate = {
   footer: string;
 };
 
-export const DEFAULT_LEASE_LANDLORD_NAME = "Rotich Management Systems";
+export const DEFAULT_LEASE_LANDLORD_NAME = "Eden Point Real Estate";
 
 export const DEFAULT_LEASE_INTRO =
   "This lease is entered into between {landlord} (the \"Landlord\") and {tenant} (the \"Tenant\") for the premises described below.";

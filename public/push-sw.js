@@ -1,4 +1,4 @@
-// Dedicated Web Push service worker for Rotich Management Systems.
+// Dedicated Web Push service worker for Eden Point Real Estate.
 // Handles push events and notification clicks. Separate from the app-shell
 // service worker so it never interferes with offline caching.
 
@@ -15,7 +15,7 @@ self.addEventListener("push", (event) => {
   try {
     payload = event.data ? event.data.json() : {};
   } catch {
-    payload = { title: "Rotich Management Systems", body: event.data ? event.data.text() : "" };
+    payload = { title: "Eden Point Real Estate", body: event.data ? event.data.text() : "" };
   }
 
   const title = payload.title || "Payment reminder";

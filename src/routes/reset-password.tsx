@@ -15,9 +15,9 @@ export const Route = createFileRoute("/reset-password")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Reset password — Rotich Management Systems" },
+      { title: "Reset password — Eden Point Real Estate" },
       { name: "description", content: "Request a reset link or set a new password for your account." },
-      { property: "og:title", content: "Reset password — Rotich Management Systems" },
+      { property: "og:title", content: "Reset password — Eden Point Real Estate" },
       { property: "og:description", content: "Request a reset link or set a new password for your account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

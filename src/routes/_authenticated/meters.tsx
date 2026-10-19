@@ -15,9 +15,9 @@ import { activeTenantsQuery, readingsQuery } from "@/lib/property-queries";
 export const Route = createFileRoute("/_authenticated/meters")({
   head: () => ({
     meta: [
-      { title: "Meter Readings & Utilities — Rotich Management Systems" },
+      { title: "Meter Readings & Utilities — Eden Point Real Estate" },
       { name: "description", content: "Log utility meter readings and compute per-tenant utility bills automatically." },
-      { property: "og:title", content: "Meter Readings & Utilities — Rotich Management Systems" },
+      { property: "og:title", content: "Meter Readings & Utilities — Eden Point Real Estate" },
       { property: "og:description", content: "Log meter readings; auto-calc utility bills." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

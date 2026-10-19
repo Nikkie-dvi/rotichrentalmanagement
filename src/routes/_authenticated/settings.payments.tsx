@@ -15,9 +15,9 @@ import { PAYMENT_METHODS, useLandlordAccount } from "@/hooks/use-landlord-accoun
 export const Route = createFileRoute("/_authenticated/settings/payments")({
   head: () => ({
     meta: [
-      { title: "Rent payment details — Rotich Management Systems" },
+      { title: "Rent payment details — Eden Point Real Estate" },
       { name: "description", content: "Set how your tenants should pay rent." },
-      { property: "og:title", content: "Rent payment details — Rotich Management Systems" },
+      { property: "og:title", content: "Rent payment details — Eden Point Real Estate" },
       { property: "og:description", content: "Payment number, method and notice shown in your tenants' app." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

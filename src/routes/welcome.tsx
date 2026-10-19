@@ -3,7 +3,7 @@ import { Check, MessageCircle, Smartphone, Bell, Bot, FileSignature, Wallet, Use
 import { Button } from "@/components/ui/button";
 import appShots from "@/assets/landing-app.jpg";
 
-const NAME = "Rotich Rental Management";
+const NAME = "Eden Point Real Estate";
 const WA = `https://wa.me/254706747498?text=${encodeURIComponent(`Hi, I'd like to know more about ${NAME}.`)}`;
 const TITLE = `${NAME} — Rent collection app for Kenyan landlords`;
 const DESC = "Collect rent by M-Pesa, send automatic SMS reminders and track every tenant's balance. KES 2,400/month with a 14-day free trial.";

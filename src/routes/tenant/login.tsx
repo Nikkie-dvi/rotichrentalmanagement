@@ -21,7 +21,7 @@ export const Route = createFileRoute("/tenant/login")({
   },
   head: () => ({
     meta: [
-      { title: "Tenant sign in — Rotich Management Systems" },
+      { title: "Tenant sign in — Eden Point Real Estate" },
       { name: "description", content: "Sign in to your tenant portal." },
       { property: "og:title", content: "Tenant sign in" },
       { property: "og:description", content: "Sign in to your tenant portal." },

@@ -19,7 +19,7 @@ import { TenantSignedLeaseUpload } from "@/components/tenant-signed-lease-upload
 export const Route = createFileRoute("/_authenticated/leases")({
   head: () => ({
     meta: [
-      { title: "Lease Agreements — Rotich Management Systems" },
+      { title: "Lease Agreements — Eden Point Real Estate" },
       { name: "description", content: "View and print signed digital lease agreements for every tenant." },
       { property: "og:title", content: "Lease Agreements" },
       { property: "og:description", content: "View and print signed digital lease agreements for every tenant." },

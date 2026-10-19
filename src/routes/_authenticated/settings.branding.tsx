@@ -13,9 +13,9 @@ import { SectionSwitcher, SectionPanel, ADMIN_TABS } from "@/components/section-
 export const Route = createFileRoute("/_authenticated/settings/branding")({
   head: () => ({
     meta: [
-      { title: "App branding — Rotich Management Systems" },
+      { title: "App branding — Eden Point Real Estate" },
       { name: "description", content: "Upload and switch the app logo used across the landlord and tenant apps." },
-      { property: "og:title", content: "App branding — Rotich Management Systems" },
+      { property: "og:title", content: "App branding — Eden Point Real Estate" },
       { property: "og:description", content: "Upload and switch the app logo without editing code." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

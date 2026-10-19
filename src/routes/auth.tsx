@@ -29,9 +29,9 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign in — Rotich Rental Management" },
+      { title: "Sign in — Eden Point Real Estate" },
       { name: "description", content: "Sign in to manage your rental properties, tenants, and payments." },
-      { property: "og:title", content: "Sign in — Rotich Rental Management" },
+      { property: "og:title", content: "Sign in — Eden Point Real Estate" },
       { property: "og:description", content: "Sign in to manage your rental properties, tenants, and payments." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -134,7 +134,7 @@ function AuthPage() {
           <div className="flex items-center gap-3">
             <AppLogo className="h-12 w-12" />
             <div>
-              <h1 className="text-xl font-bold leading-tight">Rotich Rental Management</h1>
+              <h1 className="text-xl font-bold leading-tight">Eden Point Real Estate</h1>
               <p className="text-sm text-muted-foreground">Landlord &amp; tenant portal</p>
             </div>
           </div>
@@ -166,7 +166,7 @@ function AuthPage() {
           <div className="mb-6 flex items-center gap-3 lg:hidden">
             <AppLogo className="h-11 w-11" />
             <div>
-              <h1 className="text-lg font-bold leading-tight">Rotich Rental Management</h1>
+              <h1 className="text-lg font-bold leading-tight">Eden Point Real Estate</h1>
               <p className="text-xs text-muted-foreground">Landlord &amp; tenant portal</p>
             </div>
           </div>
@@ -177,7 +177,7 @@ function AuthPage() {
                 <CardContent className="space-y-5 p-6 text-center">
                   <AppLogo className="mx-auto h-16 w-16" />
                   <div>
-                    <h2 className="text-2xl font-semibold tracking-tight">Welcome to Rotich Rental Management Systems</h2>
+                    <h2 className="text-2xl font-semibold tracking-tight">Welcome to Eden Point Real Estate</h2>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Rent, tenants and M-Pesa payments in one place.
                     </p>

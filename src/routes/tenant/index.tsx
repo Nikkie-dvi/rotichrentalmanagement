@@ -7,9 +7,9 @@ export const Route = createFileRoute("/tenant/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Tenant Portal — Rotich Management Systems" },
+      { title: "Tenant Portal — Eden Point Real Estate" },
       { name: "description", content: "Sign in or register to manage your rental, sign your lease, and report maintenance issues." },
-      { property: "og:title", content: "Tenant Portal — Rotich Management Systems" },
+      { property: "og:title", content: "Tenant Portal — Eden Point Real Estate" },
       { property: "og:description", content: "Sign your lease, view rent due, and raise maintenance requests." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -29,7 +29,7 @@ function TenantLanding() {
           <h1 className="text-2xl font-bold">
             Tenant Portal
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Rotich Management Systems</p>
+          <p className="mt-1 text-sm text-muted-foreground">Eden Point Real Estate</p>
         </div>
 
         <Card className="overflow-hidden border-primary/20 border-t-4 border-t-primary">

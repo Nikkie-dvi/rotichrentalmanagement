@@ -14,9 +14,9 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/maintenance")({
   head: () => ({
     meta: [
-      { title: "Issues & Move-outs — Rotich Management Systems" },
+      { title: "Issues & Move-outs — Eden Point Real Estate" },
       { name: "description", content: "Review tenant maintenance issues with photos and respond to move-out requests." },
-      { property: "og:title", content: "Issues & Move-outs — Rotich Management Systems" },
+      { property: "og:title", content: "Issues & Move-outs — Eden Point Real Estate" },
       { property: "og:description", content: "Tenant maintenance tickets, photos and move-out requests." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

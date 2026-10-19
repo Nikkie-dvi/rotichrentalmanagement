@@ -21,7 +21,7 @@ const Email = ({ landlordName, managerName, managerPhone, properties, needsAppro
         <Text style={text}>{landlordName ? `Hi ${landlordName},` : "Hi there,"}</Text>
         <Text style={text}>
           {managerName ?? "A property manager"}
-          {managerPhone ? ` (${managerPhone})` : ""} has registered on Rotich Management Systems to manage your
+          {managerPhone ? ` (${managerPhone})` : ""} has registered on Eden Point Real Estate to manage your
           property and record rent payments for you.
         </Text>
         {properties ? (
