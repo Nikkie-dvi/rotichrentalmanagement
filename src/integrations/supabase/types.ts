@@ -911,6 +911,7 @@ export type Database = {
           location: string | null
           name: string
           owner_id: string
+          penalty_start_day: number | null
         }
         Insert: {
           created_at?: string
@@ -921,6 +922,7 @@ export type Database = {
           location?: string | null
           name: string
           owner_id?: string
+          penalty_start_day?: number | null
         }
         Update: {
           created_at?: string
@@ -931,6 +933,7 @@ export type Database = {
           location?: string | null
           name?: string
           owner_id?: string
+          penalty_start_day?: number | null
         }
         Relationships: []
       }

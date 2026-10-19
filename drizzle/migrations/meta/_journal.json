@@ -78,6 +78,13 @@
       "when": 1791957575670,
       "tag": "0010_assistant_apply_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792391341231,
+      "tag": "0011_property_penalty_start_day",
+      "breakpoints": true
     }
   ]
 }

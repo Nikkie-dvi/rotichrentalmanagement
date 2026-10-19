@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { AutomaticInvoicing } from "@/components/automatic-invoicing";
 import { runLateFeesNow, runRentRemindersNow } from "@/lib/billing.functions";
+import { PropertyPenaltyDates } from "@/components/property-penalty-dates";
 
 const DEFAULTS = {
   default_due_day: 5,
@@ -152,7 +153,7 @@ export function AccountBillingSettings({ section }: { section: "invoicing" | "fe
       {section === "fees" && <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base"><AlarmClock className="h-4 w-4" />Penalty rules</CardTitle>
-          <CardDescription>Applies to every tenant under your account.</CardDescription>
+          <CardDescription>Default rules, with separate penalty dates for each apartment.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
@@ -201,6 +202,7 @@ export function AccountBillingSettings({ section }: { section: "invoicing" | "fe
               {runNow.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}Run late fee check now
             </Button>
           </div>
+          <PropertyPenaltyDates />
         </CardContent>
       </Card>}
 
