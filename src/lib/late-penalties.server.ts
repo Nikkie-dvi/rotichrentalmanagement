@@ -3,6 +3,7 @@
 // Server-only — never import this from a component.
 import { sendSms } from "./sms.server";
 import { chargeSmsWallet } from "./sms-wallet.server";
+import { penaltyDaysLate, penaltyStartDate, penaltyToday } from "./penalty-schedule";
 
 type Settings = {
   owner_id: string;
@@ -63,7 +64,7 @@ export function computePenalty(s: Pick<Settings, "penalty_type" | "penalty_value
 
 export async function runLatePenalties(opts: { ownerId?: string; today?: string } = {}) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const today = opts.today ?? new Date().toISOString().slice(0, 10);
+  const today = opts.today ?? penaltyToday();
 
   let settingsQuery = supabaseAdmin.from("billing_settings").select("*");
   if (opts.ownerId) settingsQuery = settingsQuery.eq("owner_id", opts.ownerId);
@@ -74,7 +75,7 @@ export async function runLatePenalties(opts: { ownerId?: string; today?: string 
 
   let invoiceQuery = supabaseAdmin
     .from("invoices")
-    .select("id, owner_id, tenant_id, month_year, due_date, total_due, balance_remaining, late_penalty_amount, penalty_applied_at, penalty_waived")
+    .select("id, owner_id, tenant_id, month_year, due_date, total_due, balance_remaining, late_penalty_amount, penalty_applied_at, penalty_waived, tenants(units(properties(penalty_start_day)))")
     .gt("balance_remaining", 0)
     .eq("penalty_waived", false)
     .is("penalty_applied_at", null);
@@ -90,12 +91,10 @@ export async function runLatePenalties(opts: { ownerId?: string; today?: string 
     if (!s.auto_penalties_enabled) continue;
 
     const due = invoiceDueDate(inv.month_year, s.default_due_day, inv.due_date);
-    const graceEnd = new Date(`${due}T00:00:00Z`);
-    graceEnd.setUTCDate(graceEnd.getUTCDate() + Number(s.grace_days || 0));
-    const now = new Date(`${today}T00:00:00Z`);
-    if (now <= graceEnd) continue;
-
-    const daysLate = Math.floor((now.getTime() - graceEnd.getTime()) / 86_400_000);
+    const startDay = inv.tenants?.units?.properties?.penalty_start_day ?? null;
+    const start = penaltyStartDate(due, Number(s.grace_days || 0), startDay);
+    const daysLate = penaltyDaysLate(today, start);
+    if (daysLate === 0) continue;
     const balance = Number(inv.balance_remaining);
     const penalty = computePenalty(s, balance, daysLate);
     if (penalty <= 0) continue;
@@ -122,7 +121,7 @@ export async function runLatePenalties(opts: { ownerId?: string; today?: string 
       category: "Late payment fee",
       amount: penalty,
       kind: "penalty",
-      description: `${daysLate} day(s) past the grace period (due ${due})`,
+      description: `${daysLate} day(s) since penalty start ${start} (due ${due})`,
     });
     applied++;
 

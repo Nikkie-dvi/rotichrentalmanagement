@@ -22,3 +22,4 @@
 - Keep History visualizations in focused presentation components fed by the existing performance query and collection-comparison helper; dynamically load the Three.js building after hydration to keep browser graphics outside SSR.
 - Track utility billing in a focused portfolio panel using service invoices; label invoice settlement separately from cash receipts because credit can settle invoices and receipts have no category-level allocation.
 - Resolve explicit assistant page-opening requests through a browser-safe allowlist of existing routes; navigation never changes records or sends notifications.
+- Store optional monthly penalty start days on properties and resolve dates through the shared penalty-schedule helper in the Nairobi timezone; account grace periods remain the fallback and both manual and scheduled checks use the same engine.
