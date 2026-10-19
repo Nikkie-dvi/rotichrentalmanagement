@@ -69,71 +69,50 @@ export async function sendSms(
   options: { portalLink?: boolean } = {},
 ): Promise<SmsResult> {
 
-  const key = process.env["SMSLEOPARD_API_KEY"];
-  const secret = process.env["SMSLEOPARD_API_SECRET"];
-  // Falling back to a sender ID the account does not own makes the provider
-  // reply "no valid recipients", so default to the live one.
-  const sender = process.env["SMSLEOPARD_SENDER_ID"] || "SMS_Leopard";
-  if (!key || !secret) return { ok: false, status: "failed", error: "SMS Leopard credentials are not configured" };
+  // Delivery via TextSMS (sms.textsms.co.ke).
+  const key = process.env["TEXTSMS_API_KEY"];
+  const partnerID = process.env["TEXTSMS_PARTNER_ID"];
+  const sender = process.env["TEXTSMS_SENDER_ID"] || "TextSMS";
+  if (!key || !partnerID) return { ok: false, status: "failed", error: "TextSMS credentials are not configured" };
 
   const destination = toKenyanMsisdn(to);
   if (!destination) return { ok: false, status: "failed", error: "Tenant has no phone number" };
   const body = options.portalLink === false ? message : withPortalLink(message);
   const safeMessage = toSmsLeopardText(body);
-
   if (!safeMessage) return { ok: false, status: "failed", error: "SMS message has no supported characters" };
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch("https://api.smsleopard.com/v1/sms/send", {
+      const res = await fetch("https://sms.textsms.co.ke/api/services/sendsms/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${btoa(`${key}:${secret}`)}`,
-        },
-        body: JSON.stringify({
-          source: sender,
-          message: safeMessage,
-          destination: [{ number: destination }],
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apikey: key, partnerID, message: safeMessage, shortcode: sender, mobile: destination }),
       });
-
       const text = await res.text();
-      const retryable = res.status === 429 || res.status >= 500 || (res.status === 400 && /enqueue message failed/i.test(text));
-      if (!res.ok && retryable && attempt < 2) {
-        const retryAfter = Number(res.headers.get("retry-after"));
-        await wait(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1_000 : 750 * (attempt + 1));
+      if (!res.ok && (res.status === 429 || res.status >= 500) && attempt < 2) {
+        await wait(750 * (attempt + 1));
         continue;
       }
-      if (!res.ok) {
-        return { ok: false, status: "failed", error: `SMS Leopard [${res.status}]: ${text.slice(0, 300)}` };
-      }
-      let responseBody: any = {};
+      if (!res.ok) return { ok: false, status: "failed", error: `TextSMS [${res.status}]: ${text.slice(0, 300)}` };
+      let parsed: any = {};
       try {
-        responseBody = JSON.parse(text);
+        parsed = JSON.parse(text);
       } catch {
-        /* provider returned non-JSON on success */
+        /* non-JSON */
       }
-      if (responseBody?.success === false) {
-        return { ok: false, status: "failed", error: String(responseBody?.message ?? text).slice(0, 300) };
+      const r = parsed?.responses?.[0] ?? parsed;
+      const code = Number(r?.["respose-code"] ?? r?.["response-code"] ?? 200);
+      if (code !== 200) {
+        return { ok: false, status: "failed", error: `TextSMS [${code}]: ${String(r?.["response-description"] ?? text).slice(0, 300)}` };
       }
-      const recipient = responseBody?.recipients?.[0];
-      if (recipient?.status === "failed") {
-        return { ok: false, status: "failed", error: `Delivery rejected for ${recipient.number ?? destination}` };
-      }
-      return { ok: true, status: recipient?.status ?? "sent", id: recipient?.id ?? responseBody?.id };
+      return { ok: true, status: "sent", id: r?.messageid ? String(r.messageid) : undefined };
     } catch (error) {
       if (attempt < 2) {
         await wait(750 * (attempt + 1));
         continue;
       }
-      return {
-        ok: false,
-        status: "failed",
-        error: error instanceof Error ? error.message : "SMS request failed",
-      };
+      return { ok: false, status: "failed", error: error instanceof Error ? error.message : "SMS request failed" };
     }
   }
-
   return { ok: false, status: "failed", error: "SMS request failed after retries" };
 }
