@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, MessageCircle, Smartphone, Bell, Bot, FileSignature, Wallet, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppLogo } from "@/components/app-logo";
 import appShots from "@/assets/landing-app.jpg";
 
 const NAME = "Eden Point Real Estate";
