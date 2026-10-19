@@ -20,6 +20,7 @@
 - [x] Signed-in desktop and phone check of the unified portfolio workspace
 
 ## Open
+- [ ] Add apartment-specific monthly late-penalty start dates and verify saved settings and date rules.
 - [ ] Add separate utility bill tracking to Portfolio.
 - [ ] Add natural-language assistant navigation to existing pages.
 - [ ] Match the Tenants preview layout with compact All, Paid ahead and Overdue filters.
