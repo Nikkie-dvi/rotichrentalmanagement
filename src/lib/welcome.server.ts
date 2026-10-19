@@ -105,7 +105,7 @@ export async function runWelcomeSweep() {
     }
     if (!l.phone) continue;
     if (await alreadyLogged("landlord_welcome", { owner_id: l.user_id })) continue;
-    const msg = `Welcome to Rotich Management Systems, ${first(l.full_name)}!${l.landlord_code ? ` Your landlord code is ${l.landlord_code}.` : ""} Add your properties and tenants at homebasemanager.app to start collecting rent.`;
+    const msg = `Welcome to Eden Point Real Estate, ${first(l.full_name)}!${l.landlord_code ? ` Your landlord code is ${l.landlord_code}.` : ""} Add your properties and tenants at homebasemanager.app to start collecting rent.`;
     const res = await sendSms(l.phone, msg, { portalLink: false });
     logs.push({ owner_id: l.user_id, channel: "sms", recipient: l.phone, subject: "landlord_welcome", message: msg, status: res.ok ? "delivered" : "failed", error: res.error ?? null });
     landlordsWelcomed++;
@@ -120,7 +120,7 @@ export async function runWelcomeSweep() {
     if (!l.phone || l.status !== "approved") continue;
     if (Date.now() - new Date(l.created_at).getTime() < 14 * 86400000) continue; // skip brand-new accounts
     if (await alreadyLogged(subject, { owner_id: l.user_id })) continue;
-    const msg = `Hi ${first(l.full_name)}, how is Rotich Management Systems working for you this month? We'd love your feedback${wa ? ` - WhatsApp us on ${wa}` : ""}. Thank you for managing with us!`;
+    const msg = `Hi ${first(l.full_name)}, how is Eden Point Real Estate working for you this month? We'd love your feedback${wa ? ` - WhatsApp us on ${wa}` : ""}. Thank you for managing with us!`;
     const res = await sendSms(l.phone, msg, { portalLink: false });
     logs.push({ owner_id: l.user_id, channel: "sms", recipient: l.phone, subject, message: msg, status: res.ok ? "delivered" : "failed", error: res.error ?? null });
     checkins++;

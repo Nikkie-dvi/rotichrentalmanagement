@@ -6,9 +6,9 @@ export const Route = createFileRoute("/_authenticated/reports")({
   },
   head: () => ({
     meta: [
-      { title: "Portfolio Performance & Reports — Rotich Management Systems" },
+      { title: "Portfolio Performance & Reports — Eden Point Real Estate" },
       { name: "description", content: "Portfolio performance, monthly reports, downloads and property statements in one workspace." },
-      { property: "og:title", content: "Portfolio Performance & Reports — Rotich Management Systems" },
+      { property: "og:title", content: "Portfolio Performance & Reports — Eden Point Real Estate" },
       { property: "og:description", content: "Review rental performance and download monthly portfolio records." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

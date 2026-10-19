@@ -63,9 +63,9 @@ const SUGGESTIONS: { label: string; body: string; audience?: Audience }[] = [
 export const Route = createFileRoute("/_authenticated/messages")({
   head: () => ({
     meta: [
-      { title: "SMS Tenants — Rotich Management Systems" },
+      { title: "SMS Tenants — Eden Point Real Estate" },
       { name: "description", content: "Text tenants by apartment, rent status or all at once, send notices and review delivery history." },
-      { property: "og:title", content: "SMS Tenants — Rotich Management Systems" },
+      { property: "og:title", content: "SMS Tenants — Eden Point Real Estate" },
       { property: "og:description", content: "One place for every tenant message: by apartment, rent due, notices and delivery history." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

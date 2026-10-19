@@ -40,9 +40,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({
     meta: [
-      { title: "Billing & Invoices — Rotich Management Systems" },
+      { title: "Billing & Invoices — Eden Point Real Estate" },
       { name: "description", content: "Generate monthly bills combining base rent and utility charges. Print or share invoices." },
-      { property: "og:title", content: "Billing & Invoices — Rotich Management Systems" },
+      { property: "og:title", content: "Billing & Invoices — Eden Point Real Estate" },
       { property: "og:description", content: "Generate and preview monthly rent invoices." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -548,7 +548,7 @@ function BillingPage() {
           {preview && (
             <div className="space-y-3" id="invoice-print">
               <div className="text-center">
-                <div className="text-lg font-bold">Rotich Management Systems Rental Invoice</div>
+                <div className="text-lg font-bold">Eden Point Real Estate Rental Invoice</div>
                 <div className="text-xs text-muted-foreground">{preview.month_year}</div>
               </div>
               <div className="text-sm space-y-1">

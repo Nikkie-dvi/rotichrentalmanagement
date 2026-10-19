@@ -37,9 +37,9 @@ import { SectionSwitcher, SectionPanel, ADMIN_TABS } from "@/components/section-
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
     meta: [
-      { title: "CEO Analytics — Rotich Management Systems" },
+      { title: "CEO Analytics — Eden Point Real Estate" },
       { name: "description", content: "Company-wide analytics: landlords, subscriptions, occupancy, collections and arrears." },
-      { property: "og:title", content: "CEO Analytics — Rotich Management Systems" },
+      { property: "og:title", content: "CEO Analytics — Eden Point Real Estate" },
       { property: "og:description", content: "Company-wide analytics across every landlord on the platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

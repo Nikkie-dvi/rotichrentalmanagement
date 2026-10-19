@@ -203,7 +203,7 @@ export function AppSidebar() {
         <div className="flex items-center gap-3 px-1">
           <AppLogo className="h-9 w-9 shrink-0 ring-1 ring-sidebar-border" />
           <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <div className="truncate text-sm font-semibold text-sidebar-foreground">Rotich Rental</div>
+            <div className="truncate text-sm font-semibold text-sidebar-foreground">Eden Point Rentals</div>
             <div className="truncate text-[11px] text-sidebar-foreground/55">Management Systems</div>
           </div>
         </div>

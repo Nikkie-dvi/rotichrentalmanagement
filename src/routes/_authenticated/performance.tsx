@@ -9,7 +9,7 @@ import { compareCollections, comparisonPeriod } from "@/lib/collection-compariso
 export const Route = createFileRoute("/_authenticated/performance")({
   head: () => ({
     meta: [
-      { title: "Portfolio Performance & Reports — Rotich Management Systems" },
+      { title: "Portfolio Performance & Reports — Eden Point Real Estate" },
       {
         name: "description",
         content:

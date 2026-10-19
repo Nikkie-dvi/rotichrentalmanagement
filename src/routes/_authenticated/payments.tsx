@@ -31,9 +31,9 @@ import { notifyPaymentLogged } from "@/lib/payment-notify.functions";
 export const Route = createFileRoute("/_authenticated/payments")({
   head: () => ({
     meta: [
-      { title: "Payments & Receipts — Rotich Management Systems" },
+      { title: "Payments & Receipts — Eden Point Real Estate" },
       { name: "description", content: "Log tenant payments across M-Pesa, bank and cash, and print receipts." },
-      { property: "og:title", content: "Payments & Receipts — Rotich Management Systems" },
+      { property: "og:title", content: "Payments & Receipts — Eden Point Real Estate" },
       { property: "og:description", content: "Log payments and generate receipts." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -458,7 +458,7 @@ function PaymentsPage() {
           {receipt && (
             <div className="space-y-3">
               <div className="text-center">
-                <div className="text-lg font-bold">Rotich Management Systems Receipt</div>
+                <div className="text-lg font-bold">Eden Point Real Estate Receipt</div>
                 <div className="text-xs text-muted-foreground">#{String(receipt.id).slice(0, 8).toUpperCase()}</div>
               </div>
               <div className="text-sm space-y-1">

@@ -35,8 +35,8 @@ async function notifyLowSmsBalance(
   if (!phone) return;
 
   const message = messagesLeft < 1
-    ? "Your Rotich Management SMS credit has run out. Open My Account to request a recharge."
-    : `Your Rotich Management SMS credit is running low: ${messagesLeft} message${messagesLeft === 1 ? "" : "s"} left. Open My Account to top up.`;
+    ? "Your Eden Point Management SMS credit has run out. Open My Account to request a recharge."
+    : `Your Eden Point Management SMS credit is running low: ${messagesLeft} message${messagesLeft === 1 ? "" : "s"} left. Open My Account to top up.`;
   const result = await sendSms(phone, message, { portalLink: false });
 
   await supabaseAdmin.from("notification_logs").insert({

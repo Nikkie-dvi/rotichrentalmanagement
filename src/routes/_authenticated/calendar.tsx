@@ -12,9 +12,9 @@ import { businessToday } from "@/lib/ledger";
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
-      { title: "Rent Calendar — Rotich Management Systems" },
+      { title: "Rent Calendar — Eden Point Real Estate" },
       { name: "description", content: "See every tenant's rent due date and payments on a calendar to plan invoicing." },
-      { property: "og:title", content: "Rent Calendar — Rotich Management Systems" },
+      { property: "og:title", content: "Rent Calendar — Eden Point Real Estate" },
       { property: "og:description", content: "Tenant due dates and paid amounts on a calendar." },
     ],
   }),

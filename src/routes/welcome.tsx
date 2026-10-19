@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, MessageCircle, Smartphone, Bell, Bot, FileSignature, Wallet, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppLogo } from "@/components/app-logo";
 import appShots from "@/assets/landing-app.jpg";
 
-const NAME = "Rotich Rental Management";
+const NAME = "Eden Point Real Estate";
 const WA = `https://wa.me/254706747498?text=${encodeURIComponent(`Hi, I'd like to know more about ${NAME}.`)}`;
 const TITLE = `${NAME} — Rent collection app for Kenyan landlords`;
 const DESC = "Collect rent by M-Pesa, send automatic SMS reminders and track every tenant's balance. KES 2,400/month with a 14-day free trial.";
@@ -36,9 +37,10 @@ const features = [
 function Welcome() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="mx-auto flex max-w-6xl items-center justify-between py-4 pl-4 pr-16">
+      <header className="mx-auto flex max-w-6xl items-center gap-2 py-4 pl-4 pr-16">
+        <AppLogo className="h-8 w-8" />
         <span className="font-semibold">{NAME}</span>
-        <Button asChild variant="ghost" size="sm"><Link to="/auth">Sign in</Link></Button>
+        <Button asChild variant="ghost" size="sm" className="ml-auto"><Link to="/auth">Sign in</Link></Button>
       </header>
 
       <section className="mx-auto grid max-w-6xl items-center gap-8 px-4 pb-12 pt-6 md:grid-cols-2">

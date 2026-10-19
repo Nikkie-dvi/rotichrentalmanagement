@@ -21,7 +21,7 @@ import { SectionSwitcher, SectionPanel, PEOPLE_TABS } from "@/components/section
 export const Route = createFileRoute("/_authenticated/applications")({
   head: () => ({
     meta: [
-      { title: "Tenant Applications — Rotich Management Systems" },
+      { title: "Tenant Applications — Eden Point Real Estate" },
       { name: "description", content: "Review and approve or decline new tenant registration applications." },
       { property: "og:title", content: "Tenant Applications" },
       { property: "og:description", content: "Review and approve or decline new tenant registrations." },

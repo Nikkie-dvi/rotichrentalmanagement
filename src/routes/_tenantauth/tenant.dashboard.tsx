@@ -51,7 +51,7 @@ export const Route = createFileRoute("/_tenantauth/tenant/dashboard")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Tenant Dashboard — Rotich Management Systems" },
+      { title: "Tenant Dashboard — Eden Point Real Estate" },
       { name: "description", content: "Your lease, next rent due, and open maintenance tickets." },
       { property: "og:title", content: "Tenant Dashboard" },
       { property: "og:description", content: "Your lease, next rent due, and open maintenance tickets." },

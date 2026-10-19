@@ -171,7 +171,7 @@ export function AccountLeaseTemplate() {
         <CardContent className="grid gap-4">
           <div className="grid gap-1.5">
             <Label htmlFor="lease-name">Landlord / company name on the lease</Label>
-            <Input id="lease-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Rotich Properties Ltd" />
+            <Input id="lease-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Eden Point Real Estate Ltd" />
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="lease-intro">Opening paragraph</Label>

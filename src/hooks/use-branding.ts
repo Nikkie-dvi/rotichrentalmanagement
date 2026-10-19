@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import logoAsset from "@/assets/rotich-logo-v2.png.asset.json";
+import logoAsset from "@/assets/eden-point-logo.png.asset.json";
 
 /** The logo shipped with the app, used until a custom one is uploaded. */
 export const DEFAULT_LOGO_URL = logoAsset.url;

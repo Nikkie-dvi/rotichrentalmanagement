@@ -128,7 +128,7 @@ export function buildStatementHtml(args: {
     <span>Total outstanding: ${ksh(totals.out)}</span>
   </div>
 
-  <footer>Generated ${esc(new Date().toLocaleString())} · Rotich Management Systems</footer>
+  <footer>Generated ${esc(new Date().toLocaleString())} · Eden Point Real Estate</footer>
   </body></html>`;
 }
 

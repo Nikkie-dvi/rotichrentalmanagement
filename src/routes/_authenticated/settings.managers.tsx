@@ -38,12 +38,12 @@ export const Route = createFileRoute("/_authenticated/settings/managers")({
   component: ManagersPage,
   head: () => ({
     meta: [
-      { title: "Property Managers | Rotich Management Systems" },
+      { title: "Property Managers | Eden Point Real Estate" },
       {
         name: "description",
         content: "Create and manage property manager logins that can view your tenants, units and rent records.",
       },
-      { property: "og:title", content: "Property Managers | Rotich Management Systems" },
+      { property: "og:title", content: "Property Managers | Eden Point Real Estate" },
       { property: "og:description", content: "Give your property managers their own secure login." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

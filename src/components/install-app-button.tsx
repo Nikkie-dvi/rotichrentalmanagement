@@ -85,7 +85,7 @@ export function InstallAppButton() {
           <DialogHeader>
             <DialogTitle>Install the app</DialogTitle>
             <DialogDescription>
-              Add Rotich Management to your home screen so it opens like a normal app.
+              Add Eden Point Real Estate to your home screen so it opens like a normal app.
             </DialogDescription>
           </DialogHeader>
           {isIos() ? (

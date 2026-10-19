@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://rotichrentalmanagement.lovable.app/</loc>
+    <loc>https://homebasemanager.app/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://rotichrentalmanagement.lovable.app/auth</loc>
+    <loc>https://homebasemanager.app/auth</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://rotichrentalmanagement.lovable.app/tenant</loc>
+    <loc>https://homebasemanager.app/tenant</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://rotichrentalmanagement.lovable.app/tenant/login</loc>
+    <loc>https://homebasemanager.app/tenant/login</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://rotichrentalmanagement.lovable.app/tenant/register</loc>
+    <loc>https://homebasemanager.app/tenant/register</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

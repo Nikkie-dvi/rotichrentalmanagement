@@ -110,7 +110,7 @@ export function AppHeader() {
       <AppLogo className="h-8 w-8 shrink-0" />
       <div className="min-w-0">
         <h1 className="truncate text-base font-semibold leading-tight">
-          {isManager ? "Rotich Manager" : "Rotich Rental"}
+          {isManager ? "Eden Point Manager" : "Eden Point Rentals"}
         </h1>
         <p className="hidden truncate text-xs text-muted-foreground sm:block">
           {isManager
