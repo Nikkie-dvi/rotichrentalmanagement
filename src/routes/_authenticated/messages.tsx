@@ -502,7 +502,7 @@ function MessagesPage() {
           </CardTitle>
           <CardDescription>
             Pick the property and the exact units, then text each tenant their own figures — itemised invoice, latest
-            payment receipt or a month statement. 1 SMS per tenant from your SMS credit.
+            payment receipt or a month statement. 1 SMS per tenant.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">

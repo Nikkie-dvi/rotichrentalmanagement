@@ -26,7 +26,7 @@ export function AppMenu() {
           <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{section.label}</h3>
           <div className="grid gap-1 sm:grid-cols-2">{items.map(item => <Button key={item.url} asChild variant={(item.matches ?? [item.url]).includes(pathname) ? "secondary" : "ghost"} className="h-11 justify-start whitespace-normal text-left text-xs">
             <Link to={item.url} onClick={() => setOpen(false)}><item.icon className="shrink-0" />{item.title}
-              {item.url === "/analytics" && isSuper && counts.pendingLandlords + counts.pendingRecharges > 0 && <span className="ml-auto rounded-full bg-destructive px-1.5 text-destructive-foreground">{counts.pendingLandlords + counts.pendingRecharges}</span>}
+              {item.url === "/analytics" && isSuper && counts.pendingLandlords > 0 && <span className="ml-auto rounded-full bg-destructive px-1.5 text-destructive-foreground">{counts.pendingLandlords}</span>}
             </Link>
           </Button>)}</div>
         </section>;

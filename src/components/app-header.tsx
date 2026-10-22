@@ -161,11 +161,11 @@ export function AppHeader() {
             </Badge>
           </Link>
         )}
-        {isSuper && counts.pendingLandlords + counts.pendingRecharges > 0 && (
+        {isSuper && counts.pendingLandlords > 0 && (
           <Link to="/landlords">
             <Badge className="gap-1 bg-warning text-warning-foreground">
               <UserPlus className="h-3.5 w-3.5" />
-              {counts.pendingLandlords + counts.pendingRecharges} to review
+              {counts.pendingLandlords} to review
             </Badge>
           </Link>
         )}

@@ -25,7 +25,7 @@ export function TenantReminderButton({ tenantId, name, balance }: { tenantId: st
   };
   return <Dialog open={open} onOpenChange={v => { if (!busy) setOpen(v); }}>
     <Button size="sm" variant="outline" className="min-w-0 flex-1" onClick={() => setOpen(true)}><BellRing className="h-4 w-4 shrink-0" /> Send reminder</Button>
-    <DialogContent><DialogHeader><DialogTitle>Remind {name}</DialogTitle><DialogDescription>This text uses your SMS credit and also sends an app alert where available.</DialogDescription></DialogHeader>
+    <DialogContent><DialogHeader><DialogTitle>Remind {name}</DialogTitle><DialogDescription>Sends a text and an app alert where available.</DialogDescription></DialogHeader>
       <p className="text-sm leading-relaxed break-words">{body}</p>
       <DialogFooter><Button variant="outline" disabled={busy} onClick={() => setOpen(false)}>Cancel</Button><Button disabled={busy} onClick={submit}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellRing className="h-4 w-4" />} Confirm and send</Button></DialogFooter>
     </DialogContent>

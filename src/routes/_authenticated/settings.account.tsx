@@ -11,17 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  effectivePrice,
-  paymentMethodLabel,
-  subscriptionState,
-  trialState,
   useIsPropertyManager,
   useLandlordAccount,
   useManagerLinks,
-  usePlatformPricing,
 } from "@/hooks/use-landlord-account";
 import { money } from "@/lib/types";
-import { SmsCreditCard } from "@/components/sms-credit-card";
 import { VacancyNotices } from "@/components/vacancy-notices";
 import { AccountControls, AccountLogout } from "@/components/account-controls";
 
@@ -43,21 +37,15 @@ export const Route = createFileRoute("/_authenticated/settings/account")({
 function AccountPage() {
   const isManager = useIsPropertyManager();
   const { data: account, isLoading } = useLandlordAccount();
-  const { data: pricing } = usePlatformPricing();
   if (isManager) return <ManagerAccountView />;
   if (isLoading) return <p className="py-12 text-center text-sm text-muted-foreground">Loading account…</p>;
   if (!account) return <p className="py-12 text-center text-sm text-muted-foreground">Account details are unavailable.</p>;
-
-  const subscription = subscriptionState(account);
-  const trial = trialState(account);
-  const price = effectivePrice(account, pricing ?? { id: "default", base_monthly: 999, loyalty_after_months: 3, loyalty_discount_percent: 10, annual_discount_percent: 20, offer_note: null });
-  const statusTone = subscription.tone === "active" ? "default" : subscription.tone === "due" ? "secondary" : "destructive";
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
       <div>
         <h2 className="text-2xl font-bold">My Account</h2>
-        <p className="text-sm text-muted-foreground">Your landlord profile, tenant access code, and subscription details.</p>
+        <p className="text-sm text-muted-foreground">Your landlord profile and tenant access code.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
@@ -101,28 +89,7 @@ function AccountPage() {
         </Card>
       </div>
 
-      <Card className="glass-card">
-        <CardHeader className="flex-row items-start justify-between gap-3">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-base"><CreditCard className="h-4 w-4 text-primary" /> Subscription</CardTitle>
-            <CardDescription>Your current plan and payment standing.</CardDescription>
-          </div>
-          <Badge variant={statusTone}>{subscription.label}</Badge>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label="Billing plan" value={price.annual ? "Annual" : "Monthly"} />
-          <Metric label="Current price" value={`${money(price.dueNow)} ${price.label}`} />
-          <Metric label="Paid until" value={account.paid_until ?? (trial.active ? `Trial · ${trial.daysLeft} days left` : "Not recorded")} />
-          <Metric label="Payment method" value={paymentMethodLabel(account.payment_method)} />
-          {account.last_payment_at && <Metric label="Last payment" value={new Date(account.last_payment_at).toLocaleDateString()} />}
-          {account.last_payment_amount != null && <Metric label="Last amount" value={money(Number(account.last_payment_amount))} />}
-          {account.last_payment_reference && <Metric label="Payment reference" value={account.last_payment_reference} />}
-          {account.discount_percent != null && Number(account.discount_percent) > 0 && <Metric label="Account discount" value={`${account.discount_percent}%`} />}
-        </CardContent>
-      </Card>
-
       <AccountControls />
-      <SmsCreditCard />
       <VacancyNotices />
       <AccountLogout />
 

@@ -1,38 +1,27 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, ShieldCheck, Smartphone, LogOut, XCircle, CalendarClock, MessageCircle, Gift } from "lucide-react";
+import { Loader2, ShieldCheck, LogOut, XCircle, Ban, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { money } from "@/lib/types";
-import { PaywavePayButton } from "@/components/paywave-pay-button";
 import {
   useLandlordAccount,
   useIsSuperAdmin,
   useManagerStatus,
-  subscriptionState,
-  usePlatformPricing,
-  effectivePrice,
-  DEFAULT_PRICING,
-  trialState,
-  TRIAL_DAYS,
   whatsappSupportLink,
 } from "@/hooks/use-landlord-account";
-import { SubscriptionStkButton } from "@/components/subscription-stk-button";
-
-
 
 /**
  * Blocks the landlord dashboard until the main account approves the landlord.
- * While pending, the landlord sees the monthly subscription payment steps.
+ * Access is free — the main account approves, suspends or reactivates each
+ * landlord manually; there are no subscription payments.
  */
 export function LandlordGate({ children }: { children: ReactNode }) {
   const { data: account, isLoading, refetch, isRefetching } = useLandlordAccount();
   const isSuper = useIsSuperAdmin();
   const { isManager, isDisabled: managerDisabled, isPending: managerPending } = useManagerStatus();
-  const { data: pricing } = usePlatformPricing();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -58,75 +47,7 @@ export function LandlordGate({ children }: { children: ReactNode }) {
   }
   if (managerDisabled && !isSuper) return <ManagerAccessRevoked />;
 
-  if (!account || isSuper || isManager) return <>{children}</>;
-
-  const price = effectivePrice(account, pricing ?? DEFAULT_PRICING);
-  const trial = trialState(account);
-  const waLink = whatsappSupportLink(
-    `Hello, I am ${account.full_name ?? account.email ?? "a landlord"}${
-      account.landlord_code ? ` (code ${account.landlord_code})` : ""
-    }. I have paid ${money(price.dueNow)} for my subscription but my account has not been updated yet. Kindly confirm.`,
-  );
-  const WhatsAppButton = ({ full = false }: { full?: boolean }) => (
-    <Button
-      asChild
-      size="sm"
-      variant="outline"
-      className={full ? "w-full" : "ml-auto"}
-    >
-      <a href={waLink} target="_blank" rel="noreferrer">
-        <MessageCircle className="h-4 w-4" /> Paid already? WhatsApp us
-      </a>
-    </Button>
-  );
-
-  if (account.status === "approved") {
-    const sub = subscriptionState(account);
-    // Expired subscription: block the dashboard until payment is recorded.
-    if (sub.tone !== "overdue") {
-      return (
-        <>
-          {sub.tone !== "active" && (
-            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
-              <CalendarClock className="h-4 w-4 shrink-0" />
-              <span className="font-medium">Subscription: {sub.label}.</span>
-              <span className="text-muted-foreground">
-                Pay {money(price.dueNow)} ({price.label}) with M-Pesa to stay active.
-              </span>
-              <PaywavePayButton kind="subscription" amount={price.dueNow} phone={account.phone} />
-              <SubscriptionStkButton amount={price.dueNow} defaultPhone={account.phone} />
-              <WhatsAppButton />
-            </div>
-          )}
-          {children}
-        </>
-      );
-    }
-  }
-
-  const declined = account.status === "declined";
-  const expired = account.status === "approved" && subscriptionState(account).tone === "overdue";
-
-  // Free trial: a brand new landlord uses everything for two weeks before paying.
-  if (!declined && trial.active) {
-    return (
-      <>
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
-          <Gift className="h-4 w-4 shrink-0 text-primary" />
-          <span className="font-medium">
-            Free trial — {trial.daysLeft} day{trial.daysLeft === 1 ? "" : "s"} left.
-          </span>
-          <span className="text-muted-foreground">
-            After that, pay {money(price.dueNow)} ({price.label}) with M-Pesa to keep your account active.
-          </span>
-          <PaywavePayButton kind="subscription" amount={price.dueNow} phone={account.phone} />
-          <SubscriptionStkButton amount={price.dueNow} defaultPhone={account.phone} />
-          <WhatsAppButton />
-        </div>
-        {children}
-      </>
-    );
-  }
+  if (!account || isSuper) return <>{children}</>;
 
   const signOut = async () => {
     await qc.cancelQueries();
@@ -135,95 +56,117 @@ export function LandlordGate({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   };
 
+  // A suspended landlord (or a manager working for one) loses access until the
+  // main account switches them back on. Data stays saved.
+  if (account.status === "suspended") {
+    return (
+      <BlockedCard
+        icon={<Ban className="h-6 w-6 text-destructive" />}
+        title="Account switched off"
+        description="This landlord account has been suspended by the main account. Your properties, tenants and records are safe — contact support to turn access back on."
+        badge={<Badge variant="destructive">Suspended</Badge>}
+        email={account.email}
+        onRefresh={() => refetch()}
+        refreshing={isRefetching}
+        onSignOut={signOut}
+        whatsapp={whatsappSupportLink(
+          `Hello, I am ${account.full_name ?? account.email ?? "a landlord"}${
+            account.landlord_code ? ` (code ${account.landlord_code})` : ""
+          }. My account has been switched off. Kindly assist.`,
+        )}
+      />
+    );
+  }
 
+  if (isManager || account.status === "approved") return <>{children}</>;
 
+  const declined = account.status === "declined";
+
+  return (
+    <BlockedCard
+      icon={
+        declined ? (
+          <XCircle className="h-6 w-6 text-destructive" />
+        ) : (
+          <ShieldCheck className="h-6 w-6 text-primary" />
+        )
+      }
+      title={declined ? "Account declined" : "Account awaiting approval"}
+      description={
+        declined
+          ? "Your landlord account was not approved."
+          : "Your registration is waiting for the main account to confirm it. Once approved, you can use everything right away — there is nothing to pay."
+      }
+      badge={<Badge variant={declined ? "destructive" : "secondary"}>{declined ? "Declined" : "Pending approval"}</Badge>}
+      reason={declined ? account.declined_reason : null}
+      email={account.email}
+      onRefresh={() => refetch()}
+      refreshing={isRefetching}
+      onSignOut={signOut}
+      whatsapp={whatsappSupportLink(
+        `Hello, I am ${account.full_name ?? account.email ?? "a landlord"}${
+          account.landlord_code ? ` (code ${account.landlord_code})` : ""
+        }. My account is still awaiting approval. Kindly assist.`,
+      )}
+    />
+  );
+}
+
+function BlockedCard({
+  icon,
+  title,
+  description,
+  badge,
+  reason,
+  email,
+  onRefresh,
+  refreshing,
+  onSignOut,
+  whatsapp,
+}: {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  badge: ReactNode;
+  reason?: string | null;
+  email: string | null;
+  onRefresh: () => void;
+  refreshing: boolean;
+  onSignOut: () => void;
+  whatsapp: string;
+}) {
   return (
     <div className="flex min-h-[70vh] items-start justify-center px-1 py-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            {declined ? (
-              <XCircle className="h-6 w-6 text-destructive" />
-            ) : (
-              <ShieldCheck className="h-6 w-6 text-primary" />
-            )}
+            {icon}
           </div>
-          <CardTitle>
-            {declined
-              ? "Account declined"
-              : expired
-                ? "Subscription expired"
-                : trial.endsAt
-                  ? "Free trial ended"
-                  : "Account awaiting approval"}
-          </CardTitle>
-          <CardDescription>
-            {declined
-              ? "Your landlord account was not approved."
-              : expired
-                ? "Your subscription is up. Pay below and your account is switched back on as soon as the payment is recorded."
-                : `Your ${TRIAL_DAYS}-day free trial is over and no payment has been received yet. Pay your subscription below and your account is switched back on as soon as it is recorded.`}
-          </CardDescription>
-          <div className="pt-2">
-            <Badge variant={declined || expired ? "destructive" : "secondary"}>
-              {declined ? "Declined" : expired ? "Subscription expired" : "Payment not received"}
-            </Badge>
-          </div>
-
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+          <div className="pt-2">{badge}</div>
         </CardHeader>
-
         <CardContent className="space-y-4">
-          {declined && account.declined_reason && (
+          {reason && (
             <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
               <div className="font-medium text-destructive">Reason</div>
-              <p className="text-muted-foreground">{account.declined_reason}</p>
+              <p className="text-muted-foreground">{reason}</p>
             </div>
           )}
-
-          {!declined && (
-            <div className="rounded-lg border p-4">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Smartphone className="h-4 w-4" /> Pay your monthly fee
-              </div>
-              <div className="mt-3 space-y-2">
-                <PaywavePayButton full kind="subscription" amount={price.dueNow} phone={account.phone} />
-                <SubscriptionStkButton full amount={price.dueNow} defaultPhone={account.phone} />
-              </div>
-
-              <div className="mt-4 rounded-md bg-muted/50 p-3">
-                <div className="text-xs text-muted-foreground">
-                  {price.annual ? "Yearly fee" : "Monthly fee"}
-                </div>
-                <div className="font-semibold">{money(price.dueNow)}</div>
-                {price.discount > 0 && (
-                  <div className="text-xs text-emerald-600 dark:text-emerald-400">
-                    {price.discount}% offer applied (was {money(price.base)})
-                  </div>
-                )}
-                {(account.offer_note ?? (pricing ?? DEFAULT_PRICING).offer_note) && (
-                  <div className="text-xs text-muted-foreground">
-                    {account.offer_note ?? (pricing ?? DEFAULT_PRICING).offer_note}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-            Signed in as <span className="font-medium text-foreground">{account.email ?? "your account"}</span>. Access
-            unlocks automatically the moment your payment is recorded.
+            Signed in as <span className="font-medium text-foreground">{email ?? "your account"}</span>.
           </div>
-
-          <WhatsAppButton full />
-
-
-
+          <Button asChild size="sm" variant="outline" className="w-full">
+            <a href={whatsapp} target="_blank" rel="noreferrer">
+              <MessageCircle className="h-4 w-4" /> Need help? WhatsApp us
+            </a>
+          </Button>
           <div className="flex gap-2">
-            <Button className="flex-1" onClick={() => refetch()} disabled={isRefetching}>
-              {isRefetching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button className="flex-1" onClick={onRefresh} disabled={refreshing}>
+              {refreshing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Check status
             </Button>
-            <Button variant="outline" onClick={signOut}>
+            <Button variant="outline" onClick={onSignOut}>
               <LogOut className="h-4 w-4" /> Sign out
             </Button>
           </div>

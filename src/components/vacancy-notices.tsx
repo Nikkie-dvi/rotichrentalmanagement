@@ -66,7 +66,7 @@ export function VacancyNotices({ initialUnitId, onSent }: { initialUnitId?: stri
       <Select value={unitId} onValueChange={choose}><SelectTrigger className="w-full min-w-0 [&>span]:truncate"><SelectValue placeholder="Choose a vacant unit" /></SelectTrigger><SelectContent>
         {q.data?.units.map(u => <SelectItem key={u.id} value={u.id}>{u.properties?.name} · {u.unit_number}</SelectItem>)}
       </SelectContent></Select>
-      {unit && <><p className="text-sm text-muted-foreground">Only {count} active tenant{count === 1 ? "" : "s"} at {unit.properties?.name} will receive this notice. Texts use your SMS credit.</p>
+      {unit && <><p className="text-sm text-muted-foreground">Only {count} active tenant{count === 1 ? "" : "s"} at {unit.properties?.name} will receive this notice.</p>
         <Textarea aria-label="Vacancy message" value={message} maxLength={400} onChange={e => { setMessage(e.target.value); setConfirming(false); }} rows={3} />
         {confirming ? <div className="flex flex-wrap items-center gap-2"><p className="w-full text-sm font-medium">Send this notice to this property's tenants?</p><Button disabled={busy || !enabled} onClick={submit}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Confirm and send</Button><Button variant="ghost" disabled={busy} onClick={() => setConfirming(false)}>Cancel</Button></div> : <Button disabled={!enabled || !count || !message.trim()} onClick={() => setConfirming(true)}><Send className="h-4 w-4" /> Review notice</Button>}
       </>}

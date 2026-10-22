@@ -114,7 +114,7 @@ export function AutoTextingPanel() {
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Row k="reminder_sms_enabled" title="By SMS" hint="Uses your SMS credit." />
+          <Row k="reminder_sms_enabled" title="By SMS" hint="Sent as a text message." />
           <Row k="reminder_push_enabled" title="Phone alert" hint="Free app notification." />
         </div>
         <Row k="sms_enabled" title="Late fee texts" hint="Text tenants automatically when a late fee is added." />
