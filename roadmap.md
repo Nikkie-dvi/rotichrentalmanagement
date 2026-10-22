@@ -35,6 +35,7 @@
 - [x] Redesign tenant status cards, property grouping, metrics and search/payment filters; desktop and phone layouts, invoice dialog and zero-balance filter verified.
 - [x] Simplify finding lease files for upload and clarify approval labels for self-applications versus landlord-added tenants; active tenant approval labels removed and direct assignment marked approved.
 - [x] Assistant edits financial records only; actual refund transfers are out of scope because landlords handle refunds themselves.
+- [x] Remove landlord SMS recharge and subscription payments; SMS unlimited on the main account, landlord access controlled by manual approve/suspend with a Suspended tab. Suspend/reactivate round-trip verified signed in; type check, 13 tests and build pass.
 
 ## Completed assistant and portfolio updates
 - [x] Compare collections with the same date last month in assistant analysis and buddy notices; comparison tests passed.
