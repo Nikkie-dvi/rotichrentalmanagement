@@ -481,7 +481,7 @@ function PaymentsPage() {
                 </Button>
               </div>
               <p className="text-xs text-center text-muted-foreground">
-                The SMS shows the amount paid, the balance left and any late fees still owed. Uses 1.2 KES of your SMS credit.
+                The SMS shows the amount paid, the balance left and any late fees still owed.
               </p>
             </div>
           )}

@@ -427,7 +427,7 @@ function BillingPage() {
               <span>
                 Text the tenant this invoice
                 <span className="block text-xs text-muted-foreground">
-                  The SMS lists each charge (rent, water, electricity, garbage, extras). Uses 1.2 KES of your SMS credit.
+                  The SMS lists each charge (rent, water, electricity, garbage, extras).
                 </span>
               </span>
             </label>

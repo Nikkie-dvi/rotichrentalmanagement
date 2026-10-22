@@ -254,7 +254,7 @@ export function AccountBillingSettings({ section }: { section: "invoicing" | "fe
             <Textarea rows={3} value={form.reminder_after_template} onChange={(e) => set("reminder_after_template", e.target.value)} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Use {"{tenant_name}"}, {"{total_balance}"}, {"{due_date}"}, {"{days}"} and {"{month}"}. SMS costs come off your SMS credit.
+            Use {"{tenant_name}"}, {"{total_balance}"}, {"{due_date}"}, {"{days}"} and {"{month}"}.
           </p>
 
           <div className="flex flex-wrap gap-2">

@@ -149,7 +149,7 @@ export function RecordPaymentButton({
             <Checkbox checked={smsReceipt} onCheckedChange={(v) => setSmsReceipt(v === true)} className="mt-0.5" />
             <span>
               Text a payment receipt to the tenant
-              <span className="block text-xs text-muted-foreground">Uses 1.2 KES of your SMS credit.</span>
+              <span className="block text-xs text-muted-foreground">Sent by SMS to the tenant's phone.</span>
             </span>
           </label>
           <Button className="w-full" onClick={save} disabled={saving}>
