@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, XCircle, ShieldAlert, Loader2, CalendarClock, Wallet, ChevronDown, Search, UserPlus } from "lucide-react";
+import { CheckCircle2, XCircle, ShieldAlert, Loader2, ChevronDown, Search, UserPlus, Ban, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,27 +10,21 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { money } from "@/lib/types";
-import { LandlordTracker } from "@/components/landlord-tracker";
 import { ManagerFeesAdmin } from "@/components/manager-fees-admin";
 
 import { SectionSwitcher, SectionPanel, ADMIN_TABS } from "@/components/section-switcher";
 import {
   useIsSuperAdmin,
-  subscriptionState,
-  MONTHLY_FEE,
-  trialState,
   type LandlordAccount,
-
 } from "@/hooks/use-landlord-account";
 
 export const Route = createFileRoute("/_authenticated/landlords")({
   head: () => ({
     meta: [
       { title: "Landlord accounts — Eden Point Real Estate" },
-      { name: "description", content: "Review, approve or decline landlord accounts and their monthly subscription." },
+      { name: "description", content: "Review, approve, suspend or reactivate landlord accounts." },
       { property: "og:title", content: "Landlord accounts — Eden Point Real Estate" },
-      { property: "og:description", content: "Review, approve or decline landlord accounts and their monthly subscription." },
+      { property: "og:description", content: "Review, approve, suspend or reactivate landlord accounts." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -38,116 +32,7 @@ export const Route = createFileRoute("/_authenticated/landlords")({
   component: LandlordsPage,
 });
 
-type PayDraft = { amount: string; date: string; months: string; reference: string };
-
-function SubscriptionBlock({ row }: { row: LandlordAccount }) {
-  const qc = useQueryClient();
-  const sub = subscriptionState(row);
-  const [busy, setBusy] = useState(false);
-  const [fee, setFee] = useState(String(row.monthly_fee ?? MONTHLY_FEE));
-  const [savingFee, setSavingFee] = useState(false);
-  const [draft, setDraft] = useState<PayDraft>({
-    amount: String(row.monthly_fee ?? MONTHLY_FEE),
-    date: new Date().toISOString().slice(0, 10),
-    months: "1",
-    reference: "",
-  });
-  const set = (patch: Partial<PayDraft>) => setDraft((d) => ({ ...d, ...patch }));
-
-  const saveFee = async () => {
-    const value = Number(fee);
-    if (!(value >= 0)) return toast.error("Enter a valid price");
-    setSavingFee(true);
-    const { error } = await supabase
-      .from("landlord_accounts")
-      .update({ monthly_fee: value })
-      .eq("id", row.id);
-    setSavingFee(false);
-    if (error) return toast.error(error.message);
-    toast.success(`Price set to ${money(value)}/month for this landlord`);
-    setDraft((d) => ({ ...d, amount: String(value) }));
-    qc.invalidateQueries({ queryKey: ["landlord-accounts-all"] });
-    qc.invalidateQueries({ queryKey: ["landlord-account"] });
-  };
-
-  const record = async () => {
-    setBusy(true);
-    const { error } = await supabase.from("landlord_subscription_payments").insert({
-      landlord_account_id: row.id,
-      amount: Number(draft.amount) || 0,
-      payment_date: draft.date,
-      months_covered: Math.max(1, Number(draft.months) || 1),
-      reference: draft.reference || null,
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Subscription payment recorded");
-    set({ reference: "" });
-    qc.invalidateQueries({ queryKey: ["landlord-accounts-all"] });
-    qc.invalidateQueries({ queryKey: ["landlord-account"] });
-  };
-
-  return (
-    <div className="mt-3 rounded-md border bg-muted/30 p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <CalendarClock className="h-4 w-4" /> Subscription
-        </div>
-        <Badge variant={sub.tone === "active" ? "default" : sub.tone === "overdue" ? "destructive" : "secondary"}>
-          {sub.label}
-        </Badge>
-      </div>
-      <div className="mt-2 grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
-        <div>Paid until: {sub.paidUntil ? sub.paidUntil.toLocaleDateString() : "—"}</div>
-        <div>
-          Last payment:{" "}
-          {row.last_payment_at
-            ? `${money(Number(row.last_payment_amount ?? 0))} on ${new Date(row.last_payment_at).toLocaleDateString()}`
-            : "—"}
-        </div>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-end gap-2">
-        <div className="w-36">
-          <Label className="text-xs">Price / month (KES)</Label>
-          <Input type="number" min={0} value={fee} onChange={(e) => setFee(e.target.value)} />
-        </div>
-        <Button size="sm" variant="outline" disabled={savingFee} onClick={saveFee}>
-          {savingFee ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Save price
-        </Button>
-        <p className="w-full text-xs text-muted-foreground">
-          This is what their M-Pesa prompt asks for — lower it to give this landlord a discount.
-        </p>
-      </div>
-
-      <div className="mt-3 grid gap-2 sm:grid-cols-4">
-        <div>
-          <Label className="text-xs">Amount</Label>
-          <Input type="number" value={draft.amount} onChange={(e) => set({ amount: e.target.value })} />
-        </div>
-        <div>
-          <Label className="text-xs">Date paid</Label>
-          <Input type="date" value={draft.date} onChange={(e) => set({ date: e.target.value })} />
-        </div>
-        <div>
-          <Label className="text-xs">Months</Label>
-          <Input type="number" min={1} value={draft.months} onChange={(e) => set({ months: e.target.value })} />
-        </div>
-        <div>
-          <Label className="text-xs">M-Pesa code</Label>
-          <Input value={draft.reference} onChange={(e) => set({ reference: e.target.value })} placeholder="e.g. TFG7..." />
-        </div>
-      </div>
-      <Button size="sm" className="mt-2" disabled={busy} onClick={record}>
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-        Record payment
-      </Button>
-    </div>
-  );
-}
+type AccountStatus = "approved" | "declined" | "pending" | "suspended";
 
 function Row({ row }: { row: LandlordAccount }) {
   const qc = useQueryClient();
@@ -155,7 +40,7 @@ function Row({ row }: { row: LandlordAccount }) {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const setStatus = async (status: "approved" | "declined" | "pending") => {
+  const setStatus = async (status: AccountStatus) => {
     setBusy(true);
     const { error } = await supabase
       .from("landlord_accounts")
@@ -171,11 +56,22 @@ function Row({ row }: { row: LandlordAccount }) {
       return;
     }
     toast.success(
-      status === "approved" ? "Landlord approved" : status === "declined" ? "Landlord declined" : "Set back to pending",
+      status === "approved"
+        ? row.status === "suspended"
+          ? "Landlord reactivated"
+          : "Landlord approved"
+        : status === "declined"
+          ? "Landlord declined"
+          : status === "suspended"
+            ? "Landlord suspended — their access is off, data stays saved"
+            : "Set back to pending",
     );
     qc.invalidateQueries({ queryKey: ["landlord-accounts-all"] });
     qc.invalidateQueries({ queryKey: ["landlord-account"] });
   };
+
+  const badgeVariant =
+    row.status === "approved" ? "default" : row.status === "declined" || row.status === "suspended" ? "destructive" : "secondary";
 
   return (
     <div className="rounded-lg border">
@@ -191,14 +87,7 @@ function Row({ row }: { row: LandlordAccount }) {
             <div className="text-xs font-mono tracking-widest text-muted-foreground">#{row.landlord_code}</div>
           )}
         </div>
-        {row.status === "pending" && trialState(row).active && (
-          <Badge variant="outline" className="shrink-0">
-            Trial · {trialState(row).daysLeft}d
-          </Badge>
-        )}
-        <Badge variant={row.status === "approved" ? "default" : row.status === "declined" ? "destructive" : "secondary"}>
-          {row.status}
-        </Badge>
+        <Badge variant={badgeVariant}>{row.status}</Badge>
 
         <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
       </button>
@@ -207,29 +96,33 @@ function Row({ row }: { row: LandlordAccount }) {
         <div className="border-t p-4 pt-3">
           <div className="text-sm font-medium">{row.full_name ?? "—"}</div>
           <div className="text-xs text-muted-foreground">
-            Registered {new Date(row.created_at).toLocaleDateString()} · Fee {money(Number(row.monthly_fee))}/month
+            Registered {new Date(row.created_at).toLocaleDateString()}
+            {row.phone ? ` · ${row.phone}` : ""}
           </div>
           {row.status === "declined" && row.declined_reason && (
             <p className="mt-2 text-xs text-muted-foreground">Reason: {row.declined_reason}</p>
           )}
 
-          <SubscriptionBlock row={row} />
-
           <div className="mt-3 flex flex-wrap items-end gap-2">
             {row.status !== "approved" && (
               <Button size="sm" disabled={busy} onClick={() => setStatus("approved")}>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                Approve
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : row.status === "suspended" ? <RotateCcw className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                {row.status === "suspended" ? "Reactivate" : "Approve"}
               </Button>
             )}
-            {row.status !== "declined" && (
+            {row.status === "approved" && (
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus("suspended")}>
+                <Ban className="h-4 w-4" /> Suspend access
+              </Button>
+            )}
+            {row.status !== "declined" && row.status !== "suspended" && (
               <>
                 <div className="min-w-40 flex-1">
                   <Label className="text-xs">Decline reason (optional)</Label>
                   <Input
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    placeholder="e.g. payment not received"
+                    placeholder="e.g. duplicate registration"
                   />
                 </div>
                 <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus("declined")}>
@@ -237,7 +130,7 @@ function Row({ row }: { row: LandlordAccount }) {
                 </Button>
               </>
             )}
-            {row.status !== "pending" && (
+            {row.status !== "pending" && row.status !== "suspended" && (
               <Button size="sm" variant="ghost" disabled={busy} onClick={() => setStatus("pending")}>
                 Set pending
               </Button>
@@ -301,6 +194,7 @@ function LandlordsPage() {
   );
   const pending = visible.filter((a) => a.status === "pending");
   const approved = visible.filter((a) => a.status === "approved");
+  const suspended = visible.filter((a) => a.status === "suspended");
   const declined = visible.filter((a) => a.status === "declined");
 
 
@@ -312,8 +206,8 @@ function LandlordsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Landlord accounts</h1>
         <p className="text-sm text-muted-foreground">
-          New landlords stay locked out until you confirm them. They pay {money(MONTHLY_FEE)} monthly by M-Pesa prompt
-          on their phone.
+          New landlords stay locked out until you confirm them. Approved landlords use the app freely — suspend access
+          anytime and their data stays saved.
         </p>
       </div>
 
@@ -328,15 +222,13 @@ function LandlordsPage() {
               Action needed · {pending.length} landlord sign-up{pending.length === 1 ? "" : "s"} waiting for your approval
             </p>
             <p className="text-xs text-muted-foreground">
-              They cannot use the app until you approve them. Find them in the pending list below, and check for any SMS
-              recharge requests waiting here too.
+              They cannot use the app until you approve them. Find them in the pending list below.
             </p>
           </div>
           <UserPlus className="ml-auto hidden h-5 w-5 shrink-0 text-warning sm:block" />
         </div>
       )}
 
-      <LandlordTracker accounts={accounts ?? []} />
       <ManagerFeesAdmin />
 
 
@@ -359,9 +251,10 @@ function LandlordsPage() {
             </div>
           ) : (
             <Tabs defaultValue="pending">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="pending">Pending ({pending.length})</TabsTrigger>
                 <TabsTrigger value="approved">Approved ({approved.length})</TabsTrigger>
+                <TabsTrigger value="suspended">Suspended ({suspended.length})</TabsTrigger>
                 <TabsTrigger value="declined">Declined ({declined.length})</TabsTrigger>
               </TabsList>
               <TabsContent value="pending" className="mt-4">
@@ -369,6 +262,9 @@ function LandlordsPage() {
               </TabsContent>
               <TabsContent value="approved" className="mt-4">
                 <List rows={approved} />
+              </TabsContent>
+              <TabsContent value="suspended" className="mt-4">
+                <List rows={suspended} />
               </TabsContent>
               <TabsContent value="declined" className="mt-4">
                 <List rows={declined} />
