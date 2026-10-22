@@ -60,7 +60,7 @@ export function SectionSwitcher({ items, compact = false }: { items: SwitcherIte
       case "/applications":
         return counts.applications;
       case "/landlords":
-        return counts.pendingLandlords + counts.pendingRecharges;
+        return counts.pendingLandlords;
       default:
         return 0;
     }
@@ -79,14 +79,10 @@ export function SectionSwitcher({ items, compact = false }: { items: SwitcherIte
         return `${counts.issues} open issue${counts.issues === 1 ? "" : "s"} from tenants`;
       case "/applications":
         return `${counts.applications} application${counts.applications === 1 ? "" : "s"} waiting for review`;
-      case "/landlords": {
-        const parts: string[] = [];
-        if (counts.pendingLandlords > 0)
-          parts.push(`${counts.pendingLandlords} landlord sign-up${counts.pendingLandlords === 1 ? "" : "s"}`);
-        if (counts.pendingRecharges > 0)
-          parts.push(`${counts.pendingRecharges} SMS recharge request${counts.pendingRecharges === 1 ? "" : "s"}`);
-        return parts.length > 0 ? `${parts.join(" and ")} waiting for your approval` : null;
-      }
+      case "/landlords":
+        return counts.pendingLandlords > 0
+          ? `${counts.pendingLandlords} landlord sign-up${counts.pendingLandlords === 1 ? "" : "s"} waiting for your approval`
+          : null;
       default:
         return null;
     }

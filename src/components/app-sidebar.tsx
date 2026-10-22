@@ -174,8 +174,8 @@ export function AppSidebar() {
   /** Live counts that deserve attention, shown as a small red badge on the item. */
   const badgeFor = (url: string): number => {
     if (url === "/billing") return counts.overdueInvoices;
-    // Main-account panel: new landlord sign-ups and SMS recharge requests waiting for approval.
-    if (url === "/analytics" && isSuper) return counts.pendingLandlords + counts.pendingRecharges;
+    // Main-account panel: new landlord sign-ups waiting for approval.
+    if (url === "/analytics" && isSuper) return counts.pendingLandlords;
     return 0;
   };
 
