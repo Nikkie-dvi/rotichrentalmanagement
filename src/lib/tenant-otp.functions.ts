@@ -260,3 +260,25 @@ export const switchMyUnit = createServerFn({ method: "POST" })
     if (!target || !msisdn) throw new Error("That unit isn't linked to your phone number.");
     return sessionForTenantRow(supabaseAdmin, target, msisdn);
   });
+
+/**
+ * Landlord account status for the signed-in tenant. The tenant portal uses
+ * this to switch itself off when the main account suspends the landlord.
+ */
+export const myLandlordAccountStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: me } = await supabaseAdmin
+      .from("tenants")
+      .select("owner_id")
+      .eq("auth_user_id", context.userId)
+      .maybeSingle();
+    if (!me?.owner_id) return { status: "approved" as const };
+    const { data: acc } = await supabaseAdmin
+      .from("landlord_accounts")
+      .select("status")
+      .eq("user_id", me.owner_id)
+      .maybeSingle();
+    return { status: ((acc as any)?.status ?? "approved") as string };
+  });
