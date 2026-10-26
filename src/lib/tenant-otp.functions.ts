@@ -51,14 +51,20 @@ export const requestTenantLoginCode = createServerFn({ method: "POST" })
 
     const { data: rows } = await supabaseAdmin
       .from("tenants")
-      .select("id, full_name, phone_number")
+      .select("id, full_name, phone_number, owner_id")
       .in("phone_number", phoneVariants(msisdn, data.phone))
       .limit(1);
-    const tenant = rows?.[0] as { id: string; full_name: string | null } | undefined;
+    const tenant = rows?.[0] as { id: string; full_name: string | null; owner_id: string | null } | undefined;
     if (!tenant) {
       throw new Error(
         "We couldn't find that phone number on any landlord's tenant list. Use \"Request access\" below.",
       );
+    }
+
+    // Landlord account switched off — tenants can't get sign-in codes.
+    const { isMessagingPaused } = await import("@/lib/account-messaging.server");
+    if (await isMessagingPaused(tenant.owner_id)) {
+      throw new Error("Your landlord's account is currently switched off, so the tenant portal is unavailable. Please contact your landlord.");
     }
 
     // Rate limits: one code a minute, five an hour.
@@ -154,13 +160,17 @@ export const verifyTenantLoginCode = createServerFn({ method: "POST" })
 
     const { data: rows } = await supabaseAdmin
       .from("tenants")
-      .select("id, full_name, email, auth_user_id")
+      .select("id, full_name, email, auth_user_id, owner_id")
       .in("phone_number", phoneVariants(msisdn, data.phone))
       .is("move_out_date", null)
       .order("created_at", { ascending: false })
       .limit(1);
-    const tenant = rows?.[0] as TenantRow | undefined;
+    const tenant = rows?.[0] as (TenantRow & { owner_id: string | null }) | undefined;
     if (!tenant) throw new Error("We couldn't find your tenant record. Please contact your landlord.");
+    const { isMessagingPaused } = await import("@/lib/account-messaging.server");
+    if (await isMessagingPaused(tenant.owner_id)) {
+      throw new Error("Your landlord's account is currently switched off, so the tenant portal is unavailable. Please contact your landlord.");
+    }
     return sessionForTenantRow(supabaseAdmin, tenant, msisdn);
   });
 
@@ -249,4 +259,26 @@ export const switchMyUnit = createServerFn({ method: "POST" })
     const target = units.find((u) => u.id === data.tenantId);
     if (!target || !msisdn) throw new Error("That unit isn't linked to your phone number.");
     return sessionForTenantRow(supabaseAdmin, target, msisdn);
+  });
+
+/**
+ * Landlord account status for the signed-in tenant. The tenant portal uses
+ * this to switch itself off when the main account suspends the landlord.
+ */
+export const myLandlordAccountStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: me } = await supabaseAdmin
+      .from("tenants")
+      .select("owner_id")
+      .eq("auth_user_id", context.userId)
+      .maybeSingle();
+    if (!me?.owner_id) return { status: "approved" as const };
+    const { data: acc } = await supabaseAdmin
+      .from("landlord_accounts")
+      .select("status")
+      .eq("user_id", me.owner_id)
+      .maybeSingle();
+    return { status: ((acc as any)?.status ?? "approved") as string };
   });
