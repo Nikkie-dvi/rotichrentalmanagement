@@ -64,6 +64,9 @@ export function computePenalty(s: Pick<Settings, "penalty_type" | "penalty_value
 
 export async function runLatePenalties(opts: { ownerId?: string; today?: string } = {}) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { pausedOwnerIds } = await import("./account-messaging.server");
+  const paused = await pausedOwnerIds();
+  if (opts.ownerId && paused.has(opts.ownerId)) return { ok: true, applied: 0, notified: 0 };
   const today = opts.today ?? penaltyToday();
 
   let settingsQuery = supabaseAdmin.from("billing_settings").select("*");
@@ -87,6 +90,7 @@ export async function runLatePenalties(opts: { ownerId?: string; today?: string 
   let notified = 0;
 
   for (const inv of (invoices ?? []) as any[]) {
+    if (paused.has(inv.owner_id)) continue; // account switched off — no fees or messages
     const s: Settings = settingsFor.get(inv.owner_id) ?? { owner_id: inv.owner_id, ...DEFAULTS };
     if (!s.auto_penalties_enabled) continue;
 

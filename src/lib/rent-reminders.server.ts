@@ -26,6 +26,9 @@ function fill(tpl: string, vars: Record<string, string>) {
 
 export async function runRentReminders(opts: { ownerId?: string } = {}) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { pausedOwnerIds } = await import("./account-messaging.server");
+  const paused = await pausedOwnerIds();
+  if (opts.ownerId && paused.has(opts.ownerId)) return { ok: true, considered: 0, smsSent: 0, smsFailed: 0, smsSkippedNoCredit: 0, pushSent: 0 };
 
   const today = new Date();
   const todayKey = today.toISOString().slice(0, 10);
@@ -92,6 +95,7 @@ export async function runRentReminders(opts: { ownerId?: string } = {}) {
   for (const inv of ((invoices ?? []) as any[])) {
     const tenant = inv.tenants;
     if (!tenant || tenant.active === false) continue;
+    if (paused.has(inv.owner_id)) continue; // account switched off — no messages
     const s = settingsByOwner.get(inv.owner_id) ?? DEFAULTS;
     if (!s.rent_reminders_enabled) continue;
     if (alreadySent.has(inv.id)) continue;
