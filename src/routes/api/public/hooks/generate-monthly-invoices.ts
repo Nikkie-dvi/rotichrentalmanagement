@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/public/hooks/generate-monthly-invoice
           let removed = 0;
           let skipped = 0;
           for (const ownerId of ids) {
-            if (disabled.has(ownerId)) {
+            if (disabled.has(ownerId) || paused.has(ownerId)) {
               skipped++;
               continue;
             }
