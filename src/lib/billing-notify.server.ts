@@ -16,6 +16,9 @@ export async function notifyTenantOfCharge(args: {
 }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+  const { isMessagingPaused } = await import("./account-messaging.server");
+  if (await isMessagingPaused(args.ownerId)) return { ok: false };
+
   const { data: tenant } = await supabaseAdmin
     .from("tenants")
     .select("id, full_name, phone_number, email, auth_user_id")

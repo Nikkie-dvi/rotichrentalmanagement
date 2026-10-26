@@ -25,6 +25,8 @@ export async function sendTenantWelcome(tenantId: string) {
     .eq("id", tenantId)
     .maybeSingle();
   if (!t || !t.active || t.approval_status === "declined") return { sent: false as const, reason: "not_active" };
+  const { isMessagingPaused } = await import("@/lib/account-messaging.server");
+  if (await isMessagingPaused(t.owner_id)) return { sent: false as const, reason: "account_paused" };
   if (!t.phone_number && !t.auth_user_id) return { sent: false as const, reason: "no_recipient" };
   if (await alreadyLogged("tenant_welcome", { tenant_id: t.id })) return { sent: false as const, reason: "already_sent" };
 
@@ -138,6 +140,8 @@ export async function runWelcomeSweep() {
 const LEASE_SUBJECT = "lease_sign_reminder";
 export async function sendLeaseSignReminders() {
   const { chargeSmsWallet } = await import("@/lib/sms-wallet.server");
+  const { pausedOwnerIds } = await import("@/lib/account-messaging.server");
+  const paused = await pausedOwnerIds();
   const dayAgo = new Date(Date.now() - 86400000).toISOString();
   const { data: tenants } = await supabaseAdmin
     .from("tenants")
@@ -152,6 +156,7 @@ export async function sendLeaseSignReminders() {
   let sent = 0;
   for (const t of (tenants ?? []) as any[]) {
     if (!t.phone_number && !t.auth_user_id) continue;
+    if (paused.has(t.owner_id)) continue; // account switched off — no messages
     const { data: prev } = await supabaseAdmin
       .from("notification_logs").select("created_at").eq("tenant_id", t.id).eq("subject", LEASE_SUBJECT)
       .order("created_at", { ascending: false });
