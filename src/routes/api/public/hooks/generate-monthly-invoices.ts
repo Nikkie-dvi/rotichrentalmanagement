@@ -27,6 +27,10 @@ export const Route = createFileRoute("/api/public/hooks/generate-monthly-invoice
           const { data: owners } = await supabaseAdmin.from("tenants").select("owner_id").eq("active", true);
           const ids = Array.from(new Set(((owners ?? []) as any[]).map((o) => o.owner_id).filter(Boolean)));
 
+          // Switched-off accounts get no new invoices (and therefore no billing messages).
+          const { pausedOwnerIds } = await import("@/lib/account-messaging.server");
+          const paused = await pausedOwnerIds();
+
           const { data: settings } = await supabaseAdmin
             .from("billing_settings")
             .select("owner_id, auto_reconcile_enabled");
@@ -40,7 +44,7 @@ export const Route = createFileRoute("/api/public/hooks/generate-monthly-invoice
           let removed = 0;
           let skipped = 0;
           for (const ownerId of ids) {
-            if (disabled.has(ownerId)) {
+            if (disabled.has(ownerId) || paused.has(ownerId)) {
               skipped++;
               continue;
             }
